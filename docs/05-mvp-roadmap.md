@@ -42,7 +42,7 @@ Done when:
 Deliverables:
 
 - Car model data
-- Starter car selection
+- Automatic starter car assignment
 - Player garage
 - Active car selection
 - Car condition
