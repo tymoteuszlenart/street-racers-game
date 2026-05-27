@@ -190,7 +190,7 @@ Recommended:
 MVP race types:
 
 - NPC street race
-- PvP challenge
+- PvP street race (instant, direct opponent)
 - Club tournament race
 - Daily event race
 
@@ -202,6 +202,35 @@ Later race types:
 - Circuit race
 - Time trial
 - Underground illegal event
+
+## PvP Races (MVP)
+
+MVP PvP is a **direct, instant** race against another player. There is no challenge inbox, accept/decline step, or defender confirmation.
+
+Flow:
+
+1. Challenger picks another player from a simple opponent list.
+2. Server reads both players’ **active cars** and snapshots stats at race start.
+3. Server resolves the race immediately (same calculation approach as NPC races).
+4. Challenger sees the result; defender is not required to be online.
+
+MVP rules:
+
+- Challenger spends regular fuel (same cost as a normal street race unless tuned later).
+- Defender does **not** spend fuel and their car does **not** take condition damage.
+- Both cars’ effective stats are frozen in snapshots at race start; later garage changes do not alter the result.
+- Self-races are not allowed.
+- PvP grants **no meaningful economy rewards** in MVP (no cash, reputation, or XP from PvP wins). Use PvP to test racing and social competition only.
+- PvP results do **not** affect leaderboards, daily missions, club points, or club tournaments in MVP.
+- Optional soft limit: cap races between the same two players per day (for example 5) to reduce spam while rewards are disabled.
+
+Deferred to a later PvP phase:
+
+- Matchmaking and opponent suggestions by rating
+- Challenge/accept flows and notifications
+- Ranked ladders, wagers, and competitive PvP rewards
+- Win-trading prevention, smurf detection, and pair-based reward farming caps
+- Club tournament or premium-fuel PvP modes
 
 ## Clubs
 

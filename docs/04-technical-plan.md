@@ -47,6 +47,7 @@ Suggested models:
 - Race
 - RaceAttempt
 - RaceResult
+- PvpRace
 - Club
 - ClubMember
 - ClubTournament
@@ -68,6 +69,7 @@ parts
 races
 race_attempts
 race_results
+pvp_races
 clubs
 club_members
 club_tournaments
@@ -237,6 +239,104 @@ Concurrency behavior must be verified with a MySQL-backed test (not SQLite alone
 - Two parallel requests with different keys but insufficient fuel: only one race consumes fuel.
 
 Integration tests for `RaceService` should cover double-submit and parallel-submit scenarios before closing the race execution work.
+
+## PvP Races (MVP)
+
+MVP PvP uses a dedicated `pvp_races` table so challenge metadata, snapshots, and future PvP features stay separate from NPC `races` definitions.
+
+### Product scope
+
+Included in MVP:
+
+- Direct instant race: challenger selects `defender_user_id`, race runs in one request
+- Active car snapshots for challenger and defender at race start
+- Server-side resolution via `RaceService` (or a thin `PvpRaceService` that delegates to it)
+- Linked `race_results` row for history and UI
+
+Not included in MVP (later phase):
+
+- Matchmaking, ranked ladders, wagers
+- Defender accept/decline or pending challenge state
+- Meaningful PvP economy rewards
+- Leaderboard, reputation, daily mission, or club tournament integration
+- Advanced anti-abuse beyond basic validation and optional pair cooldowns
+
+### Table: `pvp_races`
+
+```text
+pvp_races
+  id
+  challenger_user_id
+  defender_user_id
+  challenger_car_id
+  defender_car_id
+  challenger_snapshot    json   frozen stats at race start
+  defender_snapshot      json   frozen stats at race start
+  race_result_id         nullable, set on success
+  created_at
+  updated_at
+```
+
+Snapshot JSON should include everything `RaceService` needs to score the race (for example power, acceleration, grip, handling, condition, equipped part bonuses, and any driver level bonus). Do not read live `cars` rows for scoring after the snapshot is written.
+
+Constraints and validation:
+
+- `challenger_user_id` must not equal `defender_user_id`
+- Both users must have an active car at race start
+- `defender_car_id` is the defender’s `active_car_id` at snapshot time (stored for audit; scoring uses `defender_snapshot`)
+
+Indexes (suggested):
+
+- `(challenger_user_id, created_at)` for race history
+- `(defender_user_id, created_at)` for “raced against me” queries
+- `(challenger_user_id, defender_user_id, created_at)` if enforcing a daily pair cap
+
+### Execution flow
+
+Every PvP start runs inside one MySQL transaction, reusing the same concurrency patterns as NPC races where applicable:
+
+1. Resolve or create a `race_attempts` row from the idempotency key (same rules as NPC races).
+2. Lock `player_profiles` for the challenger (and optionally check pair cooldown).
+3. Regenerate fuel, validate fuel, spend fuel on the challenger only.
+4. Load challenger active car and defender active car; build `challenger_snapshot` and `defender_snapshot`.
+5. Insert `pvp_races` with snapshots.
+6. Run race calculation from snapshots (not live car rows).
+7. Insert `race_results` (and link `pvp_races.race_result_id`).
+8. Apply condition damage to the **challenger’s** car only; do not modify defender car condition.
+9. Do **not** grant cash, reputation, or XP for MVP PvP unless explicitly enabled later behind config.
+10. Mark `race_attempts` succeeded and commit.
+
+Idempotency keys apply to PvP start the same way as NPC race start.
+
+### Service responsibilities
+
+Suggested class:
+
+```text
+PvpRaceService
+```
+
+Responsibilities:
+
+- Validate opponent (exists, not self, has active car)
+- Build car stat snapshots
+- Orchestrate transaction, fuel spend, and `RaceService` scoring
+- Create `pvp_races` and `race_results` records
+- Enforce optional same-pair daily cap (configurable)
+
+`RaceService` should accept snapshot payloads for opponent scoring so PvP does not duplicate formula logic.
+
+### MVP anti-abuse (minimal)
+
+Until competitive PvP rewards exist, abuse surface is limited. Still enforce:
+
+- Server-side snapshots only; never trust client stats
+- Self-race blocked
+- Idempotency on race start
+- Rate limiting on PvP start endpoint (same pattern as NPC races)
+- Optional: max N `pvp_races` per `(challenger_user_id, defender_user_id)` per calendar day
+
+Defer win-trading, smurfing, and reward-farming rules until PvP grants economy or ranking value.
 
 ## Economy Transactions
 
