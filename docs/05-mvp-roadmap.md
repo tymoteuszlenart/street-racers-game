@@ -83,6 +83,30 @@ Done when:
 - Race result is stored.
 - Player receives rewards after a win.
 
+## Phase 3b: Minimal PvP Races
+
+Deliverables:
+
+- `pvp_races` table and model
+- Opponent list (simple player picker, not matchmaking)
+- Instant PvP race start (no accept/decline)
+- Active car snapshots for challenger and defender
+- PvP race result page linked to `race_results`
+- Reuse `RaceService` for scoring from snapshots
+
+Key pages:
+
+- PvP opponent list
+- PvP race result
+
+Done when:
+
+- Challenger can race another player’s active car in one action.
+- Both cars are snapshotted at race start; result does not change if either player upgrades later.
+- Challenger spends fuel; defender does not spend fuel and takes no condition damage.
+- PvP grants no meaningful cash, reputation, or XP in MVP.
+- PvP does not affect leaderboards, daily missions, or club tournaments.
+
 ## Phase 4: Tuning Shop
 
 Deliverables:
@@ -199,11 +223,12 @@ Done when:
 4. Car models and garage
 5. Fuel service
 6. Race service
-7. Tuning shop
-8. Leaderboard
-9. Clubs
-10. Premium fuel tournaments
-11. Payments
+7. Minimal PvP races (`pvp_races`, snapshots, instant flow)
+8. Tuning shop
+9. Leaderboard
+10. Clubs
+11. Premium fuel tournaments
+12. Payments
 
 ## Not Included in MVP
 
@@ -211,7 +236,9 @@ These should wait:
 
 - Realtime chat
 - Marketplace
-- Complex PvP matchmaking
+- Complex PvP matchmaking, ranked PvP ladders, and competitive PvP rewards
+- PvP challenge accept/decline flows
+- PvP wagers and economy farming controls (beyond optional same-pair daily caps)
 - Animated race simulation
 - Mobile app
 - Redis
