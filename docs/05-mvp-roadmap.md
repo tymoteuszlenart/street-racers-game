@@ -150,9 +150,9 @@ Done when:
 - Challenger spends fuel; defender does not spend fuel and takes no condition damage.
 - PvP grants no meaningful cash, reputation, or XP in MVP.
 - PvP does not affect leaderboards, daily missions, or club tournaments.
-- Same-pair daily cap is enforced (default 5 races per pair per calendar day in app timezone).
+- Same-pair daily cap is enforced (default **10 races total** per two-player pair per calendar day in app timezone; both directions count toward the limit).
 - Integration tests (MySQL): PvP idempotency and parallel-fuel scenarios; defender condition unchanged.
-- Feature test: same-pair daily cap returns error after limit.
+- Feature test: same-pair daily cap returns error after 10 races between two users (including mixed challenger/defender roles).
 
 ## Phase 5: Progression and Rankings
 

@@ -443,7 +443,7 @@ Indexes (suggested):
 
 - `(challenger_user_id, created_at)` for race history
 - `(defender_user_id, created_at)` for “raced against me” queries
-- `(challenger_user_id, defender_user_id, created_at)` if enforcing a daily pair cap
+- `(challenger_user_id, defender_user_id, created_at)` and `(defender_user_id, challenger_user_id, created_at)` or a generated pair key if enforcing the daily pair cap (see MVP anti-abuse)
 
 ### Opponent list (MVP)
 
@@ -506,7 +506,7 @@ Until competitive PvP rewards exist, abuse surface is limited. Still enforce:
 - Self-race blocked
 - Idempotency on race start
 - Rate limiting on PvP start endpoint (same pattern as NPC races)
-- Same-pair daily cap: **enabled by default**, max **5** `pvp_races` per `(challenger_user_id, defender_user_id)` per calendar day in `config('app.timezone')` (configurable)
+- Same-pair daily cap: **enabled by default**, max **10** `pvp_races` **total** per unordered player pair per calendar day in `config('app.timezone')` (configurable). Count rows where the two users are challenger and defender in either direction (for example `WHERE (challenger_user_id, defender_user_id) IN ((a, b), (b, a))` or `LEAST(challenger_user_id, defender_user_id)` / `GREATEST(...)` with a shared pair key).
 
 Defer win-trading, smurfing, and reward-farming rules until PvP grants economy or ranking value.
 
