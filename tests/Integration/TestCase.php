@@ -2,7 +2,7 @@
 
 namespace Tests\Integration;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase as BaseTestCase;
 
 /**
@@ -13,7 +13,7 @@ use Tests\TestCase as BaseTestCase;
  */
 abstract class TestCase extends BaseTestCase
 {
-    use RefreshDatabase;
+    use DatabaseMigrations;
 
     protected function setUp(): void
     {
