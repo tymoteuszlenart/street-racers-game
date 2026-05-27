@@ -349,14 +349,16 @@ Apply Laravel rate limiting to the race start endpoint:
 
 Rate limiting complements idempotency; it does not replace it.
 
-### Testing
+### Testing (race concurrency)
 
-Concurrency behavior must be verified with a MySQL-backed test (not SQLite alone):
+See **Testing strategy** for layers, file layout, and how to run the MySQL suite.
+
+Race concurrency must be verified with a MySQL-backed test (not SQLite alone):
 
 - Two parallel race start requests with the same idempotency key: one succeeds, one returns the stored result or a conflict.
 - Two parallel requests with different keys but insufficient fuel: only one race consumes fuel.
 
-Integration tests for `RaceService` should cover double-submit and parallel-submit scenarios before closing the race execution work.
+`RaceService` integration tests in `tests/Integration/` should cover double-submit and parallel-submit scenarios before closing the race execution work.
 
 ### Race results
 
@@ -505,9 +507,9 @@ Until competitive PvP rewards exist, abuse surface is limited. Still enforce:
 
 Defer win-trading, smurfing, and reward-farming rules until PvP grants economy or ranking value.
 
-### Testing (PvP)
+### Testing (PvP concurrency)
 
-Add MySQL-backed concurrency tests (same requirement as NPC races):
+See **Testing strategy**. Add MySQL-backed concurrency tests in `tests/Integration/` (same requirement as NPC races):
 
 - Parallel PvP start with the same idempotency key: one outcome, one replay or conflict.
 - Parallel PvP starts with different keys when challenger has fuel for only one race: only one race consumes fuel.
@@ -577,6 +579,128 @@ Use Laravel scheduler for:
 - Rotating dealer offers
 
 MySQL is enough for these jobs at MVP scale.
+
+## Testing strategy
+
+Automated tests protect core economy and race flows from regressions. Per-phase minimum tests are listed in `docs/05-mvp-roadmap.md`; this section defines layers, database policy, determinism, and suggested test classes.
+
+### Test harness (Phase 1)
+
+The project uses PHPUnit via Laravel:
+
+- Default suite: `php artisan test` (SQLite in-memory, see `phpunit.xml`).
+- Lint: `./vendor/bin/pint --test`.
+- First **game** tests ship with Phase 3 (`FuelService`, `RaceService`), not Phase 1.
+- Phase 1 is complete when auth/profile feature tests pass and the harness is documented in `README.md`.
+
+Continuous integration on push is tracked separately (see GitHub issue for CI workflow).
+
+### Test layers
+
+| Layer | Location | Purpose |
+| --- | --- | --- |
+| Unit | `tests/Unit/` | Pure service logic with mocked or in-memory dependencies where possible |
+| Feature | `tests/Feature/` | HTTP endpoints, auth, validation, redirects, session |
+| Integration | `tests/Integration/` | Full DB transactions, locking, idempotency, concurrency (MySQL) |
+
+### Database policy
+
+- **SQLite (default):** Most unit and feature tests. Fast, no external MySQL required for local dev or default CI.
+- **MySQL (required):** Race and PvP concurrency, row locking (`SELECT … FOR UPDATE`), and any behavior SQLite does not model reliably. Place these in `tests/Integration/` and extend `Tests\Integration\TestCase` (uses MySQL; see below).
+
+Run suites:
+
+```bash
+# Default (SQLite) — Unit + Feature only
+php artisan test
+
+# MySQL integration / concurrency (separate config; does not run with default suite)
+php artisan test --configuration=phpunit.mysql.xml
+```
+
+Local MySQL for integration tests: use the same `street_racers` database as development or a dedicated `street_racers_test` database in `.env.testing`.
+
+### Determinism (races)
+
+Race calculation should be deterministic enough to test:
+
+- Inject or seed the RNG used inside `RaceService` in unit tests (fixed seed or mocked random source).
+- Assert on stored audit fields in `race_results`: `random_factor`, `player_score`, `opponent_score`, and optional `score_breakdown` JSON.
+- Do not assert on values the client could influence; build scores only from server-side models and snapshots.
+
+### Service and flow coverage
+
+**Unit — `FuelService` (`tests/Unit/FuelServiceTest.php`)**
+
+- Regeneration from `fuel_updated_at` when time has passed
+- Cap at `fuel_max`
+- No regen above cap when already full
+- Spend fuel succeeds and fails when insufficient
+- Refill edge cases (paid refill when implemented)
+- Premium daily claim increments and respects cap (Phase 7)
+
+**Unit — `RaceService` (`tests/Unit/RaceServiceTest.php`)**
+
+- Score calculation within documented bounds
+- Win vs loss reward amounts (cash, reputation, XP)
+- Condition damage applied to active car
+- Fuel deduction amount matches race config
+- Opponent scoring from snapshot payload (PvP)
+
+**Unit — stat aggregation (`tests/Unit/CarStatAggregatorTest.php` or equivalent)**
+
+- Base car model stats
+- Equipped part bonuses
+- Condition penalty on performance
+
+**Unit — daily claim (`tests/Unit/DailyRewardServiceTest.php`)**
+
+- First claim in period grants rewards
+- Duplicate claim in same period is idempotent (no double grant)
+- Claim after reset grants again
+
+**Feature — NPC race (`tests/Feature/RaceStartTest.php`)**
+
+- Authenticated player can start a race with valid idempotency key
+- Insufficient fuel returns error without side effects
+- Missing active car is rejected
+
+**Integration — NPC race (`tests/Integration/NpcRaceConcurrencyTest.php`)**
+
+- Full flow in one transaction: fuel down, cash/XP up on win, `race_results` row created, `transactions` logged
+- Same idempotency key twice: second response returns stored result or `409` while pending
+- Parallel starts with different keys and fuel for one race: only one consumes fuel
+
+**Integration — PvP (`tests/Integration/PvpRaceConcurrencyTest.php`)**
+
+- Same idempotency and parallel-fuel scenarios as NPC races
+- Defender car condition unchanged; challenger fuel spent
+
+**Feature — payments (Phase 8, `tests/Feature/PaymentWebhookTest.php`)**
+
+- Valid webhook signature grants purchase once
+- Replay of same event id does not double-grant
+- Invalid signature does not grant
+
+### Suggested file map
+
+```text
+tests/
+  Unit/
+    FuelServiceTest.php
+    RaceServiceTest.php
+    CarStatAggregatorTest.php
+    DailyRewardServiceTest.php
+  Feature/
+    RaceStartTest.php
+    PaymentWebhookTest.php
+  Integration/
+    TestCase.php              # MySQL connection, RefreshDatabase
+    NpcRaceConcurrencyTest.php
+    PvpRaceConcurrencyTest.php
+```
+
+Add tests in the same PR as the service or endpoint they cover; do not defer Phase 3 concurrency tests past the race execution milestone.
 
 ## Security
 

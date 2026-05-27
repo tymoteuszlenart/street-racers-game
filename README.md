@@ -32,9 +32,14 @@ npm run dev
 # Start Laravel dev server
 php artisan serve
 
-# Run tests
+# Run tests (default suite uses SQLite in-memory)
 php artisan test
+
+# MySQL integration tests (race concurrency, locking) — requires local MySQL
+php artisan test --configuration=phpunit.mysql.xml
 
 # Lint (Pint)
 ./vendor/bin/pint --test
 ```
+
+See `docs/04-technical-plan.md` (Testing strategy) and `docs/05-mvp-roadmap.md` for per-phase test requirements.

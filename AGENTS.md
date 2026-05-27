@@ -1,4 +1,4 @@
-# AGENTS.md
+# [AGENTS.md](http://AGENTS.md)
 
 ## Cursor Cloud specific instructions
 
@@ -35,10 +35,20 @@ See `README.md` for standard commands. Key points:
 
 - **Lint**: `./vendor/bin/pint --test`
 - **Tests**: `php artisan test` (uses SQLite in-memory by default via `phpunit.xml`)
-- The technical plan (`docs/04-technical-plan.md`) specifies that race concurrency tests must run against MySQL, not SQLite. For those tests, override `DB_CONNECTION=mysql` in phpunit.xml or use a dedicated test suite.
+- **Integration tests**: `php artisan test --configuration=phpunit.mysql.xml` (MySQL required; not part of the default suite; extend `Tests\Integration\TestCase`)
+- Per-phase minimum tests are in `docs/05-mvp-roadmap.md`; full strategy in `docs/04-technical-plan.md` (Testing strategy).
+
+### Pull requests
+
+When opening a pull request:
+
+- Create a **normal (ready for review) PR**, not a draft PR.
+- In the PR description, include `Closes #<issue-number>` (for example `Closes #7`) so GitHub automatically closes the linked issue when the PR merges into the default branch.
+- Use one `Closes` line per issue when the PR fully resolves it; use `Refs #<issue-number>` if the PR only partially addresses an issue.
 
 ### Gotchas
 
 - The `.env` file is not committed to git. Copy `.env.example` to `.env` and run `php artisan key:generate` if `.env` is missing.
 - PlayerProfile is auto-created via a UserObserver when a new User is registered.
 - The default starter cash for new players is $5,000 (set in the migration default).
+
