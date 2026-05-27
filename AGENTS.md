@@ -24,8 +24,11 @@ sudo mysql -u root -e "
   CREATE DATABASE IF NOT EXISTS street_racers;
   CREATE DATABASE IF NOT EXISTS street_racers_test;
   CREATE USER IF NOT EXISTS 'laravel'@'localhost' IDENTIFIED BY 'password';
+  CREATE USER IF NOT EXISTS 'laravel'@'127.0.0.1' IDENTIFIED BY 'password';
   GRANT ALL PRIVILEGES ON street_racers.* TO 'laravel'@'localhost';
   GRANT ALL PRIVILEGES ON street_racers_test.* TO 'laravel'@'localhost';
+  GRANT ALL PRIVILEGES ON street_racers.* TO 'laravel'@'127.0.0.1';
+  GRANT ALL PRIVILEGES ON street_racers_test.* TO 'laravel'@'127.0.0.1';
   FLUSH PRIVILEGES;
 "
 ```

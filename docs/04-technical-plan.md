@@ -623,7 +623,7 @@ php artisan test --configuration=phpunit.mysql.xml
 
 Local MySQL for integration tests: prefer dedicated `street_racers_test` (see `AGENTS.md` setup). `phpunit.mysql.xml` sets default `DB_*` values; PHPUnit env vars override `.env.testing` for the same keys — edit `phpunit.mysql.xml` or drop those `<env>` entries and use `.env.testing` from `.env.testing.example` for custom credentials. A smoke test lives in `tests/Integration/MysqlConnectionTest.php`.
 
-Before marking Phase 3 or 4b race work done, run both `php artisan test` and `php artisan test --configuration=phpunit.mysql.xml`. Do not run integration tests in parallel against one shared MySQL database (PHPUnit `--parallel` can flake with `RefreshDatabase`).
+Before marking Phase 3 or 4b race work done, run both `php artisan test` and `php artisan test --configuration=phpunit.mysql.xml`. Do not run integration tests in parallel against one shared MySQL database (PHPUnit `--parallel` can flake with database migrations and shared state).
 
 ### Determinism (races)
 
@@ -700,7 +700,7 @@ tests/
     RaceStartTest.php
     PaymentWebhookTest.php
   Integration/
-    TestCase.php              # MySQL connection, RefreshDatabase
+    TestCase.php              # MySQL connection, DatabaseMigrations
     MysqlConnectionTest.php   # harness smoke test
     NpcRaceConcurrencyTest.php
     PvpRaceConcurrencyTest.php
