@@ -99,6 +99,120 @@ active_car_id
 
 Keep game-specific data separate from the default `users` table.
 
+## Garage and Cars
+
+Phase 2 introduces owned cars, the dealer, and the active car selection used by races.
+
+### Table: `car_models`
+
+`car_models` is the catalog of available cars. It is managed as game data and can be seeded for MVP.
+
+Suggested fields:
+
+```text
+id
+name
+class                 D | C | B | A | S
+rarity
+image_path
+power
+acceleration
+weight
+grip
+handling
+durability
+upgrade_slots        json, optional until tuning is implemented
+price
+starter              boolean
+unlock_level
+active               boolean
+created_at
+updated_at
+```
+
+Rules:
+
+- Use fictional car names and legally safe image assets.
+- `acceleration` is a first-class stat and should be included anywhere car performance is shown or calculated.
+- `unlock_level` is the MVP dealer requirement. Reputation-based, class-based, or event unlocks can be added later.
+- Starter cars are `class = D`, `starter = true`, low priced or free for initial assignment, and available at `unlock_level = 1`.
+
+### Table: `cars`
+
+`cars` stores player-owned car instances. A player can own multiple copies of the same `car_model`.
+
+Suggested fields:
+
+```text
+id
+user_id
+car_model_id
+nickname
+condition_current
+condition_max
+acquired_via          starter | dealer | admin | reward
+purchase_price        nullable, stored for audit
+created_at
+updated_at
+```
+
+Rules:
+
+- `nickname` is required for every owned car.
+- Default `condition_current` and `condition_max` to `100`.
+- Clamp condition between `0` and `condition_max`.
+- Repairs and race condition damage are not required to be functional in Phase 2, but the fields should exist so Phase 3 can apply damage without a schema redesign.
+- Add indexes for `user_id` and `car_model_id`.
+
+### Starter Car Flow
+
+For MVP, a new player receives one starter car automatically.
+
+Flow:
+
+1. When a `PlayerProfile` is created, select the default active `car_models` row where `starter = true` and `unlock_level = 1`.
+2. Create a `cars` row for the user with a generated nickname.
+3. Set `player_profiles.active_car_id` to that owned car.
+4. Do not charge cash for the automatic starter car.
+
+The starter car should become active immediately so the dashboard, garage, and later race flows can assume the player has a usable car after registration.
+
+### Dealer Rules
+
+The dealer shows active car models where `unlock_level <= player_profiles.level`.
+
+Purchase rules:
+
+- Validate the car model is active and unlocked for the player's level.
+- Validate the player has enough cash.
+- Subtract the car price server-side.
+- Create a new `cars` row with the required nickname.
+- Allow buying the same car model multiple times.
+- Do not automatically change the active car after dealer purchases unless the player has no active car.
+
+Rotating dealer offers can be added later. Phase 2 can use the full unlocked catalog.
+
+### Active Car Rules
+
+`player_profiles.active_car_id` points to the currently selected owned car.
+
+Rules:
+
+- A player can only set a car they own as active.
+- The first starter car is selected automatically.
+- If the active car is ever removed or sold in a later phase, require selecting another owned car before racing.
+- Race and PvP systems must read the active owned car from `player_profiles.active_car_id`, not from client-provided input.
+
+### Garage Pages
+
+Phase 2 pages:
+
+- Garage: list owned cars and highlight the active car.
+- Car detail: show nickname, model, class, image, stats, condition, and ownership metadata.
+- Dealer: list unlocked car models and allow purchases.
+
+Sell, repair, and tuning buttons may be visible as disabled or deferred actions until their later phases.
+
 ## Fuel Calculation
 
 Fuel regeneration should happen when needed:

@@ -106,6 +106,7 @@ Each car should have:
 
 - Class
 - Power
+- Acceleration
 - Weight
 - Grip
 - Handling
