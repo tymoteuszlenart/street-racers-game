@@ -83,30 +83,6 @@ Done when:
 - Race result is stored.
 - Player receives rewards after a win.
 
-## Phase 3b: Minimal PvP Races
-
-Deliverables:
-
-- `pvp_races` table and model
-- Opponent list (simple player picker, not matchmaking)
-- Instant PvP race start (no accept/decline)
-- Active car snapshots for challenger and defender
-- PvP race result page linked to `race_results`
-- Reuse `RaceService` for scoring from snapshots
-
-Key pages:
-
-- PvP opponent list
-- PvP race result
-
-Done when:
-
-- Challenger can race another player’s active car in one action.
-- Both cars are snapshotted at race start; result does not change if either player upgrades later.
-- Challenger spends fuel; defender does not spend fuel and takes no condition damage.
-- PvP grants no meaningful cash, reputation, or XP in MVP.
-- PvP does not affect leaderboards, daily missions, or club tournaments.
-
 ## Phase 4: Tuning Shop
 
 Deliverables:
@@ -127,6 +103,36 @@ Done when:
 - Player can buy and equip parts.
 - Upgrades affect race performance.
 - Upgrade costs remove cash correctly.
+
+## Phase 4b: Minimal PvP Races
+
+Start after Phase 4 so snapshots include equipped parts and tuned stats.
+
+Deliverables:
+
+- `pvp_races` table and model
+- `race_attempts` and `race_results` PvP fields (`attempt_type`, `defender_user_id`, `pvp_race_id`)
+- Opponent list (simple player picker, not matchmaking)
+- Instant PvP race start (no accept/decline)
+- Active car snapshots for challenger and defender (including equipped parts)
+- PvP race result page linked to `race_results`
+- Defender read-only PvP history (“raced against me”)
+- Reuse `RaceService` for scoring from snapshots
+
+Key pages:
+
+- PvP opponent list
+- PvP race result
+- PvP history (defender view)
+
+Done when:
+
+- Challenger can race another player’s active car in one action.
+- Both cars are snapshotted at race start (with current upgrades); result does not change if either player changes garage later.
+- Challenger spends fuel; defender does not spend fuel and takes no condition damage.
+- PvP grants no meaningful cash, reputation, or XP in MVP.
+- PvP does not affect leaderboards, daily missions, or club tournaments.
+- Same-pair daily cap is enforced (default 5 races per pair per day).
 
 ## Phase 5: Progression and Rankings
 
@@ -223,8 +229,8 @@ Done when:
 4. Car models and garage
 5. Fuel service
 6. Race service
-7. Minimal PvP races (`pvp_races`, snapshots, instant flow)
-8. Tuning shop
+7. Tuning shop
+8. Minimal PvP races (`pvp_races`, snapshots, instant flow)
 9. Leaderboard
 10. Clubs
 11. Premium fuel tournaments
@@ -238,7 +244,7 @@ These should wait:
 - Marketplace
 - Complex PvP matchmaking, ranked PvP ladders, and competitive PvP rewards
 - PvP challenge accept/decline flows
-- PvP wagers and economy farming controls (beyond optional same-pair daily caps)
+- PvP wagers and economy farming controls (beyond the MVP same-pair daily cap)
 - Animated race simulation
 - Mobile app
 - Redis

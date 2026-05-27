@@ -154,7 +154,7 @@ Race start must be atomic. A double-click or parallel request must not spend fue
 
 Every race start runs inside one MySQL transaction:
 
-1. Resolve or create a `race_attempts` row from the idempotency key.
+1. Resolve or create a `race_attempts` row from the idempotency key (`attempt_type = npc`, `race_id` set, `defender_user_id` null).
 2. If the attempt already succeeded, return the stored result and stop.
 3. If the attempt is pending, return a conflict response and stop.
 4. Lock rows in a fixed order (see Lock order).
@@ -192,7 +192,9 @@ race_attempts
   id
   user_id
   idempotency_key
-  race_id
+  attempt_type        npc | pvp
+  race_id             nullable, required when attempt_type = npc
+  defender_user_id    nullable, required when attempt_type = pvp
   status              pending | succeeded | failed
   race_result_id      nullable, set on success
   error_code          nullable, set on failure
@@ -206,6 +208,8 @@ Constraints and rules:
 - Unique index on `(user_id, idempotency_key)`.
 - TTL: expire or ignore keys older than 24 hours (configurable).
 - One idempotency key maps to at most one race outcome.
+- `race_id` is null for PvP attempts; `defender_user_id` is null for NPC attempts.
+- Check constraint or application validation: `attempt_type = npc` implies `race_id` is set; `attempt_type = pvp` implies `defender_user_id` is set.
 
 Duplicate request behavior:
 
@@ -240,7 +244,37 @@ Concurrency behavior must be verified with a MySQL-backed test (not SQLite alone
 
 Integration tests for `RaceService` should cover double-submit and parallel-submit scenarios before closing the race execution work.
 
+### Race results
+
+Store one row per completed race (NPC or PvP). Both `race_attempts` and `pvp_races` may reference the same `race_results.id` on success; `race_attempts.race_result_id` is the canonical pointer for idempotent replay.
+
+Suggested table:
+
+```text
+race_results
+  id
+  user_id                 challenger / initiating player
+  attempt_type            npc | pvp
+  race_id                 nullable, FK to races when attempt_type = npc
+  pvp_race_id             nullable, FK to pvp_races when attempt_type = pvp
+  won                     boolean, from initiating player's perspective
+  player_score
+  opponent_score
+  score_breakdown         json, optional audit of formula inputs
+  random_factor           stored value used in calculation
+  created_at
+  updated_at
+```
+
+Rules:
+
+- NPC rows set `race_id`; PvP rows set `pvp_race_id`.
+- Do not set both `race_id` and `pvp_race_id` on the same row.
+- PvP rows still use `user_id` for the challenger so race history queries stay consistent.
+
 ## PvP Races (MVP)
+
+Implement minimal PvP **after** the tuning shop (Phase 4) so snapshots include equipped parts and upgraded stats. See `docs/05-mvp-roadmap.md` Phase 4b.
 
 MVP PvP uses a dedicated `pvp_races` table so challenge metadata, snapshots, and future PvP features stay separate from NPC `races` definitions.
 
@@ -252,6 +286,7 @@ Included in MVP:
 - Active car snapshots for challenger and defender at race start
 - Server-side resolution via `RaceService` (or a thin `PvpRaceService` that delegates to it)
 - Linked `race_results` row for history and UI
+- Defender read-only PvP history list
 
 Not included in MVP (later phase):
 
@@ -291,20 +326,32 @@ Indexes (suggested):
 - `(defender_user_id, created_at)` for “raced against me” queries
 - `(challenger_user_id, defender_user_id, created_at)` if enforcing a daily pair cap
 
+### Opponent list (MVP)
+
+The opponent picker is a simple paginated list, not matchmaking:
+
+- Include all registered players except the challenger.
+- Exclude players without an active car.
+- Sort by recent activity or username (configurable); no rating-based ranking in MVP.
+- Page size around 20–50; search by username is optional for MVP.
+
 ### Execution flow
 
-Every PvP start runs inside one MySQL transaction, reusing the same concurrency patterns as NPC races where applicable:
+Every PvP start runs inside one MySQL transaction, reusing the same concurrency patterns as NPC races where applicable. Follow the **duplicate-request behavior** table in Race Execution and Concurrency after step 1 (return stored result on `succeeded`, `409` on `pending`, and so on).
 
-1. Resolve or create a `race_attempts` row from the idempotency key (same rules as NPC races).
-2. Lock `player_profiles` for the challenger (and optionally check pair cooldown).
-3. Regenerate fuel, validate fuel, spend fuel on the challenger only.
-4. Load challenger active car and defender active car; build `challenger_snapshot` and `defender_snapshot`.
-5. Insert `pvp_races` with snapshots.
-6. Run race calculation from snapshots (not live car rows).
-7. Insert `race_results` (and link `pvp_races.race_result_id`).
-8. Apply condition damage to the **challenger’s** car only; do not modify defender car condition.
-9. Do **not** grant cash, reputation, or XP for MVP PvP unless explicitly enabled later behind config.
-10. Mark `race_attempts` succeeded and commit.
+1. Resolve or create a `race_attempts` row with `attempt_type = pvp`, `defender_user_id`, and `race_id = null`.
+2. If the attempt already `succeeded`, return the stored `race_result` and stop.
+3. If the attempt is `pending`, return `409 Conflict` and stop.
+4. Lock rows in order: `race_attempts` → challenger `player_profiles` → challenger active `cars` → defender `player_profiles` → defender active `cars` (defender rows are locked read-only for snapshot consistency).
+5. Enforce same-pair daily cap (see MVP anti-abuse).
+6. Regenerate fuel, validate fuel, spend fuel on the challenger only.
+7. Build `challenger_snapshot` and `defender_snapshot` from the locked car rows (including equipped parts).
+8. Insert `pvp_races` with snapshots.
+9. Run race calculation from snapshots (not live car rows).
+10. Insert `race_results` with `attempt_type = pvp` and `pvp_race_id`; set `race_attempts.race_result_id` and `pvp_races.race_result_id` to the same id.
+11. Apply condition damage to the **challenger’s** car only; do not modify defender car condition.
+12. Do **not** grant cash, reputation, or XP for MVP PvP unless explicitly enabled later behind config.
+13. Mark `race_attempts` as `succeeded` and commit.
 
 Idempotency keys apply to PvP start the same way as NPC race start.
 
@@ -322,9 +369,15 @@ Responsibilities:
 - Build car stat snapshots
 - Orchestrate transaction, fuel spend, and `RaceService` scoring
 - Create `pvp_races` and `race_results` records
-- Enforce optional same-pair daily cap (configurable)
+- Enforce same-pair daily cap (default on; see MVP anti-abuse)
 
 `RaceService` should accept snapshot payloads for opponent scoring so PvP does not duplicate formula logic.
+
+### Defender visibility (MVP)
+
+- Challenger always lands on the PvP race result page after start.
+- Defender does not need to be online; no push notification in MVP.
+- Defender can open a read-only **PvP history** list (races where they were `defender_user_id`) with outcome and timestamp.
 
 ### MVP anti-abuse (minimal)
 
@@ -334,9 +387,16 @@ Until competitive PvP rewards exist, abuse surface is limited. Still enforce:
 - Self-race blocked
 - Idempotency on race start
 - Rate limiting on PvP start endpoint (same pattern as NPC races)
-- Optional: max N `pvp_races` per `(challenger_user_id, defender_user_id)` per calendar day
+- Same-pair daily cap: **enabled by default**, max **5** `pvp_races` per `(challenger_user_id, defender_user_id)` per calendar day (configurable)
 
 Defer win-trading, smurfing, and reward-farming rules until PvP grants economy or ranking value.
+
+### Testing (PvP)
+
+Add MySQL-backed concurrency tests (same requirement as NPC races):
+
+- Parallel PvP start with the same idempotency key: one outcome, one replay or conflict.
+- Parallel PvP starts with different keys when challenger has fuel for only one race: only one race consumes fuel.
 
 ## Economy Transactions
 
