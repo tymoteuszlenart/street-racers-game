@@ -15,5 +15,7 @@ class MysqlConnectionTest extends TestCase
             config('database.connections.mysql.database'),
             'Integration tests must use the dedicated test database (see phpunit.mysql.xml).'
         );
+
+        $this->assertSame(1, DB::selectOne('SELECT 1 AS ok')->ok);
     }
 }

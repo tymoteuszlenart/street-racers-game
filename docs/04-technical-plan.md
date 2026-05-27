@@ -596,7 +596,7 @@ The project uses PHPUnit via Laravel:
 - First **game** tests ship with Phase 3 (`FuelService`, `RaceService`), not Phase 1.
 - Phase 1 is complete when auth/profile feature tests pass and the harness is documented in `README.md`.
 
-Continuous integration on push is a follow-up (not part of issue #7 docs scope). Default CI should run `php artisan test`; add `php artisan test --configuration=phpunit.mysql.xml` when a MySQL service is available in CI.
+Continuous integration on push is a follow-up (not part of issue #7 docs scope): open a dedicated GitHub issue for CI if one does not exist yet. Default CI should run `php artisan test`; add `php artisan test --configuration=phpunit.mysql.xml` when a MySQL service is available in CI.
 
 ### Test layers
 
