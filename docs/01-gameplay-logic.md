@@ -224,7 +224,7 @@ MVP rules:
 - Self-races are not allowed.
 - PvP grants **no meaningful economy rewards** in MVP (no cash, reputation, or XP from PvP wins). Use PvP to test racing and social competition only.
 - PvP results do **not** affect leaderboards, daily missions, club points, or club tournaments in MVP.
-- Same-pair daily cap: **5 races per challenger/defender pair per calendar day** (enabled by default) to reduce spam while rewards are disabled.
+- Same-pair daily cap: **5 races per challenger/defender pair per calendar day** in the app timezone (enabled by default) to reduce spam while rewards are disabled.
 
 Deferred to a later PvP phase:
 

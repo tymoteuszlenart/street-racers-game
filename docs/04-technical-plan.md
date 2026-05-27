@@ -278,7 +278,7 @@ Every race start runs inside one MySQL transaction:
 8. Calculate scores and determine the winner.
 9. Apply cash, reputation, and XP to `player_profiles`.
 10. Apply condition damage to the active `cars` row.
-11. Insert `race_results` and related `transactions` rows.
+11. Insert `race_results` with `attempt_type = npc`, `race_id` set, `pvp_race_id` null, and related `transactions` rows.
 12. Mark the `race_attempts` row as succeeded and store `race_result_id`.
 13. Commit the transaction.
 
@@ -289,9 +289,12 @@ If any step fails, roll back the transaction and mark the attempt as failed when
 Always lock rows in this order to reduce deadlocks:
 
 1. `race_attempts` (by idempotency key lookup or insert)
-2. `player_profiles` (for the authenticated user)
-3. Active `cars` row (the player's `active_car_id`)
-4. `races` definition row, if needed for validation
+2. For **each distinct `user_id`** involved in the race, in **ascending `user_id` order**:
+   - `player_profiles` for that user
+   - Active `cars` row (`player_profiles.active_car_id`) for that user
+3. `races` definition row (NPC only), if needed for validation
+
+NPC races involve only the initiating player in step 2. PvP races involve challenger and defender; sorting by `user_id` prevents deadlock when A races B and B races A at the same time (both transactions lock the lower `user_id` first).
 
 Use `SELECT … FOR UPDATE` on these rows inside the transaction. Currency fields (`cash`, `reputation`, `experience`, fuel) live on `player_profiles` for MVP; there are no separate balance tables.
 
@@ -458,7 +461,7 @@ Every PvP start runs inside one MySQL transaction, reusing the same concurrency 
 1. Resolve or create a `race_attempts` row with `attempt_type = pvp`, `defender_user_id`, and `race_id = null`.
 2. If the attempt already `succeeded`, return the stored `race_result` and stop.
 3. If the attempt is `pending`, return `409 Conflict` and stop.
-4. Lock rows in order: `race_attempts` → challenger `player_profiles` → challenger active `cars` → defender `player_profiles` → defender active `cars` (defender rows are locked read-only for snapshot consistency).
+4. Lock rows using **Lock order** (`race_attempts`, then both players’ profiles and active cars in ascending `user_id`). Defender rows are read for snapshots only; still lock them for consistency under concurrency.
 5. Enforce same-pair daily cap (see MVP anti-abuse).
 6. Regenerate fuel, validate fuel, spend fuel on the challenger only.
 7. Build `challenger_snapshot` and `defender_snapshot` from the locked car rows (including equipped parts).
@@ -503,7 +506,7 @@ Until competitive PvP rewards exist, abuse surface is limited. Still enforce:
 - Self-race blocked
 - Idempotency on race start
 - Rate limiting on PvP start endpoint (same pattern as NPC races)
-- Same-pair daily cap: **enabled by default**, max **5** `pvp_races` per `(challenger_user_id, defender_user_id)` per calendar day (configurable)
+- Same-pair daily cap: **enabled by default**, max **5** `pvp_races` per `(challenger_user_id, defender_user_id)` per calendar day in `config('app.timezone')` (configurable)
 
 Defer win-trading, smurfing, and reward-farming rules until PvP grants economy or ranking value.
 
@@ -593,7 +596,7 @@ The project uses PHPUnit via Laravel:
 - First **game** tests ship with Phase 3 (`FuelService`, `RaceService`), not Phase 1.
 - Phase 1 is complete when auth/profile feature tests pass and the harness is documented in `README.md`.
 
-Continuous integration on push is tracked separately (see GitHub issue for CI workflow).
+Continuous integration on push is a follow-up (not part of issue #7 docs scope). Default CI should run `php artisan test`; add `php artisan test --configuration=phpunit.mysql.xml` when a MySQL service is available in CI.
 
 ### Test layers
 
@@ -618,7 +621,7 @@ php artisan test
 php artisan test --configuration=phpunit.mysql.xml
 ```
 
-Local MySQL for integration tests: use the same `street_racers` database as development or a dedicated `street_racers_test` database in `.env.testing`.
+Local MySQL for integration tests: prefer dedicated `street_racers_test` (see `AGENTS.md` setup). Copy `.env.testing.example` to `.env.testing` to override credentials. `phpunit.mysql.xml` sets defaults; a smoke test lives in `tests/Integration/MysqlConnectionTest.php`.
 
 ### Determinism (races)
 
@@ -696,6 +699,7 @@ tests/
     PaymentWebhookTest.php
   Integration/
     TestCase.php              # MySQL connection, RefreshDatabase
+    MysqlConnectionTest.php   # harness smoke test
     NpcRaceConcurrencyTest.php
     PvpRaceConcurrencyTest.php
 ```

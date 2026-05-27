@@ -1,4 +1,4 @@
-# [AGENTS.md](http://AGENTS.md)
+# AGENTS.md
 
 ## Cursor Cloud specific instructions
 
@@ -17,11 +17,20 @@ sudo mysqld --user=mysql &
 
 Wait a few seconds for MySQL to start, then verify with `sudo mysql -u root -e "SELECT 1;"`.
 
-The database and user are created with:
+The development and integration-test databases and user are created with:
 
 ```bash
-sudo mysql -u root -e "CREATE DATABASE IF NOT EXISTS street_racers; CREATE USER IF NOT EXISTS 'laravel'@'localhost' IDENTIFIED BY 'password'; GRANT ALL PRIVILEGES ON street_racers.* TO 'laravel'@'localhost'; FLUSH PRIVILEGES;"
+sudo mysql -u root -e "
+  CREATE DATABASE IF NOT EXISTS street_racers;
+  CREATE DATABASE IF NOT EXISTS street_racers_test;
+  CREATE USER IF NOT EXISTS 'laravel'@'localhost' IDENTIFIED BY 'password';
+  GRANT ALL PRIVILEGES ON street_racers.* TO 'laravel'@'localhost';
+  GRANT ALL PRIVILEGES ON street_racers_test.* TO 'laravel'@'localhost';
+  FLUSH PRIVILEGES;
+"
 ```
+
+`phpunit.mysql.xml` uses `street_racers_test` by default. Override with `.env.testing` if needed (see `.env.testing.example`).
 
 ### Running the application
 
@@ -44,7 +53,7 @@ When opening a pull request:
 
 - Create a **normal (ready for review) PR**, not a draft PR.
 - In the PR description, include `Closes #<issue-number>` (for example `Closes #7`) so GitHub automatically closes the linked issue when the PR merges into the default branch.
-- Use one `Closes` line per issue when the PR fully resolves it; use `Refs #<issue-number>` if the PR only partially addresses an issue.
+- Use one `Closes` line per issue when the PR fully resolves it; use `Refs #<issue-number>` if the PR only partially addresses an issue (for example documentation for #7 while CI remains a follow-up issue).
 
 ### Gotchas
 

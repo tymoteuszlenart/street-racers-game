@@ -36,6 +36,7 @@ php artisan serve
 php artisan test
 
 # MySQL integration tests (race concurrency, locking) — requires local MySQL
+# Create street_racers_test first (see AGENTS.md), then:
 php artisan test --configuration=phpunit.mysql.xml
 
 # Lint (Pint)
@@ -43,3 +44,5 @@ php artisan test --configuration=phpunit.mysql.xml
 ```
 
 See `docs/04-technical-plan.md` (Testing strategy) and `docs/05-mvp-roadmap.md` for per-phase test requirements.
+
+For integration tests, copy `.env.testing.example` to `.env.testing` if you need non-default MySQL credentials.
