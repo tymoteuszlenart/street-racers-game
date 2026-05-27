@@ -30,7 +30,7 @@ sudo mysql -u root -e "
 "
 ```
 
-`phpunit.mysql.xml` uses `street_racers_test` by default. Override with `.env.testing` if needed (see `.env.testing.example`).
+`phpunit.mysql.xml` sets `street_racers_test` and other `DB_*` values by default. PHPUnit env vars override `.env.testing` for the same keys — change `phpunit.mysql.xml` (or remove those `<env>` entries and use `.env.testing` from `.env.testing.example`) for non-default MySQL credentials.
 
 ### Running the application
 
@@ -45,6 +45,7 @@ See `README.md` for standard commands. Key points:
 - **Lint**: `./vendor/bin/pint --test`
 - **Tests**: `php artisan test` (uses SQLite in-memory by default via `phpunit.xml`)
 - **Integration tests**: `php artisan test --configuration=phpunit.mysql.xml` (MySQL required; not part of the default suite; extend `Tests\Integration\TestCase`)
+- Before closing Phase 3 or 4b race work, run **both** `php artisan test` and `php artisan test --configuration=phpunit.mysql.xml`.
 - Per-phase minimum tests are in `docs/05-mvp-roadmap.md`; full strategy in `docs/04-technical-plan.md` (Testing strategy).
 
 ### Pull requests
@@ -60,4 +61,3 @@ When opening a pull request:
 - The `.env` file is not committed to git. Copy `.env.example` to `.env` and run `php artisan key:generate` if `.env` is missing.
 - PlayerProfile is auto-created via a UserObserver when a new User is registered.
 - The default starter cash for new players is $5,000 (set in the migration default).
-

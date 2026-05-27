@@ -39,10 +39,12 @@ php artisan test
 # Create street_racers_test first (see AGENTS.md), then:
 php artisan test --configuration=phpunit.mysql.xml
 
+# Before merging race/PvP work (Phase 3 / 4b), run both commands above
+
 # Lint (Pint)
 ./vendor/bin/pint --test
 ```
 
 See `docs/04-technical-plan.md` (Testing strategy) and `docs/05-mvp-roadmap.md` for per-phase test requirements.
 
-For integration tests, copy `.env.testing.example` to `.env.testing` if you need non-default MySQL credentials.
+For non-default MySQL credentials, edit `phpunit.mysql.xml` or use `.env.testing` (see `.env.testing.example`) after removing the `DB_*` `<env>` entries from `phpunit.mysql.xml` — PHPUnit env vars take precedence over `.env.testing`.
