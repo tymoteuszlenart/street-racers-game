@@ -253,8 +253,9 @@ First version screens:
 - Tuning shop
 - Race list
 - Race result
-- PvP opponent list (instant race, no accept step)
+- PvP opponent list (instant race, no accept step; after tuning shop is live)
 - PvP race result
+- PvP history (defender read-only list)
 - Leaderboard
 - Profile
 

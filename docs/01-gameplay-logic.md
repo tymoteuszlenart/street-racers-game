@@ -205,24 +205,25 @@ Later race types:
 
 ## PvP Races (MVP)
 
-MVP PvP is a **direct, instant** race against another player. There is no challenge inbox, accept/decline step, or defender confirmation.
+MVP PvP ships **after** the tuning shop so races reflect upgraded cars (equipped parts are included in snapshots). PvP is a **direct, instant** race against another player. There is no challenge inbox, accept/decline step, or defender confirmation.
 
 Flow:
 
-1. Challenger picks another player from a simple opponent list.
-2. Server reads both players’ **active cars** and snapshots stats at race start.
+1. Challenger picks another player from a simple opponent list (all players with an active car, excluding self).
+2. Server reads both players’ **active cars** (including equipped parts) and snapshots stats at race start.
 3. Server resolves the race immediately (same calculation approach as NPC races).
 4. Challenger sees the result; defender is not required to be online.
+5. Defender can later view a read-only **PvP history** of races run against them (no notification in MVP).
 
 MVP rules:
 
 - Challenger spends regular fuel (same cost as a normal street race unless tuned later).
 - Defender does **not** spend fuel and their car does **not** take condition damage.
-- Both cars’ effective stats are frozen in snapshots at race start; later garage changes do not alter the result.
+- Both cars’ effective stats are frozen in snapshots at race start; later garage or tuning changes do not alter the result.
 - Self-races are not allowed.
 - PvP grants **no meaningful economy rewards** in MVP (no cash, reputation, or XP from PvP wins). Use PvP to test racing and social competition only.
 - PvP results do **not** affect leaderboards, daily missions, club points, or club tournaments in MVP.
-- Optional soft limit: cap races between the same two players per day (for example 5) to reduce spam while rewards are disabled.
+- Same-pair daily cap: **5 races per challenger/defender pair per calendar day** (enabled by default) to reduce spam while rewards are disabled.
 
 Deferred to a later PvP phase:
 
