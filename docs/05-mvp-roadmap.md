@@ -12,6 +12,15 @@ register -> get starter car -> race -> earn cash -> upgrade -> race stronger opp
 
 Do not start with every MMORPG feature. Add clubs, tournaments, marketplace, and payments after the core loop feels good.
 
+## Testing and “done”
+
+Each phase below includes **minimum automated tests** required before the phase is considered done. Full coverage targets, file names, and MySQL vs SQLite policy are in `docs/04-technical-plan.md` (**Testing strategy**).
+
+```bash
+php artisan test                                    # default suite (SQLite)
+php artisan test --configuration=phpunit.mysql.xml  # MySQL concurrency / DB integration
+```
+
 ## Phase 1: Project Foundation
 
 Deliverables:
@@ -36,6 +45,8 @@ Done when:
 - A new user can register.
 - A player profile is created automatically.
 - The dashboard shows player cash, level, fuel, and active car area.
+- `php artisan test` passes (auth, registration, profile feature tests).
+- `README.md` documents how to run tests and Pint.
 
 ## Phase 2: Garage and Cars
 
@@ -58,6 +69,8 @@ Done when:
 - Player can receive or buy a starter car.
 - Player can view owned cars.
 - Player can set an active car.
+- Feature tests cover starter car assignment on registration and setting active car (authorized owner only).
+- Dealer purchase feature test: insufficient cash rejected; successful purchase creates `cars` row and deducts cash.
 
 ## Phase 3: Fuel and Basic Races
 
@@ -82,6 +95,9 @@ Done when:
 - Fuel regenerates over time.
 - Race result is stored.
 - Player receives rewards after a win.
+- Unit tests: `FuelService` (regen, cap, spend); `RaceService` (scores, rewards, condition damage, fuel cost) with deterministic RNG.
+- Feature test: race start with valid idempotency key; insufficient fuel and missing active car rejected.
+- Integration tests (MySQL): full NPC race transaction; duplicate idempotency key; parallel starts with fuel for only one race.
 
 ## Phase 4: Tuning Shop
 
@@ -103,6 +119,8 @@ Done when:
 - Player can buy and equip parts.
 - Upgrades affect race performance.
 - Upgrade costs remove cash correctly.
+- Unit test: stat aggregation reflects equipped parts and condition penalty.
+- Feature tests: buy/equip flow; race score changes when parts are equipped (via `RaceService` or HTTP race start).
 
 ## Phase 4b: Minimal PvP Races
 
@@ -132,7 +150,9 @@ Done when:
 - Challenger spends fuel; defender does not spend fuel and takes no condition damage.
 - PvP grants no meaningful cash, reputation, or XP in MVP.
 - PvP does not affect leaderboards, daily missions, or club tournaments.
-- Same-pair daily cap is enforced (default 5 races per pair per day).
+- Same-pair daily cap is enforced (default **10 races total** per two-player pair per calendar day in app timezone; both directions count toward the limit).
+- Integration tests (MySQL): PvP idempotency and parallel-fuel scenarios; defender condition unchanged.
+- Feature test: same-pair daily cap returns error after 10 races between two users (including mixed challenger/defender roles).
 
 ## Phase 5: Progression and Rankings
 
@@ -155,6 +175,8 @@ Done when:
 - Players can compare rankings.
 - Race results are visible.
 - Daily rewards encourage returning.
+- Unit test: `DailyRewardService` first claim grants; duplicate claim in same period is idempotent.
+- Feature tests: leaderboard ordering; race history lists stored results.
 
 ## Phase 6: Clubs
 
@@ -177,6 +199,7 @@ Done when:
 - Player can create or join a club.
 - Clubs can gain points.
 - Clubs appear on rankings.
+- Feature tests: create/join club; club points update from tournament or configured source; club ranking page reflects points.
 
 ## Phase 7: Premium Fuel and Club Tournaments
 
@@ -200,6 +223,8 @@ Done when:
 - Player can spend premium fuel on club tournament races.
 - Club points are awarded.
 - Weekly rewards can be distributed.
+- Unit test: premium fuel daily claim (first claim, duplicate idempotent, cap).
+- Feature tests: tournament entry spends premium fuel; club points and weekly reward distribution (scheduler or command covered by test).
 
 ## Phase 8: Monetization
 
@@ -220,6 +245,7 @@ Done when:
 - Rewards are granted server-side.
 - Transactions are logged.
 - Failed payments do not grant rewards.
+- Feature tests: valid webhook signature grants once; replay does not double-grant; invalid signature does not grant; failed payment state does not grant.
 
 ## Suggested First Development Order
 

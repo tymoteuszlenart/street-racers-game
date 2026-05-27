@@ -17,11 +17,23 @@ sudo mysqld --user=mysql &
 
 Wait a few seconds for MySQL to start, then verify with `sudo mysql -u root -e "SELECT 1;"`.
 
-The database and user are created with:
+The development and integration-test databases and user are created with:
 
 ```bash
-sudo mysql -u root -e "CREATE DATABASE IF NOT EXISTS street_racers; CREATE USER IF NOT EXISTS 'laravel'@'localhost' IDENTIFIED BY 'password'; GRANT ALL PRIVILEGES ON street_racers.* TO 'laravel'@'localhost'; FLUSH PRIVILEGES;"
+sudo mysql -u root -e "
+  CREATE DATABASE IF NOT EXISTS street_racers;
+  CREATE DATABASE IF NOT EXISTS street_racers_test;
+  CREATE USER IF NOT EXISTS 'laravel'@'localhost' IDENTIFIED BY 'password';
+  CREATE USER IF NOT EXISTS 'laravel'@'127.0.0.1' IDENTIFIED BY 'password';
+  GRANT ALL PRIVILEGES ON street_racers.* TO 'laravel'@'localhost';
+  GRANT ALL PRIVILEGES ON street_racers_test.* TO 'laravel'@'localhost';
+  GRANT ALL PRIVILEGES ON street_racers.* TO 'laravel'@'127.0.0.1';
+  GRANT ALL PRIVILEGES ON street_racers_test.* TO 'laravel'@'127.0.0.1';
+  FLUSH PRIVILEGES;
+"
 ```
+
+`phpunit.mysql.xml` sets `street_racers_test` and other `DB_*` values by default. PHPUnit env vars override `.env.testing` for the same keys — change `phpunit.mysql.xml` (or remove those `<env>` entries and use `.env.testing` from `.env.testing.example`) for non-default MySQL credentials.
 
 ### Running the application
 
@@ -35,7 +47,17 @@ See `README.md` for standard commands. Key points:
 
 - **Lint**: `./vendor/bin/pint --test`
 - **Tests**: `php artisan test` (uses SQLite in-memory by default via `phpunit.xml`)
-- The technical plan (`docs/04-technical-plan.md`) specifies that race concurrency tests must run against MySQL, not SQLite. For those tests, override `DB_CONNECTION=mysql` in phpunit.xml or use a dedicated test suite.
+- **Integration tests**: `php artisan test --configuration=phpunit.mysql.xml` (MySQL required; not part of the default suite; extend `Tests\Integration\TestCase`)
+- Before closing Phase 3 or 4b race work, run **both** `php artisan test` and `php artisan test --configuration=phpunit.mysql.xml`.
+- Per-phase minimum tests are in `docs/05-mvp-roadmap.md`; full strategy in `docs/04-technical-plan.md` (Testing strategy).
+
+### Pull requests
+
+When opening a pull request:
+
+- Create a **normal (ready for review) PR**, not a draft PR.
+- In the PR description, include `Closes #<issue-number>` (for example `Closes #7`) so GitHub automatically closes the linked issue when the PR merges into the default branch.
+- Use one `Closes` line per issue when the PR fully resolves it; use `Refs #<issue-number>` if the PR only partially addresses an issue (for example documentation for #7 while CI remains a follow-up issue).
 
 ### Gotchas
 
