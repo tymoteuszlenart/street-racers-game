@@ -1,0 +1,34 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class PlayerProfile extends Model
+{
+    protected $fillable = [
+        'user_id',
+        'cash',
+        'reputation',
+        'level',
+        'experience',
+        'fuel_current',
+        'fuel_max',
+        'fuel_updated_at',
+        'premium_fuel_current',
+        'premium_fuel_max',
+        'premium_fuel_claimed_at',
+        'active_car_id',
+    ];
+
+    protected $casts = [
+        'fuel_updated_at' => 'datetime',
+        'premium_fuel_claimed_at' => 'datetime',
+    ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+}
