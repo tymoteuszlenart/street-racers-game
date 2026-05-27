@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use App\Observers\PlayerProfileObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+#[ObservedBy(PlayerProfileObserver::class)]
 class PlayerProfile extends Model
 {
     protected $fillable = [
@@ -30,5 +33,10 @@ class PlayerProfile extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function activeCar(): BelongsTo
+    {
+        return $this->belongsTo(Car::class, 'active_car_id');
     }
 }
