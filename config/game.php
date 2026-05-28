@@ -13,6 +13,10 @@ return [
         'start_rate_limit_per_minute' => 30,
     ],
 
+    'pvp' => [
+        'daily_pair_cap' => 10,
+    ],
+
     'player' => [
         'max_level' => 50,
         'experience_per_level' => 100,

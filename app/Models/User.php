@@ -50,6 +50,16 @@ class User extends Authenticatable
         return $this->hasMany(RaceResult::class);
     }
 
+    public function challengedPvpRaces(): HasMany
+    {
+        return $this->hasMany(PvpRace::class, 'challenger_user_id');
+    }
+
+    public function defendedPvpRaces(): HasMany
+    {
+        return $this->hasMany(PvpRace::class, 'defender_user_id');
+    }
+
     public function parts(): HasMany
     {
         return $this->hasMany(Part::class);

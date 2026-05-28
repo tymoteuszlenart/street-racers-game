@@ -45,6 +45,11 @@ class RaceResult extends Model
         return $this->belongsTo(Race::class);
     }
 
+    public function pvpRace(): BelongsTo
+    {
+        return $this->belongsTo(PvpRace::class);
+    }
+
     public function raceAttempt(): HasOne
     {
         return $this->hasOne(RaceAttempt::class);
