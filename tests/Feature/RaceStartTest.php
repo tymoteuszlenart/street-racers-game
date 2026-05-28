@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Race;
+use App\Models\RaceResult;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -91,11 +93,67 @@ class RaceStartTest extends TestCase
             'idempotency_key' => $key,
         ])->assertRedirect();
 
-        $this->actingAs($user)->post(route('races.start', $secondRace), [
+        $response = $this->actingAs($user)->from(route('races.index'))->post(route('races.start', $secondRace), [
             'idempotency_key' => $key,
-        ])->assertStatus(409);
+        ]);
+
+        $response->assertRedirect(route('races.index'));
+        $response->assertSessionHasErrors('race');
 
         $this->assertSame(90, $profile->fresh()->fuel_current);
+    }
+
+    public function test_failed_idempotency_key_shows_error_on_retry(): void
+    {
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['fuel_current' => 0, 'fuel_updated_at' => now()]);
+
+        $race = Race::query()->where('name', 'Downtown Sprint')->firstOrFail();
+        $key = (string) Str::uuid();
+
+        $this->actingAs($user)->from(route('races.index'))->post(route('races.start', $race), [
+            'idempotency_key' => $key,
+        ])->assertRedirect(route('races.index'))->assertSessionHasErrors('fuel');
+
+        $response = $this->actingAs($user)->from(route('races.index'))->post(route('races.start', $race), [
+            'idempotency_key' => $key,
+        ]);
+
+        $response->assertRedirect(route('races.index'));
+        $response->assertSessionHasErrors('race');
+        $this->assertSame(0, RaceResult::query()->count());
+    }
+
+    public function test_race_start_is_rate_limited(): void
+    {
+        config(['game.race.start_rate_limit_per_minute' => 2]);
+
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
+
+        $race = Race::factory()->create([
+            'fuel_cost' => 10,
+            'opponent_power' => 1,
+            'opponent_acceleration' => 1,
+            'opponent_grip' => 1,
+            'opponent_handling' => 1,
+        ]);
+
+        RateLimiter::clear('race-start');
+
+        $this->actingAs($user)->post(route('races.start', $race), [
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertRedirect();
+
+        $this->actingAs($user)->post(route('races.start', $race), [
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertRedirect();
+
+        $this->actingAs($user)->post(route('races.start', $race), [
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertStatus(429);
     }
 
     public function test_duplicate_submit_for_same_race_shows_existing_result_message(): void

@@ -6,6 +6,7 @@ use App\Exceptions\RaceAttemptPendingException;
 use App\Models\Race;
 use App\Models\RaceAttempt;
 use App\Models\RaceResult;
+use App\Models\Transaction;
 use App\Models\User;
 use App\Services\RaceService;
 use Illuminate\Support\Str;
@@ -30,6 +31,7 @@ class NpcRaceConcurrencyTest extends TestCase
         $this->assertTrue($result->raceResult->won);
         $this->assertGreaterThan($initialCash, $profile->cash);
         $this->assertDatabaseHas('race_results', ['id' => $result->raceResult->id]);
+        $this->assertSame(4, Transaction::query()->where('source_id', $result->raceResult->id)->count());
     }
 
     public function test_duplicate_idempotency_key_replays_without_double_spend(): void

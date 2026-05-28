@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\DTOs\NpcRaceStartResult;
-use App\Exceptions\IdempotencyKeyConflictException;
 use App\Enums\RaceAttemptStatus;
 use App\Enums\RaceAttemptType;
+use App\Enums\TransactionCurrency;
+use App\Enums\TransactionType;
+use App\Exceptions\IdempotencyKeyConflictException;
 use App\Exceptions\IdempotencyKeyExpiredException;
 use App\Exceptions\RaceAttemptFailedException;
 use App\Exceptions\RaceAttemptPendingException;
@@ -28,6 +30,7 @@ class RaceService
     public function __construct(
         private readonly FuelService $fuelService,
         private readonly RaceScoreCalculator $scoreCalculator,
+        private readonly TransactionService $transactionService,
     ) {}
 
     /**
@@ -87,9 +90,9 @@ class RaceService
                     throw new RaceAttemptPendingException;
                 }
 
-                $race = Race::query()->whereKey($race->id)->lockForUpdate()->firstOrFail();
-
                 [$profile, $car] = $this->lockPlayerState($user->id);
+
+                $race = Race::query()->whereKey($race->id)->lockForUpdate()->firstOrFail();
 
                 $this->assertNpcRaceEligible($profile, $car, $race);
 
@@ -146,6 +149,8 @@ class RaceService
                     'error_code' => null,
                 ]);
 
+                $this->logNpcRaceTransactions($user->id, $profile, $race, $raceResult, $won);
+
                 return new NpcRaceStartResult(
                     raceResult: $raceResult->fresh(),
                     raceAttempt: $attempt->fresh(),
@@ -155,7 +160,9 @@ class RaceService
         } catch (RaceAttemptPendingException|RaceAttemptFailedException|IdempotencyKeyExpiredException $e) {
             throw $e;
         } catch (Throwable $e) {
-            $this->markAttemptFailed($attempt, $e);
+            if ($this->shouldMarkAttemptFailed($e)) {
+                $this->markAttemptFailed($attempt, $e);
+            }
 
             throw $e;
         }
@@ -165,10 +172,6 @@ class RaceService
     {
         if ($attempt->wasRecentlyCreated) {
             return null;
-        }
-
-        if ($attempt->isExpired()) {
-            throw new IdempotencyKeyExpiredException;
         }
 
         if ($attempt->status === RaceAttemptStatus::Succeeded) {
@@ -183,6 +186,10 @@ class RaceService
 
         if ($attempt->status === RaceAttemptStatus::Failed) {
             throw new RaceAttemptFailedException($attempt->error_code);
+        }
+
+        if ($attempt->isExpired()) {
+            throw new IdempotencyKeyExpiredException;
         }
 
         throw new RaceAttemptPendingException;
@@ -281,6 +288,12 @@ class RaceService
             ]);
         }
 
+        if ($car->user_id !== $profile->user_id) {
+            throw ValidationException::withMessages([
+                'active_car' => 'Select an active car before racing.',
+            ]);
+        }
+
         if (! $race->active) {
             throw ValidationException::withMessages([
                 'race' => 'This race is not available.',
@@ -315,6 +328,57 @@ class RaceService
         ];
     }
 
+    private function logNpcRaceTransactions(
+        int $userId,
+        PlayerProfile $profile,
+        Race $race,
+        RaceResult $raceResult,
+        bool $won,
+    ): void {
+        $sourceType = $raceResult->getMorphClass();
+        $sourceId = $raceResult->id;
+
+        $this->transactionService->record(
+            userId: $userId,
+            type: TransactionType::NpcRace,
+            currency: TransactionCurrency::Fuel,
+            amount: -$race->fuel_cost,
+            balanceAfter: $profile->fuel_current,
+            sourceType: $sourceType,
+            sourceId: $sourceId,
+        );
+
+        $this->transactionService->record(
+            userId: $userId,
+            type: TransactionType::NpcRace,
+            currency: TransactionCurrency::Cash,
+            amount: $won ? $race->cash_reward_win : $race->cash_reward_loss,
+            balanceAfter: $profile->cash,
+            sourceType: $sourceType,
+            sourceId: $sourceId,
+        );
+
+        $this->transactionService->record(
+            userId: $userId,
+            type: TransactionType::NpcRace,
+            currency: TransactionCurrency::Reputation,
+            amount: $won ? $race->reputation_reward_win : $race->reputation_reward_loss,
+            balanceAfter: $profile->reputation,
+            sourceType: $sourceType,
+            sourceId: $sourceId,
+        );
+
+        $this->transactionService->record(
+            userId: $userId,
+            type: TransactionType::NpcRace,
+            currency: TransactionCurrency::Experience,
+            amount: $won ? $race->experience_reward_win : $race->experience_reward_loss,
+            balanceAfter: $profile->experience,
+            sourceType: $sourceType,
+            sourceId: $sourceId,
+        );
+    }
+
     private function applyRewards(PlayerProfile $profile, Race $race, bool $won): void
     {
         if ($won) {
@@ -340,6 +404,11 @@ class RaceService
         $damage = (int) floor($car->condition_max * ($percentLost / 100));
         $car->condition_current = max(0, $car->condition_current - $damage);
         $car->save();
+    }
+
+    private function shouldMarkAttemptFailed(Throwable $exception): bool
+    {
+        return $exception instanceof ValidationException;
     }
 
     private function markAttemptFailed(?RaceAttempt $attempt, Throwable $exception): void
