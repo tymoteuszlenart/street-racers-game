@@ -119,10 +119,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/clubs/create', [ClubController::class, 'create'])->name('clubs.create');
         Route::post('/clubs', [ClubController::class, 'store'])->name('clubs.store');
         Route::get('/clubs/rankings', [ClubRankingController::class, 'index'])->name('clubs.rankings');
-        Route::get('/clubs/{club:slug}/tournament', [ClubTournamentController::class, 'show'])->name('clubs.tournament');
-        Route::post('/clubs/{club:slug}/tournament/races', [ClubTournamentController::class, 'store'])
-            ->middleware('tournaments.unlocked')
-            ->name('clubs.tournament.races.store');
+        Route::middleware('tournaments.unlocked')->group(function () {
+            Route::get('/clubs/{club:slug}/tournament', [ClubTournamentController::class, 'show'])->name('clubs.tournament');
+            Route::post('/clubs/{club:slug}/tournament/races', [ClubTournamentController::class, 'store'])
+                ->name('clubs.tournament.races.store');
+        });
         Route::get('/clubs/{club:slug}', [ClubController::class, 'show'])->name('clubs.show');
         Route::post('/clubs/{club:slug}/join', [ClubController::class, 'join'])->name('clubs.join');
         Route::post('/clubs/{club:slug}/leave', [ClubController::class, 'leave'])->name('clubs.leave');
