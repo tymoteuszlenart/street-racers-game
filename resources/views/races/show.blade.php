@@ -37,6 +37,26 @@
                     </div>
                 </dl>
 
+                @if ($rewards)
+                    <div class="border-t border-racing-600 pt-4">
+                        <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wider mb-3">{{ __('Rewards earned') }}</h3>
+                        <dl class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-gray-300">
+                            <div>
+                                <dt class="text-gray-500 text-sm">{{ __('Cash') }}</dt>
+                                <dd class="text-white font-semibold">+${{ number_format($rewards['cash']) }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-gray-500 text-sm">{{ __('Reputation') }}</dt>
+                                <dd class="text-white font-semibold">+{{ number_format($rewards['reputation']) }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-gray-500 text-sm">{{ __('Experience') }}</dt>
+                                <dd class="text-white font-semibold">+{{ number_format($rewards['experience']) }} {{ __('XP') }}</dd>
+                            </div>
+                        </dl>
+                    </div>
+                @endif
+
                 <a href="{{ route('races.index') }}" class="inline-block text-accent-orange hover:underline">
                     {{ __('Back to races') }}
                 </a>
