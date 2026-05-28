@@ -3,14 +3,16 @@
 namespace App\Models;
 
 use App\Enums\AcquiredVia;
+use Database\Factories\CarFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Car extends Model
 {
-    /** @use HasFactory<\Database\Factories\CarFactory> */
+    /** @use HasFactory<CarFactory> */
     use HasFactory;
+
     protected $fillable = [
         'user_id',
         'car_model_id',

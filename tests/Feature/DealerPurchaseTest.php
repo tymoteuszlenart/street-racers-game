@@ -18,7 +18,7 @@ class DealerPurchaseTest extends TestCase
         $profile = $user->playerProfile()->firstOrFail();
         $profile->update(['cash' => 100]);
 
-        $carModel = CarModel::query()->where('name', 'Voltage GT')->firstOrFail();
+        $carModel = CarModel::query()->where('name', 'Neon Hatch')->firstOrFail();
 
         $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
             'nickname' => 'Dream Car',
@@ -26,6 +26,39 @@ class DealerPurchaseTest extends TestCase
 
         $response->assertSessionHasErrors('cash');
         $this->assertSame(100, $profile->fresh()->cash);
+        $this->assertSame(1, Car::query()->where('user_id', $user->id)->count());
+    }
+
+    public function test_dealer_purchase_rejects_starter_model(): void
+    {
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $initialCash = $profile->cash;
+
+        $carModel = CarModel::query()->where('starter', true)->firstOrFail();
+
+        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
+            'nickname' => 'Extra Starter',
+        ]);
+
+        $response->assertSessionHasErrors('car_model');
+        $this->assertSame($initialCash, $profile->fresh()->cash);
+        $this->assertSame(1, Car::query()->where('user_id', $user->id)->count());
+    }
+
+    public function test_dealer_purchase_rejects_level_too_low(): void
+    {
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['cash' => 100000]);
+
+        $carModel = CarModel::query()->where('name', 'Voltage GT')->firstOrFail();
+
+        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
+            'nickname' => 'Dream Car',
+        ]);
+
+        $response->assertSessionHasErrors('car_model');
         $this->assertSame(1, Car::query()->where('user_id', $user->id)->count());
     }
 
@@ -57,6 +90,29 @@ class DealerPurchaseTest extends TestCase
         $this->assertSame($carModel->id, $purchased->car_model_id);
         $this->assertSame('dealer', $purchased->acquired_via->value);
         $this->assertSame($carModel->price, $purchased->purchase_price);
+    }
+
+    public function test_dealer_purchase_sets_active_car_when_player_has_none(): void
+    {
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['active_car_id' => null, 'cash' => 20000]);
+
+        $carModel = CarModel::query()->where('name', 'Neon Hatch')->firstOrFail();
+
+        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
+            'nickname' => 'First Ride',
+        ]);
+
+        $response->assertRedirect();
+        $profile->refresh();
+
+        $purchased = Car::query()
+            ->where('user_id', $user->id)
+            ->where('nickname', 'First Ride')
+            ->firstOrFail();
+
+        $this->assertSame($purchased->id, $profile->active_car_id);
     }
 
     public function test_player_can_buy_same_model_multiple_times(): void

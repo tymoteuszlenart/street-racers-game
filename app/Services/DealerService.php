@@ -14,7 +14,11 @@ class DealerService
 {
     public function purchase(User $user, CarModel $carModel, string $nickname): Car
     {
-        $this->validatePurchase($user, $carModel);
+        $profile = $user->playerProfile ?? throw ValidationException::withMessages([
+            'car_model' => 'Player profile not found.',
+        ]);
+
+        $this->assertCanPurchase($profile, $carModel);
 
         return DB::transaction(function () use ($user, $carModel, $nickname) {
             $profile = PlayerProfile::query()
@@ -22,11 +26,9 @@ class DealerService
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($profile->cash < $carModel->price) {
-                throw ValidationException::withMessages([
-                    'cash' => 'You do not have enough cash for this car.',
-                ]);
-            }
+            $carModel->refresh();
+
+            $this->assertCanPurchase($profile, $carModel);
 
             $profile->cash -= $carModel->price;
             $profile->save();
@@ -47,23 +49,27 @@ class DealerService
         });
     }
 
-    private function validatePurchase(User $user, CarModel $carModel): void
+    private function assertCanPurchase(PlayerProfile $profile, CarModel $carModel): void
     {
+        if ($carModel->starter) {
+            throw ValidationException::withMessages([
+                'car_model' => 'Starter cars cannot be purchased from the dealer.',
+            ]);
+        }
+
         if (! $carModel->active) {
             throw ValidationException::withMessages([
                 'car_model' => 'This car is not available at the dealer.',
             ]);
         }
 
-        $level = $user->playerProfile?->level ?? 1;
-
-        if ($carModel->unlock_level > $level) {
+        if ($carModel->unlock_level > $profile->level) {
             throw ValidationException::withMessages([
                 'car_model' => 'Your level is too low to purchase this car.',
             ]);
         }
 
-        if ($user->playerProfile?->cash < $carModel->price) {
+        if ($profile->cash < $carModel->price) {
             throw ValidationException::withMessages([
                 'cash' => 'You do not have enough cash for this car.',
             ]);
