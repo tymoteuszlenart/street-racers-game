@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActiveCarController;
+use App\Http\Controllers\AdminPurchaseController;
 use App\Http\Controllers\CarUpgradeController;
 use App\Http\Controllers\ClubController;
 use App\Http\Controllers\ClubRankingController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\GarageController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\PremiumFuelController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PurchaseHistoryController;
 use App\Http\Controllers\PvpRaceController;
 use App\Http\Controllers\RaceController;
 use App\Http\Controllers\RaceHistoryController;
@@ -93,6 +95,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/shop/checkout/{shopProduct:slug}', [ShopController::class, 'checkout'])->name('shop.checkout');
     Route::get('/shop/success', [ShopController::class, 'success'])->name('shop.success');
     Route::get('/shop/cancel', [ShopController::class, 'cancel'])->name('shop.cancel');
+
+    Route::get('/purchases', [PurchaseHistoryController::class, 'index'])->name('purchases.index');
+
+    Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/purchases', [AdminPurchaseController::class, 'index'])->name('purchases.index');
+        Route::get('/purchases/{paymentOrder}', [AdminPurchaseController::class, 'show'])->name('purchases.show');
+    });
 
     Route::middleware('tournaments.unlocked')->group(function () {
         Route::get('/premium-fuel', [PremiumFuelController::class, 'index'])->name('premium-fuel.index');

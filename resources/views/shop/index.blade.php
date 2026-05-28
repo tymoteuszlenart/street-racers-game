@@ -18,6 +18,7 @@
             <div class="bg-racing-800 border border-racing-600 rounded-lg p-6">
                 <p class="text-gray-400 text-sm mb-6">
                     {{ __('Buy fuel packs with Stripe Checkout. Rewards are applied after payment is confirmed by our server — not when you land on the success page.') }}
+                    <a href="{{ route('purchases.index') }}" class="text-accent-blue hover:text-accent-neon">{{ __('View purchase history') }}</a>
                 </p>
 
                 @if ($profile !== null)
