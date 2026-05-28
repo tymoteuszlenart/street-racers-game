@@ -12,9 +12,9 @@
                     <p class="text-gray-400 text-sm">{{ __('Your previous race submission already finished, so we are showing that result.') }}</p>
                 @endif
 
-                <p class="text-2xl font-bold {{ $raceResult->is_tie ? 'text-yellow-400' : ($raceResult->won ? 'text-green-400' : 'text-red-400') }}">
+                <p class="text-2xl font-bold {{ $raceResult->is_tie ? 'text-red-400' : ($raceResult->won ? 'text-green-400' : 'text-red-400') }}">
                     @if ($raceResult->is_tie)
-                        {{ __('Draw — no winner') }}
+                        {{ __('Draw — counted as a loss') }}
                     @elseif ($raceResult->won)
                         {{ __('You won!') }}
                     @else

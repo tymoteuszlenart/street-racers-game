@@ -127,6 +127,28 @@ class RaceStartTest extends TestCase
         $this->assertSame(0, RaceResult::query()->count());
     }
 
+    public function test_validation_failure_allows_retry_with_fresh_idempotency_key(): void
+    {
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['fuel_current' => 0, 'fuel_updated_at' => now()]);
+
+        $race = Race::query()->where('name', 'Downtown Sprint')->firstOrFail();
+
+        $this->actingAs($user)->from(route('races.index'))->post(route('races.start', $race), [
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertRedirect(route('races.index'))->assertSessionHasErrors('fuel');
+
+        $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
+
+        $this->actingAs($user)->from(route('races.index'))->post(route('races.start', $race), [
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertRedirect();
+
+        $this->assertSame(1, RaceResult::query()->count());
+        $this->assertSame(90, $profile->fresh()->fuel_current);
+    }
+
     public function test_race_start_is_rate_limited(): void
     {
         config(['game.race.start_rate_limit_per_minute' => 2]);
