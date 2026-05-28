@@ -18,6 +18,7 @@ use App\Http\Controllers\TournamentResultController;
 use App\Http\Controllers\TournamentRewardController;
 use App\Http\Controllers\TuningShopController;
 use App\Services\DailyRewardService;
+use App\Services\PlayerLevelService;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -36,6 +37,9 @@ Route::get('/dashboard', function () {
     $tournamentsUnlocked = ($profile?->level ?? 1) >= $tournamentsUnlockLevel;
     $clubsUnlockLevel = config('game.clubs.unlock_level');
     $clubsUnlocked = ($profile?->level ?? 1) >= $clubsUnlockLevel;
+    $levelProgress = $profile !== null
+        ? app(PlayerLevelService::class)->progressTowardNextLevel($profile)
+        : null;
 
     return view('dashboard', [
         'profile' => $profile,
@@ -48,6 +52,7 @@ Route::get('/dashboard', function () {
         'clubsUnlocked' => $clubsUnlocked,
         'clubsUnlockLevel' => $clubsUnlockLevel,
         'userInClub' => $user?->clubMember !== null,
+        'levelProgress' => $levelProgress,
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 

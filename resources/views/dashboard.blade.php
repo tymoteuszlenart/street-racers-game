@@ -20,6 +20,17 @@
                         <div class="bg-racing-700 rounded-lg p-6 border border-racing-600">
                             <h4 class="text-accent-blue font-semibold text-lg mb-2">Level</h4>
                             <p class="text-3xl font-bold text-white">{{ $profile?->level ?? 1 }}</p>
+                            @if ($levelProgress)
+                                <p class="text-gray-400 text-sm mt-2">
+                                    {{ __(':current / :required XP to level :level', [
+                                        'current' => number_format($levelProgress['current']),
+                                        'required' => number_format($levelProgress['required']),
+                                        'level' => $levelProgress['next_level'],
+                                    ]) }}
+                                </p>
+                            @elseif ($profile && $profile->level >= config('game.player.max_level'))
+                                <p class="text-gray-400 text-sm mt-2">{{ __('Max level reached') }}</p>
+                            @endif
                         </div>
                         <div class="bg-racing-700 rounded-lg p-6 border border-racing-600">
                             <h4 class="text-accent-green font-semibold text-lg mb-2">Fuel</h4>
@@ -39,6 +50,9 @@
                         <div class="bg-racing-700 rounded-lg p-6 border border-racing-600">
                             <h4 class="text-accent-neon font-semibold text-lg mb-2">Reputation</h4>
                             <p class="text-3xl font-bold text-white">{{ $profile?->reputation ?? 0 }}</p>
+                            <a href="{{ route('leaderboard.index') }}" class="inline-block mt-2 text-sm text-accent-blue hover:text-accent-neon">
+                                {{ __('View rankings') }}
+                            </a>
                         </div>
                     </div>
 
