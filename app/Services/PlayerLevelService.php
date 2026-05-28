@@ -40,4 +40,25 @@ class PlayerLevelService
 
         return ($level - 1) * (int) config('game.player.experience_per_level', 100);
     }
+
+    /**
+     * @return array{current: int, required: int, next_level: int}|null
+     */
+    public function progressTowardNextLevel(PlayerProfile $profile): ?array
+    {
+        $maxLevel = (int) config('game.player.max_level', 50);
+
+        if ($profile->level >= $maxLevel) {
+            return null;
+        }
+
+        $floor = $this->experienceRequiredForLevel($profile->level);
+        $ceiling = $profile->level * (int) config('game.player.experience_per_level', 100);
+
+        return [
+            'current' => $profile->experience - $floor,
+            'required' => $ceiling - $floor,
+            'next_level' => $profile->level + 1,
+        ];
+    }
 }

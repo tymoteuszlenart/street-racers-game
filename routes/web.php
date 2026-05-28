@@ -14,6 +14,7 @@ use App\Http\Controllers\RaceController;
 use App\Http\Controllers\RaceHistoryController;
 use App\Http\Controllers\TuningShopController;
 use App\Services\DailyRewardService;
+use App\Services\PlayerLevelService;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -28,6 +29,9 @@ Route::get('/dashboard', function () {
     $dailyRewardTankFull = $user !== null && $dailyRewardService->isLoginClaimBlockedByFullTank($user);
     $clubsUnlockLevel = config('game.clubs.unlock_level');
     $clubsUnlocked = ($profile?->level ?? 1) >= $clubsUnlockLevel;
+    $levelProgress = $profile !== null
+        ? app(PlayerLevelService::class)->progressTowardNextLevel($profile)
+        : null;
 
     return view('dashboard', [
         'profile' => $profile,
@@ -36,6 +40,7 @@ Route::get('/dashboard', function () {
         'clubsUnlocked' => $clubsUnlocked,
         'clubsUnlockLevel' => $clubsUnlockLevel,
         'userInClub' => $user?->clubMember !== null,
+        'levelProgress' => $levelProgress,
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 

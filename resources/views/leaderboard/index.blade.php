@@ -11,6 +11,12 @@
                 {{ __('Players ranked by reputation. PvP races do not change reputation in the MVP.') }}
             </p>
 
+            @if ($currentUserGlobalRank !== null)
+                <p class="text-gray-200 text-sm">
+                    {{ __('Your rank: #:rank', ['rank' => number_format($currentUserGlobalRank)]) }}
+                </p>
+            @endif
+
             <div class="bg-racing-800 border border-racing-600 rounded-lg overflow-hidden">
                 <table class="min-w-full divide-y divide-racing-600">
                     <thead class="bg-racing-700">

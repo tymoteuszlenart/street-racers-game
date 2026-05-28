@@ -47,4 +47,31 @@ class PlayerLevelServiceTest extends TestCase
         $profile->refresh();
         $this->assertSame(2, $profile->level);
     }
+
+    public function test_progress_toward_next_level_reports_current_band(): void
+    {
+        config(['game.player.experience_per_level' => 100]);
+
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['level' => 2, 'experience' => 150]);
+
+        $progress = app(PlayerLevelService::class)->progressTowardNextLevel($profile);
+
+        $this->assertNotNull($progress);
+        $this->assertSame(50, $progress['current']);
+        $this->assertSame(100, $progress['required']);
+        $this->assertSame(3, $progress['next_level']);
+    }
+
+    public function test_progress_toward_next_level_is_null_at_max_level(): void
+    {
+        config(['game.player.max_level' => 5]);
+
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['level' => 5, 'experience' => 9999]);
+
+        $this->assertNull(app(PlayerLevelService::class)->progressTowardNextLevel($profile));
+    }
 }
