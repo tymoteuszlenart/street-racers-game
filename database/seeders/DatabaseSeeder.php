@@ -21,9 +21,12 @@ class DatabaseSeeder extends Seeder
             RaceSeeder::class,
         ]);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        User::query()->firstOrCreate(
+            ['email' => 'test@example.com'],
+            User::factory()->make([
+                'name' => 'Test User',
+                'email' => 'test@example.com',
+            ])->getAttributes(),
+        );
     }
 }
