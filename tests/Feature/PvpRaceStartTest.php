@@ -50,6 +50,19 @@ class PvpRaceStartTest extends TestCase
         $this->assertSame(0, PvpRace::query()->count());
     }
 
+    public function test_json_self_race_returns_validation_error(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->postJson(route('pvp.start', $user), [
+            'idempotency_key' => (string) Str::uuid(),
+        ]);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors('pvp');
+        $this->assertSame(0, PvpRace::query()->count());
+    }
+
     public function test_opponent_without_active_car_is_blocked(): void
     {
         $challenger = User::factory()->create();

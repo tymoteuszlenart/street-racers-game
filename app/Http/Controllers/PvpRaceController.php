@@ -138,8 +138,17 @@ class PvpRaceController extends Controller
         return $this->pvpStartErrorResponse($request, $message);
     }
 
-    private function pvpStartErrorResponse(StartPvpRaceRequest $request, string $message): RedirectResponse
+    private function pvpStartErrorResponse(StartPvpRaceRequest $request, string $message): RedirectResponse|JsonResponse
     {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => [
+                    'pvp' => [$message],
+                ],
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
         return back()
             ->withErrors(['pvp' => $message])
             ->withInput();
