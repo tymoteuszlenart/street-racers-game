@@ -64,4 +64,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Part::class);
     }
+
+    public function clubMember(): HasOne
+    {
+        return $this->hasOne(ClubMember::class);
+    }
 }

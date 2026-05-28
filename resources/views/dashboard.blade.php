@@ -47,6 +47,19 @@
                         </div>
                     @endif
 
+                    @if (! ($clubsUnlocked ?? false))
+                        <div class="bg-racing-700 rounded-lg p-6 border border-racing-600 mb-8">
+                            <h4 class="text-gray-300 font-semibold text-lg mb-2">{{ __('Clubs locked') }}</h4>
+                            <p class="text-gray-400 text-sm">{{ __('Reach level :level to create or join a club.', ['level' => $clubsUnlockLevel ?? 10]) }}</p>
+                        </div>
+                    @elseif (! ($userInClub ?? false))
+                        <div class="bg-racing-700 rounded-lg p-6 border border-racing-600 mb-8">
+                            <h4 class="text-accent-neon font-semibold text-lg mb-2">{{ __('Join a club') }}</h4>
+                            <p class="text-gray-400 text-sm mb-3">{{ __('Team up with other racers and compete on the club rankings.') }}</p>
+                            <a href="{{ route('clubs.index') }}" class="inline-block text-sm text-accent-blue hover:text-accent-neon">{{ __('Browse clubs') }}</a>
+                        </div>
+                    @endif
+
                     <div class="bg-racing-700 rounded-lg p-6 border border-racing-600">
                         <div class="flex flex-wrap items-start justify-between gap-4 mb-4">
                             <h4 class="text-accent-neon font-semibold text-lg">Active Car</h4>
