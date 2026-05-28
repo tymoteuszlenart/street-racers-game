@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CarClass;
+use App\Enums\PartSlot;
 use App\Models\Concerns\ValidatesDealerPurchase;
 use Database\Factories\CarModelFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -67,5 +68,13 @@ class CarModel extends Model
     public function scopeDealerCatalog($query)
     {
         return $query->where('starter', false);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function resolvedUpgradeSlots(): array
+    {
+        return $this->upgrade_slots ?? PartSlot::values();
     }
 }

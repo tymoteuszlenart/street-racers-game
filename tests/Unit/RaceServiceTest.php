@@ -2,11 +2,15 @@
 
 namespace Tests\Unit;
 
+use App\Enums\PartAcquiredVia;
+use App\Enums\PartSlot;
 use App\Enums\TransactionCurrency;
 use App\Enums\TransactionType;
 use App\Exceptions\IdempotencyKeyConflictException;
 use App\Exceptions\IdempotencyKeyExpiredException;
 use App\Exceptions\RaceStartRateLimitedException;
+use App\Models\Part;
+use App\Models\PartModel;
 use App\Models\Race;
 use App\Models\RaceAttempt;
 use App\Models\RaceResult;
@@ -367,6 +371,51 @@ class RaceServiceTest extends TestCase
 
         $this->assertFalse($result->replayed);
         $this->assertSame(1, RateLimiter::attempts($rateLimitKey));
+    }
+
+    public function test_equipped_parts_increase_race_score_with_fixed_random(): void
+    {
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
+
+        $car = $profile->activeCar()->firstOrFail();
+
+        $race = Race::factory()->create([
+            'fuel_cost' => 10,
+            'random_factor_variance' => 0,
+            'opponent_power' => 500,
+            'opponent_acceleration' => 500,
+            'opponent_grip' => 500,
+            'opponent_handling' => 500,
+        ]);
+
+        $service = app(RaceService::class)->withRandomUnit(fn (): float => 0.5);
+
+        $baseline = $service->startNpcRace($user, $race, (string) Str::uuid());
+        $baselineScore = $baseline->raceResult->player_score;
+
+        $partModel = PartModel::factory()->create([
+            'slot' => PartSlot::Engine,
+            'power_bonus' => 50,
+            'acceleration_bonus' => 50,
+            'grip_bonus' => 50,
+            'handling_bonus' => 50,
+        ]);
+
+        Part::query()->create([
+            'user_id' => $user->id,
+            'part_model_id' => $partModel->id,
+            'car_id' => $car->id,
+            'slot' => PartSlot::Engine,
+            'acquired_via' => PartAcquiredVia::Shop,
+        ]);
+
+        $profile->update(['fuel_current' => 100]);
+
+        $upgraded = $service->startNpcRace($user, $race, (string) Str::uuid());
+
+        $this->assertGreaterThan($baselineScore, $upgraded->raceResult->player_score);
     }
 
     public function test_rate_limited_new_key_rolls_back_pending_attempt_creation(): void

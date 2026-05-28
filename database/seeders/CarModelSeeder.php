@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\CarClass;
+use App\Enums\PartSlot;
 use App\Models\CarModel;
 use Illuminate\Database\Seeder;
 
@@ -10,6 +11,8 @@ class CarModelSeeder extends Seeder
 {
     public function run(): void
     {
+        $upgradeSlots = PartSlot::values();
+
         $models = [
             [
                 'name' => 'Rust Runner',
@@ -22,7 +25,7 @@ class CarModelSeeder extends Seeder
                 'grip' => 45,
                 'handling' => 44,
                 'durability' => 50,
-                'upgrade_slots' => null,
+                'upgrade_slots' => $upgradeSlots,
                 'price' => 0,
                 'starter' => true,
                 'unlock_level' => 1,
@@ -39,7 +42,7 @@ class CarModelSeeder extends Seeder
                 'grip' => 50,
                 'handling' => 51,
                 'durability' => 46,
-                'upgrade_slots' => null,
+                'upgrade_slots' => $upgradeSlots,
                 'price' => 3500,
                 'starter' => false,
                 'unlock_level' => 1,
@@ -56,7 +59,7 @@ class CarModelSeeder extends Seeder
                 'grip' => 58,
                 'handling' => 57,
                 'durability' => 54,
-                'upgrade_slots' => null,
+                'upgrade_slots' => $upgradeSlots,
                 'price' => 12000,
                 'starter' => false,
                 'unlock_level' => 3,
@@ -73,7 +76,7 @@ class CarModelSeeder extends Seeder
                 'grip' => 72,
                 'handling' => 74,
                 'durability' => 60,
-                'upgrade_slots' => null,
+                'upgrade_slots' => $upgradeSlots,
                 'price' => 45000,
                 'starter' => false,
                 'unlock_level' => 8,

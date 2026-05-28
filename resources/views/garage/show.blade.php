@@ -47,18 +47,27 @@
                             @endif
                         </div>
                         <div class="pt-4 border-t border-racing-600 space-y-2">
-                            <p class="text-gray-500 text-xs uppercase tracking-wide">{{ __('Coming later') }}</p>
                             <div class="flex flex-wrap gap-2">
                                 <button type="button" disabled class="px-3 py-1 text-xs rounded bg-racing-700 text-gray-500 border border-racing-600 cursor-not-allowed">{{ __('Repair') }}</button>
-                                <button type="button" disabled class="px-3 py-1 text-xs rounded bg-racing-700 text-gray-500 border border-racing-600 cursor-not-allowed">{{ __('Tune') }}</button>
+                                @if ($tuningUnlocked)
+                                    <a href="{{ route('garage.upgrades', $car) }}" class="px-3 py-1 text-xs rounded bg-racing-700 text-accent-neon border border-racing-600 hover:border-accent-neon">{{ __('Tune') }}</a>
+                                @else
+                                    <button type="button" disabled title="{{ __('Reach level 5') }}" class="px-3 py-1 text-xs rounded bg-racing-700 text-gray-500 border border-racing-600 cursor-not-allowed">{{ __('Tune') }} (Lvl 5)</button>
+                                @endif
                                 <button type="button" disabled class="px-3 py-1 text-xs rounded bg-racing-700 text-gray-500 border border-racing-600 cursor-not-allowed">{{ __('Sell') }}</button>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="px-6 pb-6">
-                    <h4 class="text-accent-orange font-semibold mb-3">{{ __('Stats') }}</h4>
-                    <x-car-stats :car-model="$car->carModel" />
+                <div class="px-6 pb-6 space-y-6">
+                    <div>
+                        <h4 class="text-accent-orange font-semibold mb-3">{{ __('Effective stats') }}</h4>
+                        <x-effective-car-stats :base-stats="$baseStats" :effective-stats="$effectiveStats" />
+                    </div>
+                    <div>
+                        <h4 class="text-gray-500 text-xs uppercase tracking-wide mb-3">{{ __('Base model stats') }}</h4>
+                        <x-car-stats :car-model="$car->carModel" />
+                    </div>
                 </div>
             </div>
         </div>
