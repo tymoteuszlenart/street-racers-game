@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Models;
+
+use App\Enums\RaceAttemptType;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+
+class RaceResult extends Model
+{
+    protected $fillable = [
+        'user_id',
+        'attempt_type',
+        'race_id',
+        'pvp_race_id',
+        'won',
+        'player_score',
+        'opponent_score',
+        'score_breakdown',
+        'random_factor',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'attempt_type' => RaceAttemptType::class,
+            'won' => 'boolean',
+            'player_score' => 'float',
+            'opponent_score' => 'float',
+            'random_factor' => 'float',
+            'score_breakdown' => 'array',
+        ];
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function race(): BelongsTo
+    {
+        return $this->belongsTo(Race::class);
+    }
+
+    public function raceAttempt(): HasOne
+    {
+        return $this->hasOne(RaceAttempt::class);
+    }
+}

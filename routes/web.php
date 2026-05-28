@@ -4,6 +4,7 @@ use App\Http\Controllers\ActiveCarController;
 use App\Http\Controllers\DealerController;
 use App\Http\Controllers\GarageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RaceController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -26,6 +27,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/dealer', [DealerController::class, 'index'])->name('dealer.index');
     Route::post('/dealer/{carModel}', [DealerController::class, 'store'])->name('dealer.purchase');
+
+    Route::get('/races', [RaceController::class, 'index'])->name('races.index');
+    Route::post('/races/{race}', [RaceController::class, 'store'])
+        ->middleware('throttle:race-start')
+        ->name('races.start');
+    Route::get('/races/results/{raceResult}', [RaceController::class, 'show'])->name('races.show');
 });
 
 Route::middleware('auth')->group(function () {
