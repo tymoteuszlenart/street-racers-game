@@ -314,7 +314,7 @@ Use this as the PR breakdown after this ADR merges. Check items off in the Phase
 ### Docs and issue closure
 
 - [x] Link this ADR from `docs/04-technical-plan.md` (Tuning section) — done in PR #21
-- [ ] Open a **Phase 4: Tuning Shop implementation** GitHub issue referencing this ADR checklist (work continues after #3 closes)
+- [x] Open a **Phase 4: Tuning Shop implementation** GitHub issue referencing this ADR checklist — [#22](https://github.com/tymoteuszlenart/street-racers-game/issues/22)
 - [ ] Merge ADR PR; **#3** closes on merge (`Closes #3` — design complete; sell deferred per decision summary)
 
 ### Explicitly deferred (not blocking #3 or Phase 4 “done”)
