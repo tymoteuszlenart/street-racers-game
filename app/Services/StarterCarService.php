@@ -3,13 +3,13 @@
 namespace App\Services;
 
 use App\Enums\AcquiredVia;
+use App\Exceptions\StarterCarCatalogNotConfiguredException;
 use App\Models\Car;
 use App\Models\CarModel;
 use App\Models\PlayerProfile;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use RuntimeException;
 
 class StarterCarService
 {
@@ -18,7 +18,15 @@ class StarterCarService
         $user = $profile->user;
 
         if ($user->cars()->exists()) {
-            return $profile->activeCar ?? $user->cars()->firstOrFail();
+            $active = $profile->activeCar;
+            if ($active !== null) {
+                return $active;
+            }
+
+            $car = $user->cars()->orderBy('id')->firstOrFail();
+            $profile->setActiveCarId($car->id);
+
+            return $car;
         }
 
         $carModel = CarModel::query()
@@ -34,9 +42,7 @@ class StarterCarService
                 'user_id' => $user->id,
             ]);
 
-            throw new RuntimeException(
-                'Starter car catalog is not configured. Run php artisan db:seed.',
-            );
+            throw new StarterCarCatalogNotConfiguredException;
         }
 
         return DB::transaction(function () use ($profile, $user, $carModel) {

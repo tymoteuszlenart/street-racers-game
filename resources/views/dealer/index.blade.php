@@ -34,11 +34,10 @@
                                 <x-car-stats :car-model="$carModel" />
                                 <form method="POST" action="{{ route('dealer.purchase', $carModel) }}" class="space-y-3 pt-2 border-t border-racing-600">
                                     @csrf
-                                    <input type="hidden" name="car_model_id" value="{{ $carModel->id }}">
                                     <div>
                                         <x-input-label for="nickname-{{ $carModel->id }}" :value="__('Nickname')" />
-                                        <x-text-input id="nickname-{{ $carModel->id }}" name="nickname" type="text" class="mt-1 block w-full" required maxlength="64" placeholder="{{ __('My street machine') }}" value="{{ old('car_model_id') == $carModel->id ? old('nickname') : '' }}" />
-                                        @if (old('car_model_id') == $carModel->id)
+                                        <x-text-input id="nickname-{{ $carModel->id }}" name="nickname" type="text" class="mt-1 block w-full" required maxlength="64" placeholder="{{ __('My street machine') }}" value="{{ (int) old('_purchase_target') === $carModel->id ? old('nickname') : '' }}" />
+                                        @if ((int) old('_purchase_target') === $carModel->id)
                                             <x-input-error :messages="$errors->get('nickname')" class="mt-2" />
                                         @endif
                                     </div>

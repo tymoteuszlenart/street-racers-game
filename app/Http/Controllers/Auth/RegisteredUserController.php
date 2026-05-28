@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Exceptions\StarterCarCatalogNotConfiguredException;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
@@ -13,7 +14,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
-use RuntimeException;
 
 class RegisteredUserController extends Controller
 {
@@ -44,14 +44,10 @@ class RegisteredUserController extends Controller
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
             ]));
-        } catch (RuntimeException $e) {
-            if (str_contains($e->getMessage(), 'Starter car catalog is not configured')) {
-                throw ValidationException::withMessages([
-                    'email' => 'Registration is temporarily unavailable. Please try again later.',
-                ]);
-            }
-
-            throw $e;
+        } catch (StarterCarCatalogNotConfiguredException) {
+            throw ValidationException::withMessages([
+                'email' => 'Registration is temporarily unavailable. Please try again later.',
+            ]);
         }
 
         event(new Registered($user));

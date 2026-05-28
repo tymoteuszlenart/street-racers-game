@@ -15,6 +15,13 @@ class PurchaseCarRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $carModel = $this->route('carModel');
+        if ($carModel instanceof CarModel) {
+            $this->merge([
+                '_purchase_target' => $carModel->id,
+            ]);
+        }
+
         if ($this->has('nickname')) {
             $this->merge([
                 'nickname' => trim((string) $this->input('nickname')),

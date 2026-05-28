@@ -2,12 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Exceptions\StarterCarCatalogNotConfiguredException;
 use App\Models\Car;
 use App\Models\CarModel;
 use App\Models\User;
+use App\Services\StarterCarService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use RuntimeException;
 use Tests\TestCase;
 
 class StarterCarTest extends TestCase
@@ -55,16 +56,46 @@ class StarterCarTest extends TestCase
         $this->assertDatabaseCount('player_profiles', 0);
     }
 
+    public function test_starter_service_repairs_missing_active_car_when_owned_cars_exist(): void
+    {
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $ownedCar = $user->cars()->firstOrFail();
+
+        $profile->setActiveCarId(null);
+
+        $car = app(StarterCarService::class)->assignToProfile($profile);
+
+        $this->assertSame($ownedCar->id, $car->id);
+        $this->assertSame($ownedCar->id, $profile->fresh()->active_car_id);
+        $this->assertSame(1, $user->cars()->count());
+    }
+
+    public function test_user_is_deleted_when_profile_setup_fails_without_outer_transaction(): void
+    {
+        CarModel::query()->delete();
+
+        $this->expectException(StarterCarCatalogNotConfiguredException::class);
+
+        try {
+            User::factory()->create();
+        } catch (StarterCarCatalogNotConfiguredException $e) {
+            $this->assertDatabaseCount('users', 0);
+            $this->assertDatabaseCount('player_profiles', 0);
+
+            throw $e;
+        }
+    }
+
     public function test_profile_creation_rolls_back_when_starter_catalog_is_missing(): void
     {
         CarModel::query()->delete();
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Starter car catalog is not configured');
+        $this->expectException(StarterCarCatalogNotConfiguredException::class);
 
         try {
             DB::transaction(fn () => User::factory()->create());
-        } catch (RuntimeException $e) {
+        } catch (StarterCarCatalogNotConfiguredException $e) {
             $this->assertDatabaseCount('users', 0);
             $this->assertDatabaseCount('player_profiles', 0);
 
