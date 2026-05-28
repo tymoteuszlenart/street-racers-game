@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             CarModelSeeder::class,
             PartModelSeeder::class,
             RaceSeeder::class,
+            ClubTournamentSeeder::class,
         ]);
 
         User::query()->firstOrCreate(
@@ -28,9 +29,5 @@ class DatabaseSeeder extends Seeder
                 'email' => 'test@example.com',
             ])->getAttributes(),
         );
-
-        $this->call([
-            ClubSeeder::class,
-        ]);
     }
 }

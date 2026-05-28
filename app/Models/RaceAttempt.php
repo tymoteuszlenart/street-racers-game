@@ -15,6 +15,7 @@ class RaceAttempt extends Model
         'attempt_type',
         'race_id',
         'defender_user_id',
+        'club_tournament_id',
         'status',
         'race_result_id',
         'error_code',
@@ -43,6 +44,11 @@ class RaceAttempt extends Model
     public function defender(): BelongsTo
     {
         return $this->belongsTo(User::class, 'defender_user_id');
+    }
+
+    public function clubTournament(): BelongsTo
+    {
+        return $this->belongsTo(ClubTournament::class);
     }
 
     public function raceResult(): BelongsTo

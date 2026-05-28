@@ -619,16 +619,25 @@ Phase 5 login rewards and Phase 7 premium fuel claims share the same calendar-da
 
 ### Premium fuel (Phase 7)
 
-- Reuse `GameDay` and the same idempotent claim pattern (`DailyRewardType` or `premium_fuel_claimed_at` with documented parity).
-- Document cap interaction with `premium_fuel_current` / `premium_fuel_max` when Phase 7 ships.
+- Daily claim: `DailyRewardType::Premium` with unique `(user_id, reward_type, claim_date)` — same idempotent pattern as login fuel (`DailyRewardService::claimPremium`).
+- Grants `+1` per calendar day (`GameDay`), capped at `config('game.premium_fuel.default_max')` (free storage **5** in MVP); `PremiumFuelService` enforces the effective cap.
+- Tournament entry spends `config('game.premium_fuel.tournament_entry_cost')` (default **1**) inside the race transaction; logged as `TransactionType::ClubTournamentEntry` / `TransactionCurrency::PremiumFuel`.
+- `player_profiles.premium_fuel_claimed_at` is updated on claim for display; `daily_rewards` is the source of truth for idempotency.
+
+### Club tournaments (Phase 7)
+
+- Tables: `club_tournaments` (weekly `season_key`, `status`), `club_tournament_entries` (snapshot `club_id`, `points`, `counts_toward_club`), `club_tournament_reward_grants` (idempotent weekly payouts).
+- `race_attempts` / `race_results` link via nullable `club_tournament_id` when `attempt_type = club_tournament`.
+- Scoring: up to **20** attempts per player per season; only the best **10** by `points` (tie-break `created_at` ASC) set `counts_toward_club = true`. `clubs.points` is recalculated as the sum of counted entries for the active season (`ClubTournamentScoringService` + `ClubPointService::setPointsFromCountedEntries`).
+- Weekly lifecycle: `php artisan club-tournament:close` (scheduled Monday `00:05`, `withoutOverlapping`) closes ended seasons, distributes rank rewards idempotently, resets `clubs.points`, opens the next season.
 
 ## Scheduled Jobs
 
 Use Laravel scheduler for:
 
 - Daily reward reset (optional cleanup; claims do not require a reset job in MVP)
-- Weekly club tournament closing
-- Weekly club reward distribution
+- Weekly club tournament closing (`club-tournament:close` — see Club tournaments above)
+- Weekly club reward distribution (same command; idempotent `club_tournament_reward_grants`)
 - Cleanup old notifications
 - Rotating dealer offers
 

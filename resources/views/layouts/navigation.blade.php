@@ -43,6 +43,11 @@
                     <x-nav-link :href="route('daily-rewards.index')" :active="request()->routeIs('daily-rewards.*')">
                         {{ __('Daily') }}
                     </x-nav-link>
+                    @if ((Auth::user()->playerProfile?->level ?? 1) >= config('game.tournaments.unlock_level'))
+                        <x-nav-link :href="route('premium-fuel.index')" :active="request()->routeIs('premium-fuel.*')">
+                            {{ __('Premium fuel') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 

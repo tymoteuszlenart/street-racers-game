@@ -74,10 +74,16 @@ class ClubController extends Controller
             ? $user->clubMember
             : null;
 
+        $tournamentsUnlockLevel = (int) config('game.tournaments.unlock_level', 15);
+        $canAccessTournament = $currentMembership !== null
+            && ($user->playerProfile?->level ?? 1) >= $tournamentsUnlockLevel;
+
         return view('clubs.show', [
             'club' => $club,
             'members' => $members,
             'currentMembership' => $currentMembership,
+            'canAccessTournament' => $canAccessTournament,
+            'tournamentsUnlockLevel' => $tournamentsUnlockLevel,
         ]);
     }
 

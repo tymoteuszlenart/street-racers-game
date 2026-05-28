@@ -4,14 +4,18 @@ use App\Http\Controllers\ActiveCarController;
 use App\Http\Controllers\CarUpgradeController;
 use App\Http\Controllers\ClubController;
 use App\Http\Controllers\ClubRankingController;
+use App\Http\Controllers\ClubTournamentController;
 use App\Http\Controllers\DailyRewardController;
 use App\Http\Controllers\DealerController;
 use App\Http\Controllers\GarageController;
 use App\Http\Controllers\LeaderboardController;
+use App\Http\Controllers\PremiumFuelController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PvpRaceController;
 use App\Http\Controllers\RaceController;
 use App\Http\Controllers\RaceHistoryController;
+use App\Http\Controllers\TournamentResultController;
+use App\Http\Controllers\TournamentRewardController;
 use App\Http\Controllers\TuningShopController;
 use App\Services\DailyRewardService;
 use App\Services\PlayerLevelService;
@@ -27,6 +31,10 @@ Route::get('/dashboard', function () {
     $dailyRewardService = app(DailyRewardService::class);
     $dailyRewardAvailable = $user !== null && $dailyRewardService->canClaimLoginToday($user);
     $dailyRewardTankFull = $user !== null && $dailyRewardService->isLoginClaimBlockedByFullTank($user);
+    $premiumFuelAvailable = $user !== null && $dailyRewardService->canClaimPremiumToday($user);
+    $premiumFuelAtCap = $user !== null && $dailyRewardService->isPremiumClaimBlockedByCap($user);
+    $tournamentsUnlockLevel = config('game.tournaments.unlock_level');
+    $tournamentsUnlocked = ($profile?->level ?? 1) >= $tournamentsUnlockLevel;
     $clubsUnlockLevel = config('game.clubs.unlock_level');
     $clubsUnlocked = ($profile?->level ?? 1) >= $clubsUnlockLevel;
     $levelProgress = $profile !== null
@@ -37,6 +45,10 @@ Route::get('/dashboard', function () {
         'profile' => $profile,
         'dailyRewardAvailable' => $dailyRewardAvailable,
         'dailyRewardTankFull' => $dailyRewardTankFull,
+        'premiumFuelAvailable' => $premiumFuelAvailable,
+        'premiumFuelAtCap' => $premiumFuelAtCap,
+        'tournamentsUnlocked' => $tournamentsUnlocked,
+        'tournamentsUnlockLevel' => $tournamentsUnlockLevel,
         'clubsUnlocked' => $clubsUnlocked,
         'clubsUnlockLevel' => $clubsUnlockLevel,
         'userInClub' => $user?->clubMember !== null,
@@ -73,6 +85,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/daily-rewards', [DailyRewardController::class, 'index'])->name('daily-rewards.index');
     Route::post('/daily-rewards/login', [DailyRewardController::class, 'store'])->name('daily-rewards.claim');
 
+    Route::middleware('tournaments.unlocked')->group(function () {
+        Route::get('/premium-fuel', [PremiumFuelController::class, 'index'])->name('premium-fuel.index');
+        Route::post('/premium-fuel/claim', [PremiumFuelController::class, 'store'])->name('premium-fuel.claim');
+        Route::get('/tournament-rewards', [TournamentRewardController::class, 'index'])->name('tournament-rewards.index');
+        Route::get('/tournament-results/{raceResult}', [TournamentResultController::class, 'show'])->name('tournament-results.show');
+    });
+
     Route::get('/race-history', [RaceHistoryController::class, 'index'])->name('race-history.index');
 
     Route::get('/rankings', [LeaderboardController::class, 'index'])->name('leaderboard.index');
@@ -82,6 +101,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/clubs/create', [ClubController::class, 'create'])->name('clubs.create');
         Route::post('/clubs', [ClubController::class, 'store'])->name('clubs.store');
         Route::get('/clubs/rankings', [ClubRankingController::class, 'index'])->name('clubs.rankings');
+        Route::get('/clubs/{club:slug}/tournament', [ClubTournamentController::class, 'show'])->name('clubs.tournament');
+        Route::post('/clubs/{club:slug}/tournament/races', [ClubTournamentController::class, 'store'])
+            ->middleware('tournaments.unlocked')
+            ->name('clubs.tournament.races.store');
         Route::get('/clubs/{club:slug}', [ClubController::class, 'show'])->name('clubs.show');
         Route::post('/clubs/{club:slug}/join', [ClubController::class, 'join'])->name('clubs.join');
         Route::post('/clubs/{club:slug}/leave', [ClubController::class, 'leave'])->name('clubs.leave');
