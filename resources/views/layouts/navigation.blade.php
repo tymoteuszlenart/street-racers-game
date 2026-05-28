@@ -26,6 +26,9 @@
                     <x-nav-link :href="route('races.index')" :active="request()->routeIs('races.*')">
                         {{ __('Races') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('pvp.index')" :active="request()->routeIs('pvp.*')">
+                        {{ __('PvP') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -88,6 +91,9 @@
             @endif
             <x-responsive-nav-link :href="route('races.index')" :active="request()->routeIs('races.*')">
                 {{ __('Races') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('pvp.index')" :active="request()->routeIs('pvp.*')">
+                {{ __('PvP') }}
             </x-responsive-nav-link>
         </div>
 

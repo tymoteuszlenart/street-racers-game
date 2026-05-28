@@ -15,6 +15,10 @@ return [
 
     'pvp' => [
         'daily_pair_cap' => 10,
+        'fuel_cost' => 10,
+        'condition_damage_min' => 1,
+        'condition_damage_max' => 3,
+        'random_factor_variance' => 0.05,
     ],
 
     'player' => [
