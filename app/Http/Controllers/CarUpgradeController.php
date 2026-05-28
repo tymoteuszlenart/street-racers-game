@@ -82,7 +82,7 @@ class CarUpgradeController extends Controller
             abort(404);
         }
 
-        $this->partEquipService->unequip($request->user(), $part);
+        $this->partEquipService->unequip($request->user(), $part, $car);
 
         return redirect()
             ->route('garage.upgrades', $car)

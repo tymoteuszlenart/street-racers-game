@@ -9,7 +9,9 @@ use App\Models\Car;
 use App\Models\Part;
 use App\Models\PartModel;
 use App\Models\User;
+use App\Services\PartEquipService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class PartEquipTest extends TestCase
@@ -160,5 +162,40 @@ class PartEquipTest extends TestCase
             ->assertRedirect();
 
         $this->assertSame($carB->id, $part->fresh()->car_id);
+    }
+
+    public function test_unequip_rejects_stale_part_that_was_moved_to_another_car(): void
+    {
+        $user = $this->tuningReadyUser();
+        $user->playerProfile()->update(['cash' => 20000]);
+
+        $carA = $user->cars()->firstOrFail();
+        $carB = Car::query()->create([
+            'user_id' => $user->id,
+            'car_model_id' => $carA->car_model_id,
+            'nickname' => 'Second Ride',
+            'acquired_via' => 'dealer',
+        ]);
+
+        $partModel = PartModel::query()->where('name', 'Street Block')->firstOrFail();
+        $stalePart = Part::query()->create([
+            'user_id' => $user->id,
+            'part_model_id' => $partModel->id,
+            'car_id' => $carA->id,
+            'slot' => PartSlot::Engine,
+            'acquired_via' => PartAcquiredVia::Shop,
+        ]);
+
+        Part::query()
+            ->whereKey($stalePart->id)
+            ->update(['car_id' => $carB->id]);
+
+        $this->expectException(ValidationException::class);
+
+        try {
+            app(PartEquipService::class)->unequip($user, $stalePart, $carA);
+        } finally {
+            $this->assertSame($carB->id, $stalePart->fresh()->car_id);
+        }
     }
 }

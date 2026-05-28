@@ -69,7 +69,7 @@ class PartEquipService
         });
     }
 
-    public function unequip(User $user, Part $part): Part
+    public function unequip(User $user, Part $part, ?Car $expectedCar = null): Part
     {
         if ($part->user_id !== $user->id) {
             throw ValidationException::withMessages([
@@ -77,11 +77,21 @@ class PartEquipService
             ]);
         }
 
-        return DB::transaction(function () use ($user, $part) {
+        if ($expectedCar !== null && $expectedCar->user_id !== $user->id) {
+            throw ValidationException::withMessages([
+                'car' => ['You do not own this car.'],
+            ]);
+        }
+
+        return DB::transaction(function () use ($user, $part, $expectedCar) {
             $part = Part::query()
                 ->whereKey($part->id)
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            $expectedCar = $expectedCar !== null
+                ? Car::query()->whereKey($expectedCar->id)->lockForUpdate()->firstOrFail()
+                : null;
 
             if ($part->user_id !== $user->id) {
                 throw ValidationException::withMessages([
@@ -89,9 +99,21 @@ class PartEquipService
                 ]);
             }
 
+            if ($expectedCar !== null && $expectedCar->user_id !== $user->id) {
+                throw ValidationException::withMessages([
+                    'car' => ['You do not own this car.'],
+                ]);
+            }
+
             if ($part->car_id === null) {
                 throw ValidationException::withMessages([
                     'part' => ['This part is not equipped on a car.'],
+                ]);
+            }
+
+            if ($expectedCar !== null && $part->car_id !== $expectedCar->id) {
+                throw ValidationException::withMessages([
+                    'part' => ['This part is no longer equipped on that car.'],
                 ]);
             }
 
