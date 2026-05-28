@@ -5,6 +5,7 @@ use App\Http\Controllers\CarUpgradeController;
 use App\Http\Controllers\DealerController;
 use App\Http\Controllers\GarageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PvpRaceController;
 use App\Http\Controllers\RaceController;
 use App\Http\Controllers\TuningShopController;
 use Illuminate\Support\Facades\Route;
@@ -42,6 +43,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/races', [RaceController::class, 'index'])->name('races.index');
     Route::post('/races/{race}', [RaceController::class, 'store'])->name('races.start');
     Route::get('/races/results/{raceResult}', [RaceController::class, 'show'])->name('races.show');
+
+    Route::get('/pvp', [PvpRaceController::class, 'index'])->name('pvp.index');
+    Route::post('/pvp/{defender}', [PvpRaceController::class, 'store'])->name('pvp.start');
+    Route::get('/pvp/results/{raceResult}', [PvpRaceController::class, 'show'])->name('pvp.show');
+    Route::get('/pvp/history', [PvpRaceController::class, 'history'])->name('pvp.history');
 });
 
 Route::middleware('auth')->group(function () {
