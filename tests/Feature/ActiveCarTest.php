@@ -39,7 +39,7 @@ class ActiveCarTest extends TestCase
 
         $response = $this->actingAs($intruder)->patch(route('garage.active', $ownersCar));
 
-        $response->assertForbidden();
+        $response->assertNotFound();
         $this->assertNotSame($ownersCar->id, $intruder->playerProfile->fresh()->active_car_id);
     }
 }

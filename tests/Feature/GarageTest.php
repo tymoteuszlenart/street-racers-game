@@ -38,6 +38,6 @@ class GarageTest extends TestCase
 
         $response = $this->actingAs($intruder)->get(route('garage.show', $ownersCar));
 
-        $response->assertForbidden();
+        $response->assertNotFound();
     }
 }

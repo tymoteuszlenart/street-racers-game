@@ -1,22 +1,30 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('player_profiles', function (Blueprint $table) {
-            $table->unsignedBigInteger('cash')->default(5000)->change();
-        });
+        if (Schema::getConnection()->getDriverName() !== 'mysql') {
+            return;
+        }
+
+        DB::statement(
+            'ALTER TABLE player_profiles MODIFY cash BIGINT UNSIGNED NOT NULL DEFAULT 5000',
+        );
     }
 
     public function down(): void
     {
-        Schema::table('player_profiles', function (Blueprint $table) {
-            $table->bigInteger('cash')->default(5000)->change();
-        });
+        if (Schema::getConnection()->getDriverName() !== 'mysql') {
+            return;
+        }
+
+        DB::statement(
+            'ALTER TABLE player_profiles MODIFY cash BIGINT NOT NULL DEFAULT 5000',
+        );
     }
 };

@@ -26,7 +26,7 @@ class GarageController extends Controller
 
     public function show(Request $request, Car $car): View
     {
-        $this->authorize('view', $car);
+        abort_unless($car->user_id === $request->user()->id, 404);
 
         $car->load('carModel');
 

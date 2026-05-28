@@ -15,7 +15,7 @@ class ActiveCarController extends Controller
 
     public function update(Request $request, Car $car): RedirectResponse
     {
-        $this->authorize('setActive', $car);
+        abort_unless($car->user_id === $request->user()->id, 404);
 
         $this->activeCarService->setActive($request->user(), $car);
 
