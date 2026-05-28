@@ -25,6 +25,19 @@ class PremiumFuelService
         return $profile->premium_fuel_current >= $this->storageMax($profile);
     }
 
+    public function hasCapacity(PlayerProfile $profile): bool
+    {
+        return $profile->premium_fuel_current < $this->purchaseStorageMax($profile);
+    }
+
+    public function purchaseStorageMax(PlayerProfile $profile): int
+    {
+        return max(
+            $profile->premium_fuel_max,
+            (int) config('game.shop.paid_premium_fuel_max', 20),
+        );
+    }
+
     public function spend(PlayerProfile $profile, int $cost): void
     {
         if (! $this->hasEnough($profile, $cost)) {
