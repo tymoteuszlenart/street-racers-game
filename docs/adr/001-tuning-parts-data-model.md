@@ -87,9 +87,13 @@ Foreign keys:
 
 ### `PartSlot` (upgrade slot)
 
-Aligned with `docs/01-gameplay-logic.md`:
+Aligned with `docs/01-gameplay-logic.md`. Use a backed string enum (`PartSlot::Engine = 'engine'`, etc.) — same lowercase snake-free style as `RaceAttemptType` / `TransactionType`.
+
+Values:
 
 `engine`, `turbo`, `tires`, `suspension`, `gearbox`, `brakes`, `nitrous`, `ecu`
+
+`car_models.upgrade_slots` JSON, `parts.slot`, and `part_models.slot` must all use these exact strings (not display titles like `Engine`).
 
 ### `PartRarity`
 
@@ -103,7 +107,7 @@ Aligned with `docs/01-gameplay-logic.md`:
 
 ### `TransactionType` (extend existing enum)
 
-Add: `part_purchase` — logged via `TransactionService` on shop buy (same pattern as NPC race rewards).
+Add `TransactionType::PartPurchase = 'part_purchase'` (same PascalCase case + snake_case value pattern as `NpcRace = 'npc_race'`). Log via `TransactionService` on shop buy.
 
 ---
 
@@ -119,7 +123,7 @@ Rules:
 
 - If `upgrade_slots` is **`null`**, treat as **all eight slots** enabled (MVP default after seeder update).
 - Equip validation: `part.slot` must be listed in the owning car’s `car_model.upgrade_slots` (resolved list).
-- Seeder should set the full list on all current `car_models` rows.
+- Seeder should set the full list on all current `car_models` rows (same lowercase strings as `PartSlot` enum values).
 
 ---
 
@@ -127,7 +131,7 @@ Rules:
 
 ```text
 buy (shop)     → parts row: user_id set, car_id NULL, slot copied from part_model
-equip          → set parts.car_id = target car; clear previous part in same (car_id, slot) if any
+equip          → set parts.car_id = target car (see swap order below)
 unequip        → set parts.car_id NULL
 sell (later)   → delete part row + credit cash (not Phase 4)
 ```
@@ -136,9 +140,11 @@ Rules:
 
 1. Only the **part owner** (`parts.user_id`) may equip/unequip.
 2. Only the **car owner** may receive equipped parts (`cars.user_id` must match).
-3. **Equip** must run in a **DB transaction** with `SELECT … FOR UPDATE` on `player_profiles`, target `cars`, and the `parts` row (and optionally the incumbent part in that slot).
-4. **Buy** must run in a transaction: lock `player_profiles`, validate cash and `unlock_level`, deduct cash, insert `parts`, record `transactions`.
-5. Client never sends stat bonuses — only `part_model_id` / `part_id` / `car_id`.
+3. **One car per part row:** equipping sets `parts.car_id` to the target car and implicitly unequips that part from any other car (a single `UPDATE` is enough; no duplicate rows).
+4. **Equip** must run in a **DB transaction** with `SELECT … FOR UPDATE` on `player_profiles`, target `cars`, the `parts` row being equipped, and the incumbent part in that `(car_id, slot)` if any.
+5. **Slot swap order** (avoids unique `(car_id, slot)` violations): within the transaction, **first** set `car_id = NULL` on the incumbent part for that slot (if any), **then** set `car_id` on the part being equipped. Never assign the new part while the incumbent still holds the same `(car_id, slot)`.
+6. **Buy** must run in a transaction: lock `player_profiles`, validate cash and `unlock_level`, deduct cash, insert `parts`, record `transactions`.
+7. Client never sends stat bonuses — only `part_model_id` / `part_id` / `car_id`.
 
 ---
 
@@ -150,7 +156,8 @@ Rules:
 | Tuning shop page | `player_profiles.level >= 5` to access shop UI and buy endpoints |
 | Car class (equip) | Car’s `car_models.class` **rank** must be `>= part_models.min_car_class` rank |
 | Slot enabled | `part.slot` ∈ resolved `upgrade_slots` for that car model |
-| Duplicate slot on car | Rejected by unique `(car_id, slot)`; service **unequips incumbent** then equips new part (explicit swap UX) |
+| Duplicate slot on car | Unique `(car_id, slot)`; service **unequips incumbent** (`car_id = NULL`) **then** equips new part (see lifecycle swap order) |
+| Part already on another car | Allowed: equip moves `car_id` to the new car (rule 3 above) |
 
 **Class rank** (implement on `CarClass` enum):
 
@@ -186,8 +193,10 @@ Location: `app/Services/CarStatAggregator.php`
 
 ```text
 effective_stat = car_models.{stat}
-               + sum(parts.{stat}_bonus from equipped parts)
+               + sum(part_models.{stat}_bonus for each equipped part on this car)
 ```
+
+Bonuses come from `part_models` via `parts.part_model_id` (equipped rows where `parts.car_id = cars.id`). The `parts` table does not store bonus columns.
 
 for `stat` ∈ { power, acceleration, grip, handling }.
 
@@ -239,7 +248,7 @@ Stored on `pvp_races.challenger_snapshot` / `defender_snapshot`:
 | Service | Responsibility |
 | --- | --- |
 | `TuningShopService` | List buyable `part_models`; `purchase(user, partModel)` |
-| `PartEquipService` | `equip(user, part, car)`; `unequip(user, part)` |
+| `PartEquipService` | `equip(user, part, car)` (incumbent `car_id = NULL` first, then assign); `unequip(user, part)` |
 | `CarStatAggregator` | Effective race stats |
 
 Suggested routes (names illustrative):
@@ -270,7 +279,7 @@ Use this as the PR breakdown after this ADR merges. Check items off in the Phase
 - [ ] `PartModelSeeder` — at least 2–3 parts per slot tier for testing; mix of rarities/classes
 - [ ] Update `CarModelSeeder`: set `upgrade_slots` to full 8-slot array on all models
 - [ ] Register seeder in `DatabaseSeeder`
-- [ ] Extend `TransactionType` with `PartPurchase` (or `part_purchase` value matching convention)
+- [ ] Extend `TransactionType` with `PartPurchase = 'part_purchase'`
 
 ### Domain services
 
@@ -304,8 +313,9 @@ Use this as the PR breakdown after this ADR merges. Check items off in the Phase
 
 ### Docs and issue closure
 
-- [ ] Link this ADR from `docs/04-technical-plan.md` (Tuning section)
-- [ ] Close GitHub **#3** when this ADR is merged (implementation tracked separately, e.g. new Phase 4 issue)
+- [x] Link this ADR from `docs/04-technical-plan.md` (Tuning section) — done in PR #21
+- [ ] Open a **Phase 4: Tuning Shop implementation** GitHub issue referencing this ADR checklist (work continues after #3 closes)
+- [ ] Merge ADR PR; **#3** closes on merge (`Closes #3` — design complete; sell deferred per decision summary)
 
 ### Explicitly deferred (not blocking #3 or Phase 4 “done”)
 
@@ -319,7 +329,7 @@ Use this as the PR breakdown after this ADR merges. Check items off in the Phase
 
 ## Acceptance criteria (issue #3)
 
-- [x] Owned vs equipped lifecycle documented (buy → inventory → equip → unequip)
+- [x] Owned vs equipped lifecycle documented (buy → inventory → equip → unequip; **sell** documented in lifecycle but deferred past Phase 4 MVP, matching issue scope for design-only closure)
 - [x] Slot uniqueness and compatibility rules defined
 - [x] Stat aggregation formula documented (`CarStatAggregator`)
 - [x] Migration/schema sketch added (this ADR + technical plan link)
