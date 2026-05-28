@@ -14,8 +14,8 @@ use App\Models\PlayerProfile;
 use App\Models\PvpRace;
 use App\Models\RaceResult;
 use App\Models\User;
+use App\Support\GameDay;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
@@ -268,7 +268,7 @@ class PvpRaceService
             return;
         }
 
-        [$dayStart, $dayEnd] = $this->appTimezoneDayBounds();
+        [$dayStart, $dayEnd] = GameDay::bounds();
 
         $count = PvpRace::query()
             ->where(function ($query) use ($challengerId, $defenderId) {
@@ -288,19 +288,6 @@ class PvpRaceService
                 'pvp' => 'Daily race limit reached for this opponent pair.',
             ]);
         }
-    }
-
-    /**
-     * @return array{0: Carbon, 1: Carbon}
-     */
-    private function appTimezoneDayBounds(): array
-    {
-        $timezone = config('app.timezone');
-
-        return [
-            now($timezone)->startOfDay()->utc(),
-            now($timezone)->endOfDay()->utc(),
-        ];
     }
 
     private function applyChallengerConditionDamage(Car $car): void

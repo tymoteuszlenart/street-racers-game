@@ -45,6 +45,11 @@ class FuelService
         return $profile->fuel_current >= $cost;
     }
 
+    public function isTankFull(PlayerProfile $profile): bool
+    {
+        return $profile->fuel_current >= $profile->fuel_max;
+    }
+
     public function spend(PlayerProfile $profile, int $cost): void
     {
         if (! $this->hasEnough($profile, $cost)) {
@@ -55,5 +60,19 @@ class FuelService
 
         $profile->fuel_current -= $cost;
         $profile->save();
+    }
+
+    public function grant(PlayerProfile $profile, int $amount): int
+    {
+        if ($amount <= 0) {
+            return 0;
+        }
+
+        $before = $profile->fuel_current;
+        $profile->fuel_current = min($profile->fuel_max, $profile->fuel_current + $amount);
+        $granted = $profile->fuel_current - $before;
+        $profile->save();
+
+        return $granted;
     }
 }

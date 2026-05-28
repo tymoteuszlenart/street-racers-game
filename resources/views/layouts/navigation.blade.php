@@ -29,6 +29,15 @@
                     <x-nav-link :href="route('pvp.index')" :active="request()->routeIs('pvp.*')">
                         {{ __('PvP') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('leaderboard.index')" :active="request()->routeIs('leaderboard.*')">
+                        {{ __('Rankings') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('race-history.index')" :active="request()->routeIs('race-history.*')">
+                        {{ __('History') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('daily-rewards.index')" :active="request()->routeIs('daily-rewards.*')">
+                        {{ __('Daily') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -94,6 +103,15 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('pvp.index')" :active="request()->routeIs('pvp.*')">
                 {{ __('PvP') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('leaderboard.index')" :active="request()->routeIs('leaderboard.*')">
+                {{ __('Rankings') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('race-history.index')" :active="request()->routeIs('race-history.*')">
+                {{ __('History') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('daily-rewards.index')" :active="request()->routeIs('daily-rewards.*')">
+                {{ __('Daily') }}
             </x-responsive-nav-link>
         </div>
 

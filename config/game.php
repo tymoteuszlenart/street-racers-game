@@ -26,4 +26,10 @@ return [
         'experience_per_level' => 100,
     ],
 
+    'daily_rewards' => [
+        'login' => [
+            'fuel' => 20,
+        ],
+    ],
+
 ];

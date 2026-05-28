@@ -31,6 +31,22 @@
                         </div>
                     </div>
 
+                    @if ($dailyRewardAvailable ?? false)
+                        <div class="bg-racing-700 rounded-lg p-6 border border-accent-orange mb-8">
+                            <h4 class="text-accent-orange font-semibold text-lg mb-2">{{ __('Daily fuel ready') }}</h4>
+                            <p class="text-gray-400 text-sm mb-3">{{ __('Claim your free daily fuel refill.') }}</p>
+                            <a href="{{ route('daily-rewards.index') }}" class="inline-block text-sm text-accent-neon hover:underline">
+                                {{ __('Claim daily reward') }}
+                            </a>
+                        </div>
+                    @elseif ($dailyRewardTankFull ?? false)
+                        <div class="bg-racing-700 rounded-lg p-6 border border-racing-600 mb-8">
+                            <h4 class="text-gray-300 font-semibold text-lg mb-2">{{ __('Daily fuel waiting') }}</h4>
+                            <p class="text-gray-400 text-sm mb-3">{{ __('Your tank is full. Spend fuel on races, then claim today\'s bonus.') }}</p>
+                            <a href="{{ route('races.index') }}" class="inline-block text-sm text-accent-blue hover:text-accent-neon">{{ __('Race now') }}</a>
+                        </div>
+                    @endif
+
                     <div class="bg-racing-700 rounded-lg p-6 border border-racing-600">
                         <div class="flex flex-wrap items-start justify-between gap-4 mb-4">
                             <h4 class="text-accent-neon font-semibold text-lg">Active Car</h4>
