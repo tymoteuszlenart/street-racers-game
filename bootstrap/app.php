@@ -21,6 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
             ->withoutOverlapping();
     })
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->validateCsrfTokens(except: [
+            'webhooks/stripe',
+        ]);
+
         $middleware->alias([
             'tuning.unlocked' => EnsureTuningShopUnlocked::class,
             'clubs.unlocked' => EnsureClubsUnlocked::class,
