@@ -4,15 +4,16 @@ namespace App\Services;
 
 use App\Models\Car;
 use App\Models\User;
+use Illuminate\Validation\ValidationException;
 
 class ActiveCarService
 {
     public function setActive(User $user, Car $car): void
     {
-        if ($car->user_id !== $user->id) {
-            abort(403);
-        }
+        $profile = $user->playerProfile ?? throw ValidationException::withMessages([
+            'car' => 'Player profile not found.',
+        ]);
 
-        $user->playerProfile?->update(['active_car_id' => $car->id]);
+        $profile->setActiveCarId($car->id);
     }
 }

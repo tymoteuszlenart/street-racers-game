@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('cars', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('car_model_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('car_model_id')->constrained()->restrictOnDelete();
             $table->string('nickname');
             $table->unsignedTinyInteger('condition_current')->default(100);
             $table->unsignedTinyInteger('condition_max')->default(100);

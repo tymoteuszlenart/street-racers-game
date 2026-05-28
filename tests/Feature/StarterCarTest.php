@@ -6,6 +6,7 @@ use App\Models\Car;
 use App\Models\CarModel;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use RuntimeException;
 use Tests\TestCase;
 
 class StarterCarTest extends TestCase
@@ -35,5 +36,15 @@ class StarterCarTest extends TestCase
         $starterModel = CarModel::query()->where('starter', true)->firstOrFail();
         $this->assertSame($starterModel->id, $car->car_model_id);
         $this->assertStringContainsString($starterModel->name, $car->nickname);
+    }
+
+    public function test_profile_creation_fails_when_starter_catalog_is_missing(): void
+    {
+        CarModel::query()->delete();
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Starter car catalog is not configured');
+
+        User::factory()->create();
     }
 }

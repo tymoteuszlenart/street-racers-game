@@ -11,13 +11,22 @@ class PurchaseCarRequest extends FormRequest
         return $this->user() !== null;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('nickname')) {
+            $this->merge([
+                'nickname' => trim((string) $this->input('nickname')),
+            ]);
+        }
+    }
+
     /**
      * @return array<string, mixed>
      */
     public function rules(): array
     {
         return [
-            'nickname' => ['required', 'string', 'max:64'],
+            'nickname' => ['required', 'string', 'min:1', 'max:64'],
         ];
     }
 }

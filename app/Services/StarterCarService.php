@@ -8,11 +8,19 @@ use App\Models\CarModel;
 use App\Models\PlayerProfile;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use RuntimeException;
 
 class StarterCarService
 {
-    public function assignToProfile(PlayerProfile $profile): ?Car
+    public function assignToProfile(PlayerProfile $profile): Car
     {
+        $user = $profile->user;
+
+        if ($user->cars()->exists()) {
+            return $profile->activeCar ?? $user->cars()->firstOrFail();
+        }
+
         $carModel = CarModel::query()
             ->active()
             ->starter()
@@ -21,10 +29,15 @@ class StarterCarService
             ->first();
 
         if ($carModel === null) {
-            return null;
-        }
+            Log::error('Starter car catalog is not configured.', [
+                'player_profile_id' => $profile->id,
+                'user_id' => $user->id,
+            ]);
 
-        $user = $profile->user;
+            throw new RuntimeException(
+                'Starter car catalog is not configured. Run php artisan db:seed.',
+            );
+        }
 
         return DB::transaction(function () use ($profile, $user, $carModel) {
             $car = Car::query()->create([
@@ -35,7 +48,7 @@ class StarterCarService
                 'purchase_price' => null,
             ]);
 
-            $profile->update(['active_car_id' => $car->id]);
+            $profile->setActiveCarId($car->id);
 
             return $car;
         });

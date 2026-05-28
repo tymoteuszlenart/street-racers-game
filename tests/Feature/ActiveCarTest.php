@@ -22,7 +22,7 @@ class ActiveCarTest extends TestCase
             'nickname' => 'Backup Ride',
         ]);
 
-        $profile->update(['active_car_id' => $starterCar->id]);
+        $profile->setActiveCarId($starterCar->id);
 
         $response = $this->actingAs($user)->patch(route('garage.active', $secondCar));
 

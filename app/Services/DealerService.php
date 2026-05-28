@@ -42,7 +42,7 @@ class DealerService
             ]);
 
             if ($profile->active_car_id === null) {
-                $profile->update(['active_car_id' => $car->id]);
+                $profile->setActiveCarId($car->id);
             }
 
             return $car;

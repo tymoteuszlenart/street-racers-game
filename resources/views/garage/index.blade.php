@@ -7,12 +7,6 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            @if (session('status'))
-                <div class="bg-racing-700 border border-accent-green text-accent-green px-4 py-3 rounded-lg">
-                    {{ __('Changes saved.') }}
-                </div>
-            @endif
-
             <div class="flex flex-wrap gap-4 justify-between items-center">
                 <p class="text-gray-400">{{ __('Your owned cars. The active car is used for races.') }}</p>
                 <a href="{{ route('dealer.index') }}" class="inline-flex items-center px-4 py-2 bg-accent-orange text-white rounded-md font-semibold text-sm hover:opacity-90">

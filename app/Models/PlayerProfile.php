@@ -22,7 +22,6 @@ class PlayerProfile extends Model
         'premium_fuel_current',
         'premium_fuel_max',
         'premium_fuel_claimed_at',
-        'active_car_id',
     ];
 
     protected $casts = [
@@ -38,5 +37,11 @@ class PlayerProfile extends Model
     public function activeCar(): BelongsTo
     {
         return $this->belongsTo(Car::class, 'active_car_id');
+    }
+
+    public function setActiveCarId(?int $carId): void
+    {
+        $this->active_car_id = $carId;
+        $this->save();
     }
 }

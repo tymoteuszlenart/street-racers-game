@@ -96,7 +96,8 @@ class DealerPurchaseTest extends TestCase
     {
         $user = User::factory()->create();
         $profile = $user->playerProfile()->firstOrFail();
-        $profile->update(['active_car_id' => null, 'cash' => 20000]);
+        $profile->setActiveCarId(null);
+        $profile->update(['cash' => 20000]);
 
         $carModel = CarModel::query()->where('name', 'Neon Hatch')->firstOrFail();
 
@@ -113,6 +114,42 @@ class DealerPurchaseTest extends TestCase
             ->firstOrFail();
 
         $this->assertSame($purchased->id, $profile->active_car_id);
+    }
+
+    public function test_dealer_purchase_rejects_inactive_model(): void
+    {
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $initialCash = $profile->cash;
+
+        $carModel = CarModel::factory()->create([
+            'name' => 'Retired Racer',
+            'active' => false,
+            'starter' => false,
+            'unlock_level' => 1,
+            'price' => 1000,
+        ]);
+
+        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
+            'nickname' => 'Should Fail',
+        ]);
+
+        $response->assertSessionHasErrors('car_model');
+        $this->assertSame($initialCash, $profile->fresh()->cash);
+        $this->assertSame(1, Car::query()->where('user_id', $user->id)->count());
+    }
+
+    public function test_dealer_purchase_rejects_whitespace_nickname(): void
+    {
+        $user = User::factory()->create();
+
+        $carModel = CarModel::query()->where('name', 'Neon Hatch')->firstOrFail();
+
+        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
+            'nickname' => '   ',
+        ]);
+
+        $response->assertSessionHasErrors('nickname');
     }
 
     public function test_player_can_buy_same_model_multiple_times(): void
