@@ -13,26 +13,33 @@ class ClubMembershipService
 {
     public function join(User $user, Club $club): ClubMember
     {
-        if (ClubMember::query()->where('user_id', $user->id)->exists()) {
-            throw ValidationException::withMessages([
-                'club' => 'You are already in a club.',
+        return DB::transaction(function () use ($user, $club) {
+            if (ClubMember::query()->where('user_id', $user->id)->lockForUpdate()->exists()) {
+                throw ValidationException::withMessages([
+                    'club' => 'You are already in a club.',
+                ]);
+            }
+
+            Club::query()->whereKey($club->id)->lockForUpdate()->firstOrFail();
+
+            $memberCount = ClubMember::query()
+                ->where('club_id', $club->id)
+                ->lockForUpdate()
+                ->count();
+
+            if ($memberCount >= config('game.clubs.max_members')) {
+                throw ValidationException::withMessages([
+                    'club' => 'This club is full.',
+                ]);
+            }
+
+            return ClubMember::query()->create([
+                'club_id' => $club->id,
+                'user_id' => $user->id,
+                'role' => ClubRole::Member,
+                'joined_at' => now(),
             ]);
-        }
-
-        $club->loadCount('members');
-
-        if ($club->isFull()) {
-            throw ValidationException::withMessages([
-                'club' => 'This club is full.',
-            ]);
-        }
-
-        return ClubMember::query()->create([
-            'club_id' => $club->id,
-            'user_id' => $user->id,
-            'role' => ClubRole::Member,
-            'joined_at' => now(),
-        ]);
+        });
     }
 
     public function leave(User $user): void
