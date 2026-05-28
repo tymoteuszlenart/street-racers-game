@@ -44,6 +44,11 @@ class Club extends Model
         return $this->hasManyThrough(User::class, ClubMember::class, 'club_id', 'id', 'id', 'user_id');
     }
 
+    public function tournamentEntries(): HasMany
+    {
+        return $this->hasMany(ClubTournamentEntry::class);
+    }
+
     public function isFull(): bool
     {
         $count = $this->members_count ?? $this->members()->count();

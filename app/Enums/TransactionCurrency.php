@@ -8,4 +8,5 @@ enum TransactionCurrency: string
     case Cash = 'cash';
     case Reputation = 'reputation';
     case Experience = 'experience';
+    case PremiumFuel = 'premium_fuel';
 }

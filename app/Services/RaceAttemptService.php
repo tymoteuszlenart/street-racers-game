@@ -22,6 +22,7 @@ class RaceAttemptService
         RaceAttemptType $attemptType,
         ?int $raceId,
         ?int $defenderUserId,
+        ?int $clubTournamentId = null,
     ): ResolvedRaceAttempt {
         $attempt = RaceAttempt::query()
             ->where('user_id', $userId)
@@ -30,7 +31,7 @@ class RaceAttemptService
             ->first();
 
         if ($attempt !== null) {
-            $this->assertMatchingAttemptRequest($attempt, $attemptType, $raceId, $defenderUserId);
+            $this->assertMatchingAttemptRequest($attempt, $attemptType, $raceId, $defenderUserId, $clubTournamentId);
 
             return new ResolvedRaceAttempt(
                 attempt: $attempt,
@@ -48,6 +49,7 @@ class RaceAttemptService
                     'attempt_type' => $attemptType,
                     'race_id' => $raceId,
                     'defender_user_id' => $defenderUserId,
+                    'club_tournament_id' => $clubTournamentId,
                     'status' => RaceAttemptStatus::Pending,
                     'expires_at' => $expiresAt,
                 ]),
@@ -64,7 +66,7 @@ class RaceAttemptService
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            $this->assertMatchingAttemptRequest($attempt, $attemptType, $raceId, $defenderUserId);
+            $this->assertMatchingAttemptRequest($attempt, $attemptType, $raceId, $defenderUserId, $clubTournamentId);
 
             return new ResolvedRaceAttempt(
                 attempt: $attempt,
@@ -97,14 +99,16 @@ class RaceAttemptService
         ?int $raceId,
         ?int $defenderUserId,
         string $errorCode,
+        ?int $clubTournamentId = null,
     ): void {
-        DB::transaction(function () use ($userId, $idempotencyKey, $attemptType, $raceId, $defenderUserId, $errorCode) {
+        DB::transaction(function () use ($userId, $idempotencyKey, $attemptType, $raceId, $defenderUserId, $clubTournamentId, $errorCode) {
             $resolvedAttempt = $this->resolveOrCreate(
                 userId: $userId,
                 idempotencyKey: $idempotencyKey,
                 attemptType: $attemptType,
                 raceId: $raceId,
                 defenderUserId: $defenderUserId,
+                clubTournamentId: $clubTournamentId,
             );
 
             $attempt = $resolvedAttempt->attempt;
@@ -125,11 +129,13 @@ class RaceAttemptService
         RaceAttemptType $attemptType,
         ?int $raceId,
         ?int $defenderUserId,
+        ?int $clubTournamentId,
     ): void {
         if (
             $attempt->attempt_type !== $attemptType
             || $attempt->race_id !== $raceId
             || $attempt->defender_user_id !== $defenderUserId
+            || $attempt->club_tournament_id !== $clubTournamentId
         ) {
             throw new IdempotencyKeyConflictException;
         }

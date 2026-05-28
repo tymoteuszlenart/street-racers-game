@@ -52,6 +52,13 @@
                 @endif
 
                 <div class="flex flex-wrap gap-3 pt-2">
+                    @if ($canAccessTournament ?? false)
+                        <a href="{{ route('clubs.tournament', $club) }}" class="inline-flex items-center px-4 py-2 bg-racing-700 border border-accent-neon rounded-md text-sm text-accent-neon hover:bg-racing-600">
+                            {{ __('Club tournament') }}
+                        </a>
+                    @elseif ($currentMembership !== null)
+                        <p class="text-gray-500 text-sm">{{ __('Reach level :level for club tournaments.', ['level' => $tournamentsUnlockLevel ?? 15]) }}</p>
+                    @endif
                     @if ($currentMembership === null && ! $club->isFull())
                         <form method="POST" action="{{ route('clubs.join', $club) }}">
                             @csrf
