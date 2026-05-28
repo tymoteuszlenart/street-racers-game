@@ -21,7 +21,10 @@ npm install
 cp .env.example .env
 php artisan key:generate
 php artisan migrate
+php artisan db:seed
 ```
+
+The car catalog (`CarModelSeeder`) is required for starter cars on registration and the dealer.
 
 ## Development
 

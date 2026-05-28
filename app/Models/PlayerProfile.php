@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use App\Observers\PlayerProfileObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+#[ObservedBy(PlayerProfileObserver::class)]
 class PlayerProfile extends Model
 {
     protected $fillable = [
@@ -19,7 +22,6 @@ class PlayerProfile extends Model
         'premium_fuel_current',
         'premium_fuel_max',
         'premium_fuel_claimed_at',
-        'active_car_id',
     ];
 
     protected $casts = [
@@ -30,5 +32,24 @@ class PlayerProfile extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function activeCar(): BelongsTo
+    {
+        return $this->belongsTo(Car::class, 'active_car_id');
+    }
+
+    public function setActiveCarId(?int $carId): void
+    {
+        if ($carId !== null) {
+            $car = Car::query()->findOrFail($carId);
+
+            if ($car->user_id !== $this->user_id) {
+                throw new \InvalidArgumentException('Active car must belong to the player.');
+            }
+        }
+
+        $this->active_car_id = $carId;
+        $this->save();
     }
 }
