@@ -596,7 +596,7 @@ The project uses PHPUnit via Laravel:
 - First **game** tests ship with Phase 3 (`FuelService`, `RaceService`), not Phase 1.
 - Phase 1 is complete when auth/profile feature tests pass and the harness is documented in `README.md`.
 
-Continuous integration on push is a follow-up (not part of issue #7 docs scope): open a dedicated GitHub issue for CI if one does not exist yet. Default CI should run `php artisan test`; add `php artisan test --configuration=phpunit.mysql.xml` when a MySQL service is available in CI.
+Continuous integration (`.github/workflows/tests.yml`): the `tests` job runs `php artisan test` (SQLite) and Pint; the `integration` job runs `php artisan test --configuration=phpunit.mysql.xml` against a MySQL 8.0 service container on every push/PR to `main`.
 
 ### Test layers
 
@@ -608,7 +608,7 @@ Continuous integration on push is a follow-up (not part of issue #7 docs scope):
 
 ### Database policy
 
-- **SQLite (default):** Most unit and feature tests. Fast, no external MySQL required for local dev or default CI.
+- **SQLite (default):** Most unit and feature tests. Fast, no external MySQL required for local dev; default CI job uses SQLite in-memory.
 - **MySQL (required):** Race and PvP concurrency, row locking (`SELECT … FOR UPDATE`), and any behavior SQLite does not model reliably. Place these in `tests/Integration/` and extend `Tests\Integration\TestCase` (uses MySQL; see below).
 
 Run suites:

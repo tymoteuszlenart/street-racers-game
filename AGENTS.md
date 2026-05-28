@@ -45,10 +45,10 @@ See `README.md` for standard commands. Key points:
 
 ### Testing
 
-- **CI**: GitHub Actions workflow `.github/workflows/tests.yml` runs `php artisan test` and `./vendor/bin/pint --test` on push/PR to `main`.
+- **CI**: GitHub Actions workflow `.github/workflows/tests.yml` runs on push/PR to `main`: the `tests` job runs `php artisan test` (SQLite) and `./vendor/bin/pint --test`; the `integration` job starts MySQL 8.0 and runs `php artisan test --configuration=phpunit.mysql.xml` (no secrets required — credentials match `phpunit.mysql.xml`).
 - **Lint**: `./vendor/bin/pint --test`
 - **Tests**: `php artisan test` (uses SQLite in-memory by default via `phpunit.xml`)
-- **Integration tests**: `php artisan test --configuration=phpunit.mysql.xml` (MySQL required; not part of the default suite; extend `Tests\Integration\TestCase`)
+- **Integration tests**: `php artisan test --configuration=phpunit.mysql.xml` (MySQL required locally; same suite runs in CI; extend `Tests\Integration\TestCase`)
 - Before closing Phase 3 or 4b race work, run **both** `php artisan test` and `php artisan test --configuration=phpunit.mysql.xml`.
 - Per-phase minimum tests are in `docs/05-mvp-roadmap.md`; full strategy in `docs/04-technical-plan.md` (Testing strategy).
 
