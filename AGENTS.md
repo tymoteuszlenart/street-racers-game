@@ -65,3 +65,4 @@ When opening a pull request:
 - The `.env` file is not committed to git. Copy `.env.example` to `.env` and run `php artisan key:generate` if `.env` is missing.
 - PlayerProfile is auto-created via a UserObserver when a new User is registered.
 - The default starter cash for new players is $5,000 (set in the migration default).
+- **Race start rate limits** use Laravel `RateLimiter` (see `docs/04-technical-plan.md`, Rate limiting). Production deployments with multiple app servers must use a shared cache (`CACHE_STORE=redis`); `file`/`array` only rate-limit per process.
