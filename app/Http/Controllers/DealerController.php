@@ -22,6 +22,7 @@ class DealerController extends Controller
 
         $carModels = CarModel::query()
             ->active()
+            ->dealerCatalog()
             ->unlockedForLevel($level)
             ->orderBy('unlock_level')
             ->orderBy('price')

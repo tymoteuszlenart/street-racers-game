@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CarClass;
+use App\Models\Concerns\ValidatesDealerPurchase;
 use Database\Factories\CarModelFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,6 +13,8 @@ class CarModel extends Model
 {
     /** @use HasFactory<CarModelFactory> */
     use HasFactory;
+
+    use ValidatesDealerPurchase;
 
     protected $fillable = [
         'name',
@@ -59,5 +62,10 @@ class CarModel extends Model
     public function scopeStarter($query)
     {
         return $query->where('starter', true);
+    }
+
+    public function scopeDealerCatalog($query)
+    {
+        return $query->where('starter', false);
     }
 }

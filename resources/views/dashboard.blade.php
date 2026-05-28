@@ -15,19 +15,19 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                         <div class="bg-racing-700 rounded-lg p-6 border border-racing-600">
                             <h4 class="text-accent-orange font-semibold text-lg mb-2">Cash</h4>
-                            <p class="text-3xl font-bold text-white">${{ number_format($profile->cash ?? 0) }}</p>
+                            <p class="text-3xl font-bold text-white">${{ number_format($profile?->cash ?? 0) }}</p>
                         </div>
                         <div class="bg-racing-700 rounded-lg p-6 border border-racing-600">
                             <h4 class="text-accent-blue font-semibold text-lg mb-2">Level</h4>
-                            <p class="text-3xl font-bold text-white">{{ $profile->level ?? 1 }}</p>
+                            <p class="text-3xl font-bold text-white">{{ $profile?->level ?? 1 }}</p>
                         </div>
                         <div class="bg-racing-700 rounded-lg p-6 border border-racing-600">
                             <h4 class="text-accent-green font-semibold text-lg mb-2">Fuel</h4>
-                            <p class="text-3xl font-bold text-white">{{ $profile->fuel_current ?? 0 }}/{{ $profile->fuel_max ?? 100 }}</p>
+                            <p class="text-3xl font-bold text-white">{{ $profile?->fuel_current ?? 0 }}/{{ $profile?->fuel_max ?? 100 }}</p>
                         </div>
                         <div class="bg-racing-700 rounded-lg p-6 border border-racing-600">
                             <h4 class="text-accent-neon font-semibold text-lg mb-2">Reputation</h4>
-                            <p class="text-3xl font-bold text-white">{{ $profile->reputation ?? 0 }}</p>
+                            <p class="text-3xl font-bold text-white">{{ $profile?->reputation ?? 0 }}</p>
                         </div>
                     </div>
 

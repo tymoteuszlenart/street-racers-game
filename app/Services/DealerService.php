@@ -51,28 +51,6 @@ class DealerService
 
     private function assertCanPurchase(PlayerProfile $profile, CarModel $carModel): void
     {
-        if ($carModel->starter) {
-            throw ValidationException::withMessages([
-                'car_model' => 'Starter cars cannot be purchased from the dealer.',
-            ]);
-        }
-
-        if (! $carModel->active) {
-            throw ValidationException::withMessages([
-                'car_model' => 'This car is not available at the dealer.',
-            ]);
-        }
-
-        if ($carModel->unlock_level > $profile->level) {
-            throw ValidationException::withMessages([
-                'car_model' => 'Your level is too low to purchase this car.',
-            ]);
-        }
-
-        if ($profile->cash < $carModel->price) {
-            throw ValidationException::withMessages([
-                'cash' => 'You do not have enough cash for this car.',
-            ]);
-        }
+        $carModel->assertPurchasableBy($profile);
     }
 }

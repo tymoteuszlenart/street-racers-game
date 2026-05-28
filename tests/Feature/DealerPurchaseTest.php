@@ -21,6 +21,7 @@ class DealerPurchaseTest extends TestCase
         $carModel = CarModel::query()->where('name', 'Neon Hatch')->firstOrFail();
 
         $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
+            'car_model_id' => $carModel->id,
             'nickname' => 'Dream Car',
         ]);
 

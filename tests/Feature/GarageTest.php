@@ -11,6 +11,24 @@ class GarageTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_guest_cannot_view_garage(): void
+    {
+        $response = $this->get(route('garage.index'));
+
+        $response->assertRedirect(route('login'));
+    }
+
+    public function test_owner_can_view_garage_index(): void
+    {
+        $user = User::factory()->create();
+        $car = $user->cars()->firstOrFail();
+
+        $response = $this->actingAs($user)->get(route('garage.index'));
+
+        $response->assertOk();
+        $response->assertSee($car->nickname);
+    }
+
     public function test_user_cannot_view_another_players_car(): void
     {
         $owner = User::factory()->create();

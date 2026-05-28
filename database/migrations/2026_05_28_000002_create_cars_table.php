@@ -18,9 +18,6 @@ return new class extends Migration
             $table->string('acquired_via');
             $table->unsignedBigInteger('purchase_price')->nullable();
             $table->timestamps();
-
-            $table->index('user_id');
-            $table->index('car_model_id');
         });
     }
 

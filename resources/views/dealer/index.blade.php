@@ -12,6 +12,13 @@
                 <span class="text-white font-semibold">${{ number_format($cash) }}</span>
             </p>
 
+            @if ($errors->has('cash') || $errors->has('car_model'))
+                <div class="bg-racing-700 border border-accent-orange text-accent-orange px-4 py-3 rounded-lg space-y-1">
+                    <x-input-error :messages="$errors->get('cash')" />
+                    <x-input-error :messages="$errors->get('car_model')" />
+                </div>
+            @endif
+
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 @foreach ($carModels as $carModel)
                     <div class="bg-racing-800 border border-racing-600 rounded-lg p-6">
@@ -23,24 +30,20 @@
                                 <div>
                                     <h3 class="text-xl font-bold text-white">{{ $carModel->name }}</h3>
                                     <p class="text-gray-400 text-sm">Class {{ $carModel->class->value }} · Lvl {{ $carModel->unlock_level }}+ · ${{ number_format($carModel->price) }}</p>
-                                    @if ($carModel->starter)
-                                        <p class="text-accent-neon text-xs mt-1">{{ __('Starter model — assigned on registration') }}</p>
-                                    @endif
                                 </div>
                                 <x-car-stats :car-model="$carModel" />
-                                @if (! $carModel->starter)
-                                    <form method="POST" action="{{ route('dealer.purchase', $carModel) }}" class="space-y-3 pt-2 border-t border-racing-600">
-                                        @csrf
-                                        <div>
-                                            <x-input-label for="nickname-{{ $carModel->id }}" :value="__('Nickname')" />
-                                            <x-text-input id="nickname-{{ $carModel->id }}" name="nickname" type="text" class="mt-1 block w-full" required maxlength="64" placeholder="{{ __('My street machine') }}" />
+                                <form method="POST" action="{{ route('dealer.purchase', $carModel) }}" class="space-y-3 pt-2 border-t border-racing-600">
+                                    @csrf
+                                    <input type="hidden" name="car_model_id" value="{{ $carModel->id }}">
+                                    <div>
+                                        <x-input-label for="nickname-{{ $carModel->id }}" :value="__('Nickname')" />
+                                        <x-text-input id="nickname-{{ $carModel->id }}" name="nickname" type="text" class="mt-1 block w-full" required maxlength="64" placeholder="{{ __('My street machine') }}" value="{{ old('car_model_id') == $carModel->id ? old('nickname') : '' }}" />
+                                        @if (old('car_model_id') == $carModel->id)
                                             <x-input-error :messages="$errors->get('nickname')" class="mt-2" />
-                                            <x-input-error :messages="$errors->get('cash')" class="mt-2" />
-                                            <x-input-error :messages="$errors->get('car_model')" class="mt-2" />
-                                        </div>
-                                        <x-primary-button>{{ __('Purchase') }}</x-primary-button>
-                                    </form>
-                                @endif
+                                        @endif
+                                    </div>
+                                    <x-primary-button>{{ __('Purchase') }}</x-primary-button>
+                                </form>
                             </div>
                         </div>
                     </div>

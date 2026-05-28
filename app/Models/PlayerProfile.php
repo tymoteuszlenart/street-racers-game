@@ -41,6 +41,14 @@ class PlayerProfile extends Model
 
     public function setActiveCarId(?int $carId): void
     {
+        if ($carId !== null) {
+            $car = Car::query()->findOrFail($carId);
+
+            if ($car->user_id !== $this->user_id) {
+                throw new \InvalidArgumentException('Active car must belong to the player.');
+            }
+        }
+
         $this->active_car_id = $carId;
         $this->save();
     }
