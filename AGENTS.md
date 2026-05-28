@@ -45,6 +45,7 @@ See `README.md` for standard commands. Key points:
 
 ### Testing
 
+- **CI**: GitHub Actions workflow `.github/workflows/tests.yml` runs `php artisan test` and `./vendor/bin/pint --test` on push/PR to `main`.
 - **Lint**: `./vendor/bin/pint --test`
 - **Tests**: `php artisan test` (uses SQLite in-memory by default via `phpunit.xml`)
 - **Integration tests**: `php artisan test --configuration=phpunit.mysql.xml` (MySQL required; not part of the default suite; extend `Tests\Integration\TestCase`)
