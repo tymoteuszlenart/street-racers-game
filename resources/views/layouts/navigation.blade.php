@@ -43,6 +43,9 @@
                     <x-nav-link :href="route('daily-rewards.index')" :active="request()->routeIs('daily-rewards.*')">
                         {{ __('Daily') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('shop.index')" :active="request()->routeIs('shop.*')">
+                        {{ __('Shop') }}
+                    </x-nav-link>
                     @if ((Auth::user()->playerProfile?->level ?? 1) >= config('game.tournaments.unlock_level'))
                         <x-nav-link :href="route('premium-fuel.index')" :active="request()->routeIs('premium-fuel.*')">
                             {{ __('Premium fuel') }}
@@ -127,6 +130,9 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('daily-rewards.index')" :active="request()->routeIs('daily-rewards.*')">
                 {{ __('Daily') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('shop.index')" :active="request()->routeIs('shop.*')">
+                {{ __('Shop') }}
             </x-responsive-nav-link>
         </div>
 

@@ -14,6 +14,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PvpRaceController;
 use App\Http\Controllers\RaceController;
 use App\Http\Controllers\RaceHistoryController;
+use App\Http\Controllers\ShopController;
 use App\Http\Controllers\TournamentResultController;
 use App\Http\Controllers\TournamentRewardController;
 use App\Http\Controllers\TuningShopController;
@@ -84,6 +85,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/daily-rewards', [DailyRewardController::class, 'index'])->name('daily-rewards.index');
     Route::post('/daily-rewards/login', [DailyRewardController::class, 'store'])->name('daily-rewards.claim');
+
+    Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
+    Route::post('/shop/checkout/{shopProduct:slug}', [ShopController::class, 'checkout'])->name('shop.checkout');
+    Route::get('/shop/success', [ShopController::class, 'success'])->name('shop.success');
+    Route::get('/shop/cancel', [ShopController::class, 'cancel'])->name('shop.cancel');
 
     Route::middleware('tournaments.unlocked')->group(function () {
         Route::get('/premium-fuel', [PremiumFuelController::class, 'index'])->name('premium-fuel.index');

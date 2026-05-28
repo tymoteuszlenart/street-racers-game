@@ -47,6 +47,7 @@ return [
 
     'shop' => [
         'paid_premium_fuel_max' => 20,
+        'checkout_rate_limit_per_minute' => 10,
         'products' => [
             'fuel-add-50' => [
                 'slug' => 'fuel-add-50',

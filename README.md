@@ -55,3 +55,21 @@ On every push and pull request to `main`, [GitHub Actions](https://github.com/ty
 See `docs/04-technical-plan.md` (Testing strategy) and `docs/05-mvp-roadmap.md` for per-phase test requirements.
 
 For non-default MySQL credentials, edit `phpunit.mysql.xml` or use `.env.testing` (see `.env.testing.example`) after removing the `DB_*` `<env>` entries from `phpunit.mysql.xml` — PHPUnit env vars take precedence over `.env.testing`.
+
+## Stripe (test mode)
+
+Paid fuel packs use [Stripe Checkout](https://stripe.com/docs/checkout). Set test keys in `.env`:
+
+```env
+STRIPE_KEY=pk_test_...
+STRIPE_SECRET=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+`STRIPE_WEBHOOK_SECRET` is required for webhook fulfillment (#35). For local webhook testing, forward events to the app:
+
+```bash
+stripe listen --forward-to http://localhost:8000/stripe/webhook
+```
+
+Use the signing secret printed by `stripe listen` as `STRIPE_WEBHOOK_SECRET`. Checkout success/cancel URLs are `/shop/success` and `/shop/cancel`; rewards are granted only after a verified webhook, not on the success page alone.
