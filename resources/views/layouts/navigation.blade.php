@@ -23,6 +23,11 @@
                             {{ __('Tuning') }}
                         </x-nav-link>
                     @endif
+                    @if ((Auth::user()->playerProfile?->level ?? 1) >= config('game.clubs.unlock_level'))
+                        <x-nav-link :href="route('clubs.index')" :active="request()->routeIs('clubs.*')">
+                            {{ __('Club') }}
+                        </x-nav-link>
+                    @endif
                     <x-nav-link :href="route('races.index')" :active="request()->routeIs('races.*')">
                         {{ __('Races') }}
                     </x-nav-link>
@@ -96,6 +101,11 @@
             @if ((Auth::user()->playerProfile?->level ?? 1) >= 5)
                 <x-responsive-nav-link :href="route('tuning.index')" :active="request()->routeIs('tuning.*')">
                     {{ __('Tuning') }}
+                </x-responsive-nav-link>
+            @endif
+            @if ((Auth::user()->playerProfile?->level ?? 1) >= config('game.clubs.unlock_level'))
+                <x-responsive-nav-link :href="route('clubs.index')" :active="request()->routeIs('clubs.*')">
+                    {{ __('Club') }}
                 </x-responsive-nav-link>
             @endif
             <x-responsive-nav-link :href="route('races.index')" :active="request()->routeIs('races.*')">

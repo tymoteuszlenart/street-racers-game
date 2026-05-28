@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\ActiveCarController;
 use App\Http\Controllers\CarUpgradeController;
+use App\Http\Controllers\ClubController;
+use App\Http\Controllers\ClubRankingController;
 use App\Http\Controllers\DailyRewardController;
 use App\Http\Controllers\DealerController;
 use App\Http\Controllers\GarageController;
@@ -19,16 +21,21 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    $user = auth()->user();
+    $user = auth()->user()?->load('clubMember');
     $profile = $user?->playerProfile?->load('activeCar.carModel');
     $dailyRewardService = app(DailyRewardService::class);
     $dailyRewardAvailable = $user !== null && $dailyRewardService->canClaimLoginToday($user);
     $dailyRewardTankFull = $user !== null && $dailyRewardService->isLoginClaimBlockedByFullTank($user);
+    $clubsUnlockLevel = config('game.clubs.unlock_level');
+    $clubsUnlocked = ($profile?->level ?? 1) >= $clubsUnlockLevel;
 
     return view('dashboard', [
         'profile' => $profile,
         'dailyRewardAvailable' => $dailyRewardAvailable,
         'dailyRewardTankFull' => $dailyRewardTankFull,
+        'clubsUnlocked' => $clubsUnlocked,
+        'clubsUnlockLevel' => $clubsUnlockLevel,
+        'userInClub' => $user?->clubMember !== null,
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -64,6 +71,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/race-history', [RaceHistoryController::class, 'index'])->name('race-history.index');
 
     Route::get('/rankings', [LeaderboardController::class, 'index'])->name('leaderboard.index');
+
+    Route::middleware('clubs.unlocked')->group(function () {
+        Route::get('/clubs', [ClubController::class, 'index'])->name('clubs.index');
+        Route::get('/clubs/create', [ClubController::class, 'create'])->name('clubs.create');
+        Route::post('/clubs', [ClubController::class, 'store'])->name('clubs.store');
+        Route::get('/clubs/rankings', [ClubRankingController::class, 'index'])->name('clubs.rankings');
+        Route::get('/clubs/{club:slug}', [ClubController::class, 'show'])->name('clubs.show');
+        Route::post('/clubs/{club:slug}/join', [ClubController::class, 'join'])->name('clubs.join');
+        Route::post('/clubs/{club:slug}/leave', [ClubController::class, 'leave'])->name('clubs.leave');
+        Route::delete('/clubs/{club:slug}/members/{member}', [ClubController::class, 'kick'])->name('clubs.members.kick');
+        Route::patch('/clubs/{club:slug}/members/{member}/role', [ClubController::class, 'updateMemberRole'])->name('clubs.members.role');
+        Route::post('/clubs/{club:slug}/transfer-ownership', [ClubController::class, 'transferOwnership'])->name('clubs.transfer-ownership');
+        Route::delete('/clubs/{club:slug}', [ClubController::class, 'destroy'])->name('clubs.destroy');
+    });
 });
 
 Route::middleware('auth')->group(function () {

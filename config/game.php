@@ -32,4 +32,11 @@ return [
         ],
     ],
 
+    'clubs' => [
+        'unlock_level' => 10,
+        'max_members' => 30,
+        'name_min_length' => 3,
+        'name_max_length' => 64,
+    ],
+
 ];
