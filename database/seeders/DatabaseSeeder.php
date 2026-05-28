@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             PartModelSeeder::class,
             RaceSeeder::class,
             ClubTournamentSeeder::class,
+            ShopProductSeeder::class,
         ]);
 
         User::query()->firstOrCreate(

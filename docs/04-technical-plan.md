@@ -564,19 +564,62 @@ This helps debug economy problems and payment issues.
 
 ## Payments
 
-Payments should not be part of the first prototype.
+Phase 8 uses Stripe Checkout and server-verified webhooks. Never trust the browser or success redirect to grant paid rewards.
 
-When ready, use a real payment provider such as Stripe.
+### Balance authority
 
-Payment flow should:
+- **Source of truth:** `player_profiles` columns (`cash`, `fuel_current`, `fuel_max`, `premium_fuel_current`, `premium_fuel_max`, etc.).
+- **Audit log:** `transactions` is append-only; `balance_after` snapshots the authoritative column after each change.
+- **Paid grants:** `PaymentFulfillmentService` (Phase 8.3) updates profiles inside `DB::transaction` with `lockForUpdate` on the player row, then records `TransactionType::PaidFuelPurchase` or `PaidPremiumFuelPurchase`.
 
-1. Create payment intent.
-2. Wait for payment webhook.
-3. Verify webhook signature.
-4. Grant purchased item server-side.
-5. Log transaction.
+### Catalog (`shop_products`)
 
-Never trust the browser to grant paid rewards.
+Seeded from `config('game.shop.products')` via `ShopProductSeeder`. Each row has:
+
+- `slug` — route key for checkout (`POST /shop/checkout/{shopProduct:slug}`)
+- `type` — `ShopProductType`: `regular_fuel` or `premium_fuel`
+- `grant_mode` / `grant_amount` — regular fuel only: `add` (+N fuel) or `fill_to_max`; premium packs use `grant_amount` only
+- `price_cents`, optional `stripe_price_id`, `active`, `sort_order`
+
+Config also defines `game.shop.paid_premium_fuel_max` (**20**). On the first paid premium grant, fulfillment raises `player_profiles.premium_fuel_max` from the free cap (**5**, Phase 7) toward that paid cap if lower.
+
+### Orders (`payment_orders`)
+
+| Column | Purpose |
+|--------|---------|
+| `uuid` | Public order id; Stripe `client_reference_id` |
+| `status` | `PaymentOrderStatus`: `pending`, `paid`, `failed`, `cancelled` |
+| `provider_checkout_session_id` | Set when Checkout session is created (#34) |
+| `provider_payment_intent_id` | Optional Stripe payment intent |
+| `provider_event_id` | **Unique** Stripe webhook `event.id` — idempotency key for fulfillment |
+| `granted_payload` | JSON snapshot of what was granted (fuel amounts, etc.) |
+| `fulfilled_at` | Set when inventory is granted; replay must not grant again |
+
+Checkout (#34) creates a `pending` order. Webhooks (#35) verify `Stripe-Signature`, match the order by session metadata, and call fulfillment once per `provider_event_id`.
+
+### Webhook idempotency (step-by-step)
+
+1. Verify signature on raw request body; reject with **400** if invalid.
+2. Load `payment_orders` by checkout session / `client_reference_id` (`uuid`).
+3. If `provider_event_id` already stored **or** `fulfilled_at` is set → return **200** without granting (replay-safe).
+4. `DB::transaction`: `lockForUpdate` player profile → grant via `FuelService` / `PremiumFuelService` → `TransactionService::record()` → set order `paid`, `granted_payload`, `fulfilled_at`, `provider_event_id`.
+5. Failed/expired checkout events must not grant; order stays `pending` or moves to `failed`/`cancelled` without `fulfilled_at`.
+
+Refund/chargeback automation is **out of MVP**; document manual admin adjustment if needed.
+
+### Admin
+
+`users.is_admin` (default `false`) gates purchase history admin views (#36). Balance adjustments remain logged via `transactions` with actor/reason when implemented.
+
+### Transaction types (paid)
+
+- `PaidFuelPurchase` — regular fuel SKUs (`TransactionCurrency::Fuel`)
+- `PaidPremiumFuelPurchase` — premium packs (`TransactionCurrency::PremiumFuel`, added in Phase 7)
+
+### Tests
+
+- Phase 8.1: `tests/Unit/PaymentOrderFactoryTest.php` — factory `pending` / `paid` states
+- Phase 8.3: `tests/Feature/PaymentWebhookTest.php` — signature, single grant, replay, failure paths
 
 ## Admin Tools
 
