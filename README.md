@@ -50,7 +50,7 @@ php artisan test --configuration=phpunit.mysql.xml
 ./vendor/bin/pint --test
 ```
 
-On every push and pull request to `main`, [GitHub Actions](https://github.com/tymoteuszlenart/street-racers-game/actions/workflows/tests.yml) runs the default test suite and Pint. MySQL integration tests (`phpunit.mysql.xml`) are run locally until Phase 3 concurrency tests land.
+On every push and pull request to `main`, [GitHub Actions](https://github.com/tymoteuszlenart/street-racers-game/actions/workflows/tests.yml) runs the default test suite (SQLite) and Pint. MySQL integration tests (`phpunit.mysql.xml`, race concurrency) are **not** in CI yet — run them locally before merging race/PvP work (see open issues for adding them to Actions).
 
 See `docs/04-technical-plan.md` (Testing strategy) and `docs/05-mvp-roadmap.md` for per-phase test requirements.
 
