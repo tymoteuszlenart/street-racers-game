@@ -59,3 +59,69 @@ jobs:
 
       - name: Run Pint
         run: ./vendor/bin/pint --test
+
+  integration:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: street_racers_test
+          MYSQL_USER: laravel
+          MYSQL_PASSWORD: password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_mysql, bcmath, intl
+          coverage: none
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Prepare MySQL for integration tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mysql-client
+          mysql -h 127.0.0.1 -P 3306 -u root -ppassword -e "
+            CREATE DATABASE IF NOT EXISTS street_racers_test;
+            CREATE USER IF NOT EXISTS 'laravel'@'localhost' IDENTIFIED BY 'password';
+            CREATE USER IF NOT EXISTS 'laravel'@'127.0.0.1' IDENTIFIED BY 'password';
+            GRANT ALL PRIVILEGES ON street_racers_test.* TO 'laravel'@'localhost';
+            GRANT ALL PRIVILEGES ON street_racers_test.* TO 'laravel'@'127.0.0.1';
+            FLUSH PRIVILEGES;
+          "
+
+      - name: Prepare application
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run MySQL integration tests
+        run: composer test:integration

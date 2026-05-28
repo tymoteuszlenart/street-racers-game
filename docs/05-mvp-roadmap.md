@@ -18,7 +18,7 @@ Each phase below includes **minimum automated tests** required before the phase 
 
 ```bash
 php artisan test                                    # default suite (SQLite)
-php artisan test --configuration=phpunit.mysql.xml  # MySQL concurrency / DB integration
+composer test:integration  # MySQL concurrency / DB integration
 ```
 
 ## Phase 1: Project Foundation

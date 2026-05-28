@@ -42,7 +42,7 @@ php artisan test
 
 # MySQL integration tests (race concurrency, locking) — requires local MySQL
 # Create street_racers_test first (see AGENTS.md), then:
-php artisan test --configuration=phpunit.mysql.xml
+composer test:integration
 
 # Before merging race/PvP work (Phase 3 / 4b), run both commands above
 
@@ -50,7 +50,7 @@ php artisan test --configuration=phpunit.mysql.xml
 ./vendor/bin/pint --test
 ```
 
-On every push and pull request to `main`, [GitHub Actions](https://github.com/tymoteuszlenart/street-racers-game/actions/workflows/tests.yml) runs the default test suite (SQLite) and Pint. MySQL integration tests (`phpunit.mysql.xml`, race concurrency) are **not** in CI yet — run them locally before merging race/PvP work (see open issues for adding them to Actions).
+On every push and pull request to `main`, [GitHub Actions](https://github.com/tymoteuszlenart/street-racers-game/actions/workflows/tests.yml) runs the default test suite (SQLite) and Pint, plus a separate **integration** job that runs `phpunit.mysql.xml` against MySQL 8.0 (race concurrency, locking, idempotency). Run the MySQL suite locally before merging race/PvP work if you change integration tests or database behavior.
 
 See `docs/04-technical-plan.md` (Testing strategy) and `docs/05-mvp-roadmap.md` for per-phase test requirements.
 
