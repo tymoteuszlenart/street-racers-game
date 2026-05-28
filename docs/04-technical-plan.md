@@ -607,7 +607,7 @@ The project uses PHPUnit via Laravel:
 - First **game** tests ship with Phase 3 (`FuelService`, `RaceService`), not Phase 1.
 - Phase 1 is complete when auth/profile feature tests pass and the harness is documented in `README.md`.
 
-Continuous integration (`.github/workflows/tests.yml`): the `tests` job runs `php artisan test` (SQLite) and Pint; the `integration` job runs `php artisan test --configuration=phpunit.mysql.xml` against a MySQL 8.0 service container on every push/PR to `main`.
+Continuous integration (`.github/workflows/tests.yml`): the `tests` job runs `php artisan test` (SQLite) and Pint; the `integration` job runs `composer test:integration` against a MySQL 8.0 service container on every push/PR to `main`.
 
 ### Test layers
 
@@ -629,12 +629,12 @@ Run suites:
 php artisan test
 
 # MySQL integration / concurrency (separate config; does not run with default suite)
-php artisan test --configuration=phpunit.mysql.xml
+composer test:integration
 ```
 
 Local MySQL for integration tests: prefer dedicated `street_racers_test` (see `AGENTS.md` setup). `phpunit.mysql.xml` sets default `DB_*` values; PHPUnit env vars override `.env.testing` for the same keys — edit `phpunit.mysql.xml` or drop those `<env>` entries and use `.env.testing` from `.env.testing.example` for custom credentials. A smoke test lives in `tests/Integration/MysqlConnectionTest.php`.
 
-Before marking Phase 3 or 4b race work done, run both `php artisan test` and `php artisan test --configuration=phpunit.mysql.xml`. Do not run integration tests in parallel against one shared MySQL database (PHPUnit `--parallel` can flake with database migrations and shared state).
+Before marking Phase 3 or 4b race work done, run both `php artisan test` and `composer test:integration`. Do not run integration tests in parallel against one shared MySQL database (PHPUnit `--parallel` can flake with database migrations and shared state).
 
 ### Determinism (races)
 

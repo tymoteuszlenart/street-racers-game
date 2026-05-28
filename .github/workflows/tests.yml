@@ -124,4 +124,4 @@ jobs:
           php artisan key:generate
 
       - name: Run MySQL integration tests
-        run: php artisan test --configuration=phpunit.mysql.xml
+        run: composer test:integration

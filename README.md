@@ -42,7 +42,7 @@ php artisan test
 
 # MySQL integration tests (race concurrency, locking) — requires local MySQL
 # Create street_racers_test first (see AGENTS.md), then:
-php artisan test --configuration=phpunit.mysql.xml
+composer test:integration
 
 # Before merging race/PvP work (Phase 3 / 4b), run both commands above
 
