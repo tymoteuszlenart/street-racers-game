@@ -29,9 +29,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/dealer/{carModel}', [DealerController::class, 'store'])->name('dealer.purchase');
 
     Route::get('/races', [RaceController::class, 'index'])->name('races.index');
-    Route::post('/races/{race}', [RaceController::class, 'store'])
-        ->middleware('throttle.race-start')
-        ->name('races.start');
+    Route::post('/races/{race}', [RaceController::class, 'store'])->name('races.start');
     Route::get('/races/results/{raceResult}', [RaceController::class, 'show'])->name('races.show');
 });
 

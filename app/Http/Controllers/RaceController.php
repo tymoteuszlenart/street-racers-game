@@ -6,6 +6,7 @@ use App\Exceptions\IdempotencyKeyConflictException;
 use App\Exceptions\IdempotencyKeyExpiredException;
 use App\Exceptions\RaceAttemptFailedException;
 use App\Exceptions\RaceAttemptPendingException;
+use App\Exceptions\RaceStartRateLimitedException;
 use App\Http\Requests\StartNpcRaceRequest;
 use App\Models\Race;
 use App\Models\RaceResult;
@@ -13,6 +14,7 @@ use App\Services\RaceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 class RaceController extends Controller
 {
@@ -46,7 +48,13 @@ class RaceController extends Controller
                 $request->idempotencyKey(),
             );
         } catch (RaceAttemptPendingException|IdempotencyKeyConflictException|RaceAttemptFailedException|IdempotencyKeyExpiredException $exception) {
-            return $this->raceStartErrorResponse($request, $exception->getMessage());
+            return $this->raceStartErrorResponse($exception->getMessage());
+        } catch (RaceStartRateLimitedException $exception) {
+            throw new TooManyRequestsHttpException(
+                $exception->retryAfterSeconds,
+                $exception->getMessage(),
+                $exception,
+            );
         } catch (ValidationException $exception) {
             return back()->withErrors($exception->errors())->withInput();
         }
@@ -56,7 +64,7 @@ class RaceController extends Controller
             ->with('status', $result->replayed ? 'race-existing-result' : 'race-complete');
     }
 
-    private function raceStartErrorResponse(StartNpcRaceRequest $request, string $message): RedirectResponse
+    private function raceStartErrorResponse(string $message): RedirectResponse
     {
         return back()
             ->withErrors(['race' => $message])

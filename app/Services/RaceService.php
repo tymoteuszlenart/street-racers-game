@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\DTOs\NpcRaceStartResult;
+use App\DTOs\ResolvedRaceAttempt;
 use App\Enums\RaceAttemptStatus;
 use App\Enums\RaceAttemptType;
 use App\Enums\TransactionCurrency;
@@ -11,6 +12,7 @@ use App\Exceptions\IdempotencyKeyConflictException;
 use App\Exceptions\IdempotencyKeyExpiredException;
 use App\Exceptions\RaceAttemptFailedException;
 use App\Exceptions\RaceAttemptPendingException;
+use App\Exceptions\RaceStartRateLimitedException;
 use App\Models\Car;
 use App\Models\PlayerProfile;
 use App\Models\Race;
@@ -19,6 +21,7 @@ use App\Models\RaceResult;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -67,7 +70,7 @@ class RaceService
     {
         try {
             return DB::transaction(function () use ($user, $race, $idempotencyKey) {
-                $attempt = $this->resolveOrCreateAttempt(
+                $resolvedAttempt = $this->resolveOrCreateAttempt(
                     userId: $user->id,
                     idempotencyKey: $idempotencyKey,
                     attemptType: RaceAttemptType::Npc,
@@ -75,20 +78,17 @@ class RaceService
                     defenderUserId: null,
                 );
 
-                $replay = $this->replayIfAlreadyFinished($attempt);
+                $attempt = $resolvedAttempt->attempt;
 
-                if ($replay !== null) {
-                    return $replay;
-                }
-
-                if ($attempt->status !== RaceAttemptStatus::Pending) {
-                    throw new RaceAttemptPendingException;
+                if (! $resolvedAttempt->isNew) {
+                    return $this->replayIfAlreadyFinished($attempt);
                 }
 
                 [$profile, $car] = $this->lockPlayerState($user->id);
 
                 $race = Race::query()->whereKey($race->id)->lockForUpdate()->firstOrFail();
 
+                $this->consumeStartRateLimit($user->id);
                 $this->assertNpcRaceEligible($profile, $car, $race);
 
                 $this->fuelService->regenerate($profile);
@@ -168,12 +168,8 @@ class RaceService
         }
     }
 
-    private function replayIfAlreadyFinished(RaceAttempt $attempt): ?NpcRaceStartResult
+    private function replayIfAlreadyFinished(RaceAttempt $attempt): NpcRaceStartResult
     {
-        if ($attempt->wasRecentlyCreated) {
-            return null;
-        }
-
         if ($attempt->status === RaceAttemptStatus::Succeeded) {
             $raceResult = $attempt->raceResult ?? RaceResult::query()->findOrFail($attempt->race_result_id);
 
@@ -201,7 +197,7 @@ class RaceService
         RaceAttemptType $attemptType,
         ?int $raceId,
         ?int $defenderUserId,
-    ): RaceAttempt {
+    ): ResolvedRaceAttempt {
         $attempt = RaceAttempt::query()
             ->where('user_id', $userId)
             ->where('idempotency_key', $idempotencyKey)
@@ -211,21 +207,27 @@ class RaceService
         if ($attempt !== null) {
             $this->assertMatchingAttemptRequest($attempt, $attemptType, $raceId, $defenderUserId);
 
-            return $attempt;
+            return new ResolvedRaceAttempt(
+                attempt: $attempt,
+                isNew: false,
+            );
         }
 
         $expiresAt = now()->addHours((int) config('game.race.idempotency_ttl_hours', 24));
 
         try {
-            return RaceAttempt::query()->create([
-                'user_id' => $userId,
-                'idempotency_key' => $idempotencyKey,
-                'attempt_type' => $attemptType,
-                'race_id' => $raceId,
-                'defender_user_id' => $defenderUserId,
-                'status' => RaceAttemptStatus::Pending,
-                'expires_at' => $expiresAt,
-            ]);
+            return new ResolvedRaceAttempt(
+                attempt: RaceAttempt::query()->create([
+                    'user_id' => $userId,
+                    'idempotency_key' => $idempotencyKey,
+                    'attempt_type' => $attemptType,
+                    'race_id' => $raceId,
+                    'defender_user_id' => $defenderUserId,
+                    'status' => RaceAttemptStatus::Pending,
+                    'expires_at' => $expiresAt,
+                ]),
+                isNew: true,
+            );
         } catch (QueryException $exception) {
             if (! $this->isUniqueConstraintViolation($exception)) {
                 throw $exception;
@@ -239,8 +241,16 @@ class RaceService
 
             $this->assertMatchingAttemptRequest($attempt, $attemptType, $raceId, $defenderUserId);
 
-            return $attempt;
+            return new ResolvedRaceAttempt(
+                attempt: $attempt,
+                isNew: false,
+            );
         }
+    }
+
+    public static function raceStartRateLimitKey(int $userId): string
+    {
+        return 'race-start:'.$userId;
     }
 
     private function assertMatchingAttemptRequest(
@@ -419,13 +429,15 @@ class RaceService
             : 'race_failed';
 
         DB::transaction(function () use ($userId, $idempotencyKey, $attemptType, $raceId, $defenderUserId, $errorCode) {
-            $attempt = $this->resolveOrCreateAttempt(
+            $resolvedAttempt = $this->resolveOrCreateAttempt(
                 userId: $userId,
                 idempotencyKey: $idempotencyKey,
                 attemptType: $attemptType,
                 raceId: $raceId,
                 defenderUserId: $defenderUserId,
             );
+
+            $attempt = $resolvedAttempt->attempt;
 
             if ($attempt->status !== RaceAttemptStatus::Pending) {
                 return;
@@ -436,6 +448,21 @@ class RaceService
                 'error_code' => $errorCode,
             ]);
         });
+    }
+
+    private function consumeStartRateLimit(int $userId): void
+    {
+        $rateLimitKey = self::raceStartRateLimitKey($userId);
+        $maxAttempts = (int) config('game.race.start_rate_limit_per_minute', 30);
+        $decaySeconds = 60;
+
+        if (RateLimiter::tooManyAttempts($rateLimitKey, $maxAttempts)) {
+            throw new RaceStartRateLimitedException(
+                retryAfterSeconds: max(1, RateLimiter::availableIn($rateLimitKey)),
+            );
+        }
+
+        RateLimiter::hit($rateLimitKey, $decaySeconds);
     }
 
     private function isUniqueConstraintViolation(QueryException $exception): bool

@@ -6,6 +6,7 @@ use App\Enums\TransactionCurrency;
 use App\Enums\TransactionType;
 use App\Exceptions\IdempotencyKeyConflictException;
 use App\Exceptions\IdempotencyKeyExpiredException;
+use App\Exceptions\RaceStartRateLimitedException;
 use App\Models\Race;
 use App\Models\RaceAttempt;
 use App\Models\RaceResult;
@@ -13,6 +14,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Services\RaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -263,5 +265,44 @@ class RaceServiceTest extends TestCase
         $this->assertSame('failed', $attempt->status->value);
         $this->assertSame(0, RaceResult::query()->count());
         $this->assertSame(0, RaceAttempt::query()->where('status', 'pending')->count());
+    }
+
+    public function test_rate_limited_new_key_rolls_back_pending_attempt_creation(): void
+    {
+        config(['game.race.start_rate_limit_per_minute' => 1]);
+
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
+
+        $race = Race::factory()->create([
+            'fuel_cost' => 10,
+            'opponent_power' => 1,
+            'opponent_acceleration' => 1,
+            'opponent_grip' => 1,
+            'opponent_handling' => 1,
+        ]);
+
+        RateLimiter::clear(RaceService::raceStartRateLimitKey($user->id));
+
+        $service = app(RaceService::class)->withRandomUnit(fn (): float => 0.9);
+        $firstKey = (string) Str::uuid();
+        $secondKey = (string) Str::uuid();
+
+        $service->startNpcRace($user, $race, $firstKey);
+
+        try {
+            $service->startNpcRace($user, $race, $secondKey);
+            $this->fail('Expected rate limit exception for brand new key.');
+        } catch (RaceStartRateLimitedException) {
+            // expected
+        }
+
+        $this->assertDatabaseMissing('race_attempts', [
+            'user_id' => $user->id,
+            'idempotency_key' => $secondKey,
+        ]);
+        $this->assertSame(1, RaceAttempt::query()->count());
+        $this->assertSame(1, RaceResult::query()->count());
     }
 }
