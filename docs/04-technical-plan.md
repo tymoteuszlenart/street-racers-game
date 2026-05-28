@@ -213,6 +213,19 @@ Phase 2 pages:
 
 Sell, repair, and tuning buttons may be visible as disabled or deferred actions until their later phases.
 
+## Tuning and parts
+
+**Authoritative design:** [ADR 001: Tuning parts — inventory, equipment, and stat aggregation](./adr/001-tuning-parts-data-model.md) (resolves GitHub issue #3).
+
+Summary for implementers:
+
+- **Catalog:** `part_models` — slot, rarity, stat bonuses, price, `unlock_level`, `min_car_class`, `active`.
+- **Owned:** `parts` — `user_id`, `part_model_id`, nullable `car_id` (inventory vs equipped), denormalized `slot`, `acquired_via`, `purchase_price`.
+- **Slots:** Eight `PartSlot` values; which slots a car supports come from `car_models.upgrade_slots` (JSON array; `null` = all slots).
+- **Equip rules:** One part per slot per car; swap unequips incumbent; class and slot checks server-side; tuning shop requires player **level ≥ 5**.
+- **Stats:** `CarStatAggregator` = base `car_models` stats + sum of equipped part bonuses; `RaceService` and PvP snapshots must use this, not raw model stats.
+- **Phase 4 MVP:** buy, equip, unequip only (no sell). See ADR checklist for files and migrations.
+
 ## Fuel Calculation
 
 Fuel regeneration should happen when needed:
