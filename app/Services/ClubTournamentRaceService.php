@@ -265,6 +265,12 @@ class ClubTournamentRaceService
             ]);
         }
 
+        if (now()->isAfter($tournament->ends_at)) {
+            throw ValidationException::withMessages([
+                'tournament' => 'This tournament season has ended.',
+            ]);
+        }
+
         $maxAttempts = (int) config('game.tournaments.max_attempts_per_player', 20);
         $attemptCount = ClubTournamentEntry::query()
             ->where('club_tournament_id', $tournament->id)

@@ -50,6 +50,22 @@ class ClubTournamentRaceTest extends TestCase
         $this->assertSame(1, ClubTournamentEntry::query()->where('user_id', $user->id)->count());
     }
 
+    public function test_tournament_race_rejected_after_season_ends(): void
+    {
+        [$user, $club] = $this->tournamentRacer();
+        ClubTournament::query()->firstOrFail()->update([
+            'ends_at' => now()->subMinute(),
+        ]);
+
+        $response = $this->actingAs($user)->post(route('clubs.tournament.races.store', $club), [
+            'idempotency_key' => (string) Str::uuid(),
+        ]);
+
+        $response->assertSessionHasErrors('tournament');
+        $this->assertSame(0, ClubTournamentEntry::query()->where('user_id', $user->id)->count());
+        $this->assertSame(3, $user->playerProfile->fresh()->premium_fuel_current);
+    }
+
     public function test_twenty_first_attempt_is_rejected(): void
     {
         [$user, $club] = $this->tournamentRacer();
