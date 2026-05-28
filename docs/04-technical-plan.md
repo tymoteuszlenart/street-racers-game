@@ -346,11 +346,22 @@ The first request for a key creates a `pending` row before locking player state.
 
 Apply Laravel rate limiting to the race start endpoint:
 
-- Key: authenticated `user_id` (not IP alone).
-- Suggested limit: 30 requests per minute per user (tune in config).
-- Return `429 Too Many Requests` when exceeded.
+- Key: authenticated `user_id` (not IP alone), implemented as `race-start:{userId}` via `RaceService::raceStartRateLimitKey()`.
+- Limit: `config('game.race.start_rate_limit_per_minute')` (default **30** successful new starts per rolling 60 seconds).
+- Return `429 Too Many Requests` when exceeded (HTML clients get `TooManyRequestsHttpException`; JSON clients get `Retry-After`).
+
+**Semantics (NPC race start):**
+
+- Only **new** race starts that commit successfully increment the counter (`RateLimiter::hit` runs after the DB transaction, and only when `replayed` is false).
+- **Idempotent replays** of the same key (already `succeeded`) do not consume quota.
+- **Failed** attempts (`validation_failed`, etc.) and **rate-limited** attempts that roll back do not increment the counter.
+- Rate limiting is checked **inside** the race transaction (after the idempotency row is resolved) so a rejected start does not leave a dangling `pending` attempt.
 
 Rate limiting complements idempotency; it does not replace it.
+
+**Deployment (multi-instance):**
+
+Laravel’s `RateLimiter` stores counters in the **default cache store** (`CACHE_STORE` in `.env`). With `file` or `array`, each app server maintains its own counters, so the effective limit is multiplied by the number of nodes. For production with more than one PHP worker or host, use a **shared** cache backend (typically **Redis**: `CACHE_STORE=redis` and a reachable `REDIS_*` connection) before relying on race-start throttling in live traffic.
 
 ### Testing (race concurrency)
 
