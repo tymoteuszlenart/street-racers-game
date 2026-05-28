@@ -35,6 +35,7 @@ class RaceService
         private readonly RaceScoreCalculator $scoreCalculator,
         private readonly TransactionService $transactionService,
         private readonly PlayerLevelService $playerLevelService,
+        private readonly CarStatAggregator $carStatAggregator,
     ) {}
 
     /**
@@ -331,20 +332,7 @@ class RaceService
      */
     private function statsFromCar(Car $car): array
     {
-        $car->loadMissing('carModel');
-        $model = $car->carModel;
-
-        $conditionPercent = $car->condition_max > 0
-            ? ($car->condition_current / $car->condition_max) * 100
-            : 100;
-
-        return [
-            'power' => $model->power,
-            'acceleration' => $model->acceleration,
-            'grip' => $model->grip,
-            'handling' => $model->handling,
-            'condition_percent' => $conditionPercent,
-        ];
+        return $this->carStatAggregator->aggregate($car);
     }
 
     private function logNpcRaceTransactions(

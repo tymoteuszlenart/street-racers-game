@@ -18,6 +18,11 @@
                     <x-nav-link :href="route('dealer.index')" :active="request()->routeIs('dealer.*')">
                         {{ __('Dealer') }}
                     </x-nav-link>
+                    @if ((Auth::user()->playerProfile?->level ?? 1) >= 5)
+                        <x-nav-link :href="route('tuning.index')" :active="request()->routeIs('tuning.*')">
+                            {{ __('Tuning') }}
+                        </x-nav-link>
+                    @endif
                     <x-nav-link :href="route('races.index')" :active="request()->routeIs('races.*')">
                         {{ __('Races') }}
                     </x-nav-link>
@@ -75,6 +80,14 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('dealer.index')" :active="request()->routeIs('dealer.*')">
                 {{ __('Dealer') }}
+            </x-responsive-nav-link>
+            @if ((Auth::user()->playerProfile?->level ?? 1) >= 5)
+                <x-responsive-nav-link :href="route('tuning.index')" :active="request()->routeIs('tuning.*')">
+                    {{ __('Tuning') }}
+                </x-responsive-nav-link>
+            @endif
+            <x-responsive-nav-link :href="route('races.index')" :active="request()->routeIs('races.*')">
+                {{ __('Races') }}
             </x-responsive-nav-link>
         </div>
 

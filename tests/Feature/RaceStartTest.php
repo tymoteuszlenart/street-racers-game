@@ -2,6 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Enums\PartAcquiredVia;
+use App\Enums\PartSlot;
+use App\Models\Part;
+use App\Models\PartModel;
 use App\Models\Race;
 use App\Models\RaceAttempt;
 use App\Models\RaceResult;
@@ -312,6 +316,56 @@ class RaceStartTest extends TestCase
             ->postJson(route('races.start', $race), ['idempotency_key' => $key])
             ->assertStatus(409)
             ->assertJson(['message' => 'A race with this idempotency key is already in progress.']);
+    }
+
+    public function test_race_score_reflects_equipped_part(): void
+    {
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
+
+        $car = $profile->activeCar()->firstOrFail();
+
+        $race = Race::factory()->create([
+            'fuel_cost' => 10,
+            'random_factor_variance' => 0,
+            'opponent_power' => 500,
+            'opponent_acceleration' => 500,
+            'opponent_grip' => 500,
+            'opponent_handling' => 500,
+        ]);
+
+        $this->actingAs($user)->post(route('races.start', $race), [
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertRedirect();
+
+        $baselineScore = RaceResult::query()->firstOrFail()->player_score;
+
+        $partModel = PartModel::factory()->create([
+            'slot' => PartSlot::Engine,
+            'power_bonus' => 40,
+            'acceleration_bonus' => 40,
+            'grip_bonus' => 40,
+            'handling_bonus' => 40,
+        ]);
+
+        Part::query()->create([
+            'user_id' => $user->id,
+            'part_model_id' => $partModel->id,
+            'car_id' => $car->id,
+            'slot' => PartSlot::Engine,
+            'acquired_via' => PartAcquiredVia::Shop,
+        ]);
+
+        $profile->update(['fuel_current' => 100]);
+
+        $this->actingAs($user)->post(route('races.start', $race), [
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertRedirect();
+
+        $upgradedScore = RaceResult::query()->orderByDesc('id')->firstOrFail()->player_score;
+
+        $this->assertGreaterThan($baselineScore, $upgradedScore);
     }
 
     public function test_duplicate_submit_for_same_race_shows_existing_result_message(): void

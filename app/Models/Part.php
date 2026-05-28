@@ -2,24 +2,23 @@
 
 namespace App\Models;
 
-use App\Enums\AcquiredVia;
-use Database\Factories\CarFactory;
+use App\Enums\PartAcquiredVia;
+use App\Enums\PartSlot;
+use Database\Factories\PartFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Car extends Model
+class Part extends Model
 {
-    /** @use HasFactory<CarFactory> */
+    /** @use HasFactory<PartFactory> */
     use HasFactory;
 
     protected $fillable = [
         'user_id',
-        'car_model_id',
-        'nickname',
-        'condition_current',
-        'condition_max',
+        'part_model_id',
+        'car_id',
+        'slot',
         'acquired_via',
         'purchase_price',
     ];
@@ -27,7 +26,8 @@ class Car extends Model
     protected function casts(): array
     {
         return [
-            'acquired_via' => AcquiredVia::class,
+            'slot' => PartSlot::class,
+            'acquired_via' => PartAcquiredVia::class,
         ];
     }
 
@@ -36,13 +36,13 @@ class Car extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function carModel(): BelongsTo
+    public function partModel(): BelongsTo
     {
-        return $this->belongsTo(CarModel::class);
+        return $this->belongsTo(PartModel::class);
     }
 
-    public function parts(): HasMany
+    public function car(): BelongsTo
     {
-        return $this->hasMany(Part::class);
+        return $this->belongsTo(Car::class);
     }
 }
