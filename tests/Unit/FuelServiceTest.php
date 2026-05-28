@@ -74,4 +74,28 @@ class FuelServiceTest extends TestCase
 
         $this->fuelService->spend($profile->fresh(), 10);
     }
+
+    public function test_is_tank_full_when_at_or_above_max(): void
+    {
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['fuel_current' => 100, 'fuel_max' => 100]);
+
+        $this->assertTrue($this->fuelService->isTankFull($profile->fresh()));
+    }
+
+    public function test_grant_fuel_respects_cap(): void
+    {
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update([
+            'fuel_current' => 95,
+            'fuel_max' => 100,
+        ]);
+
+        $granted = $this->fuelService->grant($profile->fresh(), 20);
+
+        $this->assertSame(5, $granted);
+        $this->assertSame(100, $profile->fresh()->fuel_current);
+    }
 }

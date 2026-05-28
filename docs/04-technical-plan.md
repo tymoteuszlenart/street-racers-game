@@ -582,11 +582,38 @@ Useful admin features:
 
 For MVP, this can be simple Laravel CRUD behind an admin role.
 
+## Daily claims (MVP)
+
+Phase 5 login rewards and Phase 7 premium fuel claims share the same calendar-day rules.
+
+### Calendar day
+
+- Canonical timezone: `config('app.timezone')` (same as PvP same-pair daily cap).
+- Day boundary: `00:00:00` through end of day in that timezone.
+- `claim_date` on `daily_rewards` stores the calendar date (`DATE`) in that timezone, not UTC, unless the app timezone is UTC.
+- Helper: `App\Support\GameDay` (`today()`, `bounds()` for UTC query ranges).
+
+### Login reward (Phase 5)
+
+- Config: `config('game.daily_rewards.login.fuel')` (default **20**).
+- One claim per `(user_id, reward_type, claim_date)`; unique index enforces this.
+- **No streaks** in MVP — each day is independent.
+- Before granting: run `FuelService::regenerate()`; claim is **rejected** while `fuel_current >= fuel_max` (UI disables the button and shows a warning). Players must spend fuel first so the full `:fuel` bonus can be applied.
+- Grant adds fuel up to `fuel_max` (overflow is not stored; `granted_payload.fuel` records the amount actually added, which equals the configured bonus when there is enough room).
+- **Idempotent replay:** a second claim the same day returns success with the stored `granted_payload`; no double grant.
+- Log fuel grants in `transactions` with `TransactionType::DailyReward` when `fuel_granted > 0`.
+- **Scheduler:** not required for MVP; claims are validated on `POST`. Optional future jobs may clean old rows or send reminders only.
+
+### Premium fuel (Phase 7)
+
+- Reuse `GameDay` and the same idempotent claim pattern (`DailyRewardType` or `premium_fuel_claimed_at` with documented parity).
+- Document cap interaction with `premium_fuel_current` / `premium_fuel_max` when Phase 7 ships.
+
 ## Scheduled Jobs
 
 Use Laravel scheduler for:
 
-- Daily reward reset
+- Daily reward reset (optional cleanup; claims do not require a reset job in MVP)
 - Weekly club tournament closing
 - Weekly club reward distribution
 - Cleanup old notifications
