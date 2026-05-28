@@ -7,11 +7,21 @@ use Database\Factories\PaymentOrderFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class PaymentOrder extends Model
 {
     /** @use HasFactory<PaymentOrderFactory> */
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::creating(function (PaymentOrder $order): void {
+            if ($order->uuid === null || $order->uuid === '') {
+                $order->uuid = (string) Str::uuid();
+            }
+        });
+    }
 
     protected $fillable = [
         'uuid',

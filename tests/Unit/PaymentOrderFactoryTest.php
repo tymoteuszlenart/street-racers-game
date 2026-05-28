@@ -32,4 +32,12 @@ class PaymentOrderFactoryTest extends TestCase
         $this->assertNotNull($order->fulfilled_at);
         $this->assertTrue($order->isFulfilled());
     }
+
+    public function test_uuid_is_assigned_when_not_provided(): void
+    {
+        $order = PaymentOrder::factory()->create(['uuid' => null]);
+
+        $this->assertNotNull($order->uuid);
+        $this->assertNotSame('', $order->uuid);
+    }
 }

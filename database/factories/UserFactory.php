@@ -45,8 +45,8 @@ class UserFactory extends Factory
 
     public function admin(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'is_admin' => true,
-        ]);
+        return $this->afterCreating(function (User $user): void {
+            $user->forceFill(['is_admin' => true])->save();
+        });
     }
 }
