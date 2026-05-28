@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Exceptions\IdempotencyKeyConflictException;
 use App\Models\Race;
 use App\Models\RaceAttempt;
 use App\Models\RaceResult;
@@ -72,6 +73,43 @@ class RaceServiceTest extends TestCase
         $this->assertSame($first->raceResult->id, $second->raceResult->id);
         $this->assertSame(90, $profile->fresh()->fuel_current);
         $this->assertSame(1, RaceResult::query()->count());
+    }
+
+    public function test_duplicate_idempotency_key_for_different_race_is_rejected(): void
+    {
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
+
+        $firstRace = Race::factory()->create([
+            'fuel_cost' => 10,
+            'opponent_power' => 1,
+            'opponent_acceleration' => 1,
+            'opponent_grip' => 1,
+            'opponent_handling' => 1,
+        ]);
+        $secondRace = Race::factory()->create([
+            'fuel_cost' => 15,
+            'opponent_power' => 1,
+            'opponent_acceleration' => 1,
+            'opponent_grip' => 1,
+            'opponent_handling' => 1,
+        ]);
+
+        $service = app(RaceService::class)->withRandomUnit(fn (): float => 0.9);
+        $key = (string) Str::uuid();
+
+        $first = $service->startNpcRace($user, $firstRace, $key);
+
+        $this->expectException(IdempotencyKeyConflictException::class);
+
+        try {
+            $service->startNpcRace($user, $secondRace, $key);
+        } finally {
+            $this->assertSame($first->raceResult->race_id, $firstRace->id);
+            $this->assertSame(90, $profile->fresh()->fuel_current);
+            $this->assertSame(1, RaceResult::query()->count());
+        }
     }
 
     public function test_insufficient_fuel_marks_attempt_failed(): void

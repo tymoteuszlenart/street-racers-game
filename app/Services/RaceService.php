@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\DTOs\NpcRaceStartResult;
+use App\Exceptions\IdempotencyKeyConflictException;
 use App\Enums\RaceAttemptStatus;
 use App\Enums\RaceAttemptType;
 use App\Exceptions\IdempotencyKeyExpiredException;
@@ -201,6 +202,8 @@ class RaceService
             ->first();
 
         if ($attempt !== null) {
+            $this->assertMatchingAttemptRequest($attempt, $attemptType, $raceId, $defenderUserId);
+
             return $attempt;
         }
 
@@ -221,11 +224,30 @@ class RaceService
                 throw $exception;
             }
 
-            return RaceAttempt::query()
+            $attempt = RaceAttempt::query()
                 ->where('user_id', $userId)
                 ->where('idempotency_key', $idempotencyKey)
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            $this->assertMatchingAttemptRequest($attempt, $attemptType, $raceId, $defenderUserId);
+
+            return $attempt;
+        }
+    }
+
+    private function assertMatchingAttemptRequest(
+        RaceAttempt $attempt,
+        RaceAttemptType $attemptType,
+        ?int $raceId,
+        ?int $defenderUserId,
+    ): void {
+        if (
+            $attempt->attempt_type !== $attemptType
+            || $attempt->race_id !== $raceId
+            || $attempt->defender_user_id !== $defenderUserId
+        ) {
+            throw new IdempotencyKeyConflictException;
         }
     }
 

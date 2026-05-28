@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\IdempotencyKeyExpiredException;
+use App\Exceptions\IdempotencyKeyConflictException;
 use App\Exceptions\RaceAttemptFailedException;
 use App\Exceptions\RaceAttemptPendingException;
 use App\Http\Requests\StartNpcRaceRequest;
@@ -46,6 +47,8 @@ class RaceController extends Controller
             );
         } catch (RaceAttemptPendingException) {
             abort(409, 'A race with this idempotency key is already in progress.');
+        } catch (IdempotencyKeyConflictException) {
+            abort(409, 'This idempotency key was already used for a different race request.');
         } catch (RaceAttemptFailedException) {
             abort(422, 'This idempotency key was used by a failed race attempt. Use a new key to retry.');
         } catch (IdempotencyKeyExpiredException) {
@@ -56,7 +59,7 @@ class RaceController extends Controller
 
         return redirect()
             ->route('races.show', $result->raceResult)
-            ->with('status', $result->replayed ? 'race-replayed' : 'race-complete');
+            ->with('status', $result->replayed ? 'race-existing-result' : 'race-complete');
     }
 
     public function show(RaceResult $raceResult): View

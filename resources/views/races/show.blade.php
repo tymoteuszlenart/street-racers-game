@@ -8,8 +8,8 @@
     <div class="py-12">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-racing-800 border border-racing-600 rounded-lg p-6 space-y-4">
-                @if (session('status') === 'race-replayed')
-                    <p class="text-gray-400 text-sm">{{ __('This result was returned from a previous race attempt (idempotent replay).') }}</p>
+                @if (session('status') === 'race-existing-result')
+                    <p class="text-gray-400 text-sm">{{ __('Your previous race submission already finished, so we are showing that result.') }}</p>
                 @endif
 
                 <p class="text-2xl font-bold {{ $raceResult->won ? 'text-green-400' : 'text-red-400' }}">
