@@ -9,7 +9,7 @@
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <p class="text-gray-500 text-sm">
-                    {{ __('Clubs ranked by tournament points.') }}
+                    {{ __('Clubs ranked by club points.') }}
                 </p>
                 <a href="{{ route('clubs.index') }}" class="text-sm text-accent-blue hover:text-accent-neon">
                     {{ __('Browse clubs') }}

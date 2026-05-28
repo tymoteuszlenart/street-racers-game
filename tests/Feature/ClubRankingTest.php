@@ -27,6 +27,7 @@ class ClubRankingTest extends TestCase
         $response = $this->actingAs($user)->get(route('clubs.rankings'));
 
         $response->assertOk();
+        $response->assertSee('Clubs ranked by club points.', false);
         $response->assertSeeInOrder(['High Points', 'Mid Points', 'Low Points']);
         $response->assertSee('(your club)', false);
     }
