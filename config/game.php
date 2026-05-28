@@ -34,7 +34,7 @@ return [
 
     'clubs' => [
         'unlock_level' => 10,
-        'max_members' => 30,
+        'max_members' => (int) env('GAME_CLUBS_MAX_MEMBERS', 30),
         'name_min_length' => 3,
         'name_max_length' => 64,
     ],

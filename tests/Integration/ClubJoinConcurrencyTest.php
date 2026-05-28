@@ -53,7 +53,9 @@ class ClubJoinConcurrencyTest extends TestCase
                 'clubs:integration-join',
                 (string) $userId,
                 (string) $clubId,
-            ], base_path(), null, null, 60);
+            ], base_path(), [
+                'GAME_CLUBS_MAX_MEMBERS' => '2',
+            ], null, 60);
             $process->start();
             $processes[] = $process;
         }
