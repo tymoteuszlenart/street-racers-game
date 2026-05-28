@@ -75,4 +75,14 @@ class FuelService
 
         return $granted;
     }
+
+    public function fillToMax(PlayerProfile $profile): int
+    {
+        $before = $profile->fuel_current;
+        $profile->fuel_current = $profile->fuel_max;
+        $granted = $profile->fuel_current - $before;
+        $profile->save();
+
+        return $granted;
+    }
 }

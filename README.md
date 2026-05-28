@@ -69,7 +69,7 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 `STRIPE_WEBHOOK_SECRET` is required for webhook fulfillment (#35). For local webhook testing, forward events to the app:
 
 ```bash
-stripe listen --forward-to http://localhost:8000/stripe/webhook
+stripe listen --forward-to http://localhost:8000/webhooks/stripe
 ```
 
 Use the signing secret printed by `stripe listen` as `STRIPE_WEBHOOK_SECRET`. Checkout success/cancel URLs are `/shop/success` and `/shop/cancel`; rewards are granted only after a verified webhook, not on the success page alone.

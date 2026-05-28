@@ -15,12 +15,15 @@ use App\Http\Controllers\PvpRaceController;
 use App\Http\Controllers\RaceController;
 use App\Http\Controllers\RaceHistoryController;
 use App\Http\Controllers\ShopController;
+use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\TournamentResultController;
 use App\Http\Controllers\TournamentRewardController;
 use App\Http\Controllers\TuningShopController;
 use App\Services\DailyRewardService;
 use App\Services\PlayerLevelService;
 use Illuminate\Support\Facades\Route;
+
+Route::post('/webhooks/stripe', StripeWebhookController::class)->name('webhooks.stripe');
 
 Route::get('/', function () {
     return view('welcome');

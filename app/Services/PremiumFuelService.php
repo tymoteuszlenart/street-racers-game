@@ -64,4 +64,29 @@ class PremiumFuelService
 
         return $granted;
     }
+
+    public function ensurePaidStorageCap(PlayerProfile $profile): void
+    {
+        $paidMax = (int) config('game.shop.paid_premium_fuel_max', 20);
+
+        if ($profile->premium_fuel_max < $paidMax) {
+            $profile->premium_fuel_max = $paidMax;
+            $profile->save();
+        }
+    }
+
+    public function grantPurchase(PlayerProfile $profile, int $amount): int
+    {
+        if ($amount <= 0) {
+            return 0;
+        }
+
+        $max = $this->purchaseStorageMax($profile);
+        $before = $profile->premium_fuel_current;
+        $profile->premium_fuel_current = min($max, $profile->premium_fuel_current + $amount);
+        $granted = $profile->premium_fuel_current - $before;
+        $profile->save();
+
+        return $granted;
+    }
 }
