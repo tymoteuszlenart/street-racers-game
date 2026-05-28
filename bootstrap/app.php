@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnsureClubsUnlocked;
 use App\Http\Middleware\EnsureTournamentsUnlocked;
 use App\Http\Middleware\EnsureTuningShopUnlocked;
+use App\Http\Middleware\EnsureUserIsAdmin;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -26,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
+            'admin' => EnsureUserIsAdmin::class,
             'tuning.unlocked' => EnsureTuningShopUnlocked::class,
             'clubs.unlocked' => EnsureClubsUnlocked::class,
             'tournaments.unlocked' => EnsureTournamentsUnlocked::class,

@@ -59,4 +59,25 @@ class PaymentOrder extends Model
     {
         return $this->fulfilled_at !== null;
     }
+
+    public function grantedSummary(): ?string
+    {
+        $payload = $this->granted_payload;
+
+        if (! is_array($payload) || $payload === []) {
+            return null;
+        }
+
+        $parts = [];
+
+        if (isset($payload['fuel'])) {
+            $parts[] = __('+:count regular fuel', ['count' => (int) $payload['fuel']]);
+        }
+
+        if (isset($payload['premium_fuel'])) {
+            $parts[] = __('+:count premium fuel', ['count' => (int) $payload['premium_fuel']]);
+        }
+
+        return $parts === [] ? null : implode(', ', $parts);
+    }
 }
