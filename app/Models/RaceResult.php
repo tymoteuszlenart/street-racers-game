@@ -15,6 +15,7 @@ class RaceResult extends Model
         'race_id',
         'pvp_race_id',
         'won',
+        'is_tie',
         'player_score',
         'opponent_score',
         'score_breakdown',
@@ -26,6 +27,7 @@ class RaceResult extends Model
         return [
             'attempt_type' => RaceAttemptType::class,
             'won' => 'boolean',
+            'is_tie' => 'boolean',
             'player_score' => 'float',
             'opponent_score' => 'float',
             'random_factor' => 'float',

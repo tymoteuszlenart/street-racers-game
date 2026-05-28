@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Race;
+use App\Models\RaceAttempt;
 use App\Models\RaceResult;
 use App\Models\User;
 use App\Services\RaceService;
@@ -211,24 +212,84 @@ class RaceStartTest extends TestCase
             'opponent_grip' => 1,
             'opponent_handling' => 1,
         ]);
-        $key = (string) Str::uuid();
+        $failedKey = (string) Str::uuid();
 
         RateLimiter::clear(RaceService::raceStartRateLimitKey($user->id));
 
         $this->actingAs($user)->from(route('races.index'))->post(route('races.start', $race), [
-            'idempotency_key' => $key,
+            'idempotency_key' => $failedKey,
         ])->assertRedirect(route('races.index'))->assertSessionHasErrors('fuel');
+
+        $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
+
+        $this->actingAs($user)->post(route('races.start', $race), [
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertRedirect();
 
         $this->actingAs($user)->post(route('races.start', $race), [
             'idempotency_key' => (string) Str::uuid(),
         ])->assertStatus(429);
 
         $response = $this->actingAs($user)->from(route('races.index'))->post(route('races.start', $race), [
-            'idempotency_key' => $key,
+            'idempotency_key' => $failedKey,
         ]);
 
         $response->assertRedirect(route('races.index'));
         $response->assertSessionHasErrors('race');
+    }
+
+    public function test_inactive_race_cannot_be_started(): void
+    {
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
+
+        $race = Race::factory()->create([
+            'active' => false,
+            'fuel_cost' => 10,
+            'opponent_power' => 1,
+            'opponent_acceleration' => 1,
+            'opponent_grip' => 1,
+            'opponent_handling' => 1,
+        ]);
+
+        $response = $this->actingAs($user)->from(route('races.index'))->post(route('races.start', $race), [
+            'idempotency_key' => (string) Str::uuid(),
+        ]);
+
+        $response->assertRedirect(route('races.index'));
+        $response->assertSessionHasErrors('race');
+        $this->assertSame(0, RaceResult::query()->count());
+    }
+
+    public function test_pending_idempotency_key_returns_409_for_json_clients(): void
+    {
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
+
+        $race = Race::factory()->create([
+            'fuel_cost' => 10,
+            'opponent_power' => 1,
+            'opponent_acceleration' => 1,
+            'opponent_grip' => 1,
+            'opponent_handling' => 1,
+        ]);
+        $key = (string) Str::uuid();
+
+        RaceAttempt::query()->create([
+            'user_id' => $user->id,
+            'idempotency_key' => $key,
+            'attempt_type' => 'npc',
+            'race_id' => $race->id,
+            'status' => 'pending',
+            'expires_at' => now()->addDay(),
+        ]);
+
+        $this->actingAs($user)
+            ->postJson(route('races.start', $race), ['idempotency_key' => $key])
+            ->assertStatus(409)
+            ->assertJson(['message' => 'A race with this idempotency key is already in progress.']);
     }
 
     public function test_duplicate_submit_for_same_race_shows_existing_result_message(): void

@@ -33,7 +33,7 @@
                         </div>
                         <form method="POST" action="{{ route('races.start', $race) }}">
                             @csrf
-                            <input type="hidden" name="idempotency_key" value="{{ Str::uuid() }}">
+                            <input type="hidden" name="idempotency_key" value="{{ old('idempotency_key', $raceIdempotencyKeys[$race->id] ?? '') }}">
                             <x-primary-button type="submit">
                                 {{ __('Race') }}
                             </x-primary-button>

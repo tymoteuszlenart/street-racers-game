@@ -13,4 +13,9 @@ return [
         'start_rate_limit_per_minute' => 30,
     ],
 
+    'player' => [
+        'max_level' => 50,
+        'experience_per_level' => 100,
+    ],
+
 ];

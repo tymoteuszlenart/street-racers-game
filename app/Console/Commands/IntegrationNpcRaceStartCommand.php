@@ -16,6 +16,12 @@ class IntegrationNpcRaceStartCommand extends Command
 
     public function handle(RaceService $raceService): int
     {
+        if (! app()->environment(['local', 'testing'])) {
+            $this->error('This command is only available in local and testing environments.');
+
+            return self::FAILURE;
+        }
+
         $user = User::query()->findOrFail((int) $this->argument('userId'));
         $race = Race::query()->findOrFail((int) $this->argument('raceId'));
         $idempotencyKey = $this->argument('idempotencyKey');

@@ -34,6 +34,7 @@ class RaceService
         private readonly FuelService $fuelService,
         private readonly RaceScoreCalculator $scoreCalculator,
         private readonly TransactionService $transactionService,
+        private readonly PlayerLevelService $playerLevelService,
     ) {}
 
     /**
@@ -69,7 +70,7 @@ class RaceService
     private function startNpcRaceOnce(User $user, Race $race, string $idempotencyKey): NpcRaceStartResult
     {
         try {
-            return DB::transaction(function () use ($user, $race, $idempotencyKey) {
+            $result = DB::transaction(function () use ($user, $race, $idempotencyKey) {
                 $resolvedAttempt = $this->resolveOrCreateAttempt(
                     userId: $user->id,
                     idempotencyKey: $idempotencyKey,
@@ -86,9 +87,7 @@ class RaceService
 
                 [$profile, $car] = $this->lockPlayerState($user->id);
 
-                $race = Race::query()->whereKey($race->id)->lockForUpdate()->firstOrFail();
-
-                $this->consumeStartRateLimit($user->id);
+                $this->assertRaceStartNotRateLimited($user->id);
                 $this->assertNpcRaceEligible($profile, $car, $race);
 
                 $this->fuelService->regenerate($profile);
@@ -118,7 +117,10 @@ class RaceService
                     0,
                 );
 
-                $won = $playerOutcome['score'] > $opponentOutcome['score'];
+                $playerScore = $playerOutcome['score'];
+                $opponentScore = $opponentOutcome['score'];
+                $isTie = $playerScore === $opponentScore;
+                $won = $playerScore > $opponentScore;
 
                 $this->applyRewards($profile, $race, $won);
                 $this->applyConditionDamage($car, $race);
@@ -129,8 +131,9 @@ class RaceService
                     'race_id' => $race->id,
                     'pvp_race_id' => null,
                     'won' => $won,
-                    'player_score' => $playerOutcome['score'],
-                    'opponent_score' => $opponentOutcome['score'],
+                    'is_tie' => $isTie,
+                    'player_score' => $playerScore,
+                    'opponent_score' => $opponentScore,
                     'score_breakdown' => [
                         'player' => $playerOutcome['breakdown'],
                         'opponent' => $opponentOutcome['breakdown'],
@@ -152,6 +155,12 @@ class RaceService
                     replayed: false,
                 );
             });
+
+            if (! $result->replayed) {
+                $this->recordRaceStartRateLimitHit($user->id);
+            }
+
+            return $result;
         } catch (RaceAttemptPendingException|RaceAttemptFailedException|IdempotencyKeyExpiredException $e) {
             throw $e;
         } catch (ValidationException $e) {
@@ -394,11 +403,14 @@ class RaceService
         if ($won) {
             $profile->cash += $race->cash_reward_win;
             $profile->reputation += $race->reputation_reward_win;
-            $profile->experience += $race->experience_reward_win;
+            $this->playerLevelService->addExperience($profile, $race->experience_reward_win);
         } else {
             $profile->cash += $race->cash_reward_loss;
             $profile->reputation += $race->reputation_reward_loss;
-            $profile->experience += $race->experience_reward_loss;
+            $this->playerLevelService->addExperience(
+                $profile,
+                $race->experience_reward_loss,
+            );
         }
 
         $profile->save();
@@ -450,19 +462,21 @@ class RaceService
         });
     }
 
-    private function consumeStartRateLimit(int $userId): void
+    private function assertRaceStartNotRateLimited(int $userId): void
     {
         $rateLimitKey = self::raceStartRateLimitKey($userId);
         $maxAttempts = (int) config('game.race.start_rate_limit_per_minute', 30);
-        $decaySeconds = 60;
 
         if (RateLimiter::tooManyAttempts($rateLimitKey, $maxAttempts)) {
             throw new RaceStartRateLimitedException(
                 retryAfterSeconds: max(1, RateLimiter::availableIn($rateLimitKey)),
             );
         }
+    }
 
-        RateLimiter::hit($rateLimitKey, $decaySeconds);
+    private function recordRaceStartRateLimitHit(int $userId): void
+    {
+        RateLimiter::hit(self::raceStartRateLimitKey($userId), 60);
     }
 
     private function isUniqueConstraintViolation(QueryException $exception): bool

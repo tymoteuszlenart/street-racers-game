@@ -12,6 +12,7 @@ use App\Models\RaceAttempt;
 use App\Models\RaceResult;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\RaceScoreCalculator;
 use App\Services\RaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\RateLimiter;
@@ -60,6 +61,73 @@ class RaceServiceTest extends TestCase
             'amount' => -10,
             'source_id' => $result->raceResult->id,
         ]);
+    }
+
+    public function test_winning_race_can_level_up_player(): void
+    {
+        config([
+            'game.player.max_level' => 50,
+            'game.player.experience_per_level' => 100,
+        ]);
+
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update([
+            'level' => 1,
+            'experience' => 0,
+            'fuel_current' => 100,
+            'fuel_updated_at' => now(),
+        ]);
+
+        $race = Race::factory()->create([
+            'fuel_cost' => 10,
+            'experience_reward_win' => 100,
+            'opponent_power' => 1,
+            'opponent_acceleration' => 1,
+            'opponent_grip' => 1,
+            'opponent_handling' => 1,
+        ]);
+
+        app(RaceService::class)
+            ->withRandomUnit(fn (): float => 0.9)
+            ->startNpcRace($user, $race, (string) Str::uuid());
+
+        $profile->refresh();
+        $this->assertSame(2, $profile->level);
+        $this->assertSame(100, $profile->experience);
+    }
+
+    public function test_tie_records_is_tie_and_applies_loss_rewards(): void
+    {
+        $this->mock(RaceScoreCalculator::class, function ($mock): void {
+            $mock->shouldReceive('randomFactorInRange')->andReturn(0.0);
+            $mock->shouldReceive('calculate')->twice()->andReturn(
+                ['score' => 42.0, 'breakdown' => []],
+                ['score' => 42.0, 'breakdown' => []],
+            );
+        });
+
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
+        $initialCash = $profile->cash;
+
+        $race = Race::factory()->create([
+            'fuel_cost' => 10,
+            'cash_reward_win' => 500,
+            'cash_reward_loss' => 40,
+            'opponent_power' => 1,
+            'opponent_acceleration' => 1,
+            'opponent_grip' => 1,
+            'opponent_handling' => 1,
+        ]);
+
+        $result = app(RaceService::class)->startNpcRace($user, $race, (string) Str::uuid());
+
+        $this->assertTrue($result->raceResult->is_tie);
+        $this->assertFalse($result->raceResult->won);
+        $profile->refresh();
+        $this->assertSame($initialCash + $race->cash_reward_loss, $profile->cash);
     }
 
     public function test_active_car_must_belong_to_player(): void
@@ -265,6 +333,40 @@ class RaceServiceTest extends TestCase
         $this->assertSame('failed', $attempt->status->value);
         $this->assertSame(0, RaceResult::query()->count());
         $this->assertSame(0, RaceAttempt::query()->where('status', 'pending')->count());
+    }
+
+    public function test_validation_failure_does_not_consume_rate_limit(): void
+    {
+        config(['game.race.start_rate_limit_per_minute' => 1]);
+
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['fuel_current' => 0, 'fuel_updated_at' => now()]);
+
+        $race = Race::factory()->create(['fuel_cost' => 10]);
+        $rateLimitKey = RaceService::raceStartRateLimitKey($user->id);
+
+        RateLimiter::clear($rateLimitKey);
+
+        $service = app(RaceService::class);
+
+        try {
+            $service->startNpcRace($user, $race, (string) Str::uuid());
+            $this->fail('Expected validation exception for insufficient fuel.');
+        } catch (ValidationException) {
+            // expected
+        }
+
+        $this->assertSame(0, RateLimiter::attempts($rateLimitKey));
+
+        $profile->update(['fuel_current' => 100]);
+
+        $result = $service
+            ->withRandomUnit(fn (): float => 0.9)
+            ->startNpcRace($user, $race, (string) Str::uuid());
+
+        $this->assertFalse($result->replayed);
+        $this->assertSame(1, RateLimiter::attempts($rateLimitKey));
     }
 
     public function test_rate_limited_new_key_rolls_back_pending_attempt_creation(): void
