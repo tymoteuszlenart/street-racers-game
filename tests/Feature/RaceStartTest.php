@@ -156,6 +156,38 @@ class RaceStartTest extends TestCase
         ])->assertStatus(429);
     }
 
+    public function test_idempotent_replay_bypasses_rate_limit(): void
+    {
+        config(['game.race.start_rate_limit_per_minute' => 1]);
+
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
+
+        $race = Race::factory()->create([
+            'fuel_cost' => 10,
+            'opponent_power' => 1,
+            'opponent_acceleration' => 1,
+            'opponent_grip' => 1,
+            'opponent_handling' => 1,
+        ]);
+        $key = (string) Str::uuid();
+
+        RateLimiter::clear('race-start');
+
+        $this->actingAs($user)->post(route('races.start', $race), [
+            'idempotency_key' => $key,
+        ])->assertRedirect();
+
+        $this->actingAs($user)->post(route('races.start', $race), [
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertStatus(429);
+
+        $this->actingAs($user)->post(route('races.start', $race), [
+            'idempotency_key' => $key,
+        ])->assertRedirect()->assertSessionHas('status', 'race-existing-result');
+    }
+
     public function test_duplicate_submit_for_same_race_shows_existing_result_message(): void
     {
         $user = User::factory()->create();

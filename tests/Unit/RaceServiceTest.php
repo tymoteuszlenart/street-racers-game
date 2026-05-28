@@ -262,5 +262,6 @@ class RaceServiceTest extends TestCase
         $this->assertNotNull($attempt);
         $this->assertSame('failed', $attempt->status->value);
         $this->assertSame(0, RaceResult::query()->count());
+        $this->assertSame(0, RaceAttempt::query()->where('status', 'pending')->count());
     }
 }

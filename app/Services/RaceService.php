@@ -51,7 +51,7 @@ class RaceService
         for ($attemptNumber = 1; $attemptNumber <= $maxAttempts; $attemptNumber++) {
             try {
                 return $this->startNpcRaceOnce($user, $race, $idempotencyKey);
-            } catch (QueryException $exception) {
+            } catch (Throwable $exception) {
                 if ($attemptNumber < $maxAttempts && $this->isDeadlock($exception)) {
                     continue;
                 }
@@ -65,26 +65,21 @@ class RaceService
 
     private function startNpcRaceOnce(User $user, Race $race, string $idempotencyKey): NpcRaceStartResult
     {
-        $attempt = DB::transaction(fn () => $this->resolveOrCreateAttempt(
-            userId: $user->id,
-            idempotencyKey: $idempotencyKey,
-            attemptType: RaceAttemptType::Npc,
-            raceId: $race->id,
-            defenderUserId: null,
-        ));
-
-        $replay = $this->replayIfAlreadyFinished($attempt);
-
-        if ($replay !== null) {
-            return $replay;
-        }
-
         try {
-            return DB::transaction(function () use ($user, $race, $attempt) {
-                $attempt = RaceAttempt::query()
-                    ->whereKey($attempt->id)
-                    ->lockForUpdate()
-                    ->firstOrFail();
+            return DB::transaction(function () use ($user, $race, $idempotencyKey) {
+                $attempt = $this->resolveOrCreateAttempt(
+                    userId: $user->id,
+                    idempotencyKey: $idempotencyKey,
+                    attemptType: RaceAttemptType::Npc,
+                    raceId: $race->id,
+                    defenderUserId: null,
+                );
+
+                $replay = $this->replayIfAlreadyFinished($attempt);
+
+                if ($replay !== null) {
+                    return $replay;
+                }
 
                 if ($attempt->status !== RaceAttemptStatus::Pending) {
                     throw new RaceAttemptPendingException;
@@ -159,10 +154,15 @@ class RaceService
             });
         } catch (RaceAttemptPendingException|RaceAttemptFailedException|IdempotencyKeyExpiredException $e) {
             throw $e;
-        } catch (Throwable $e) {
-            if ($this->shouldMarkAttemptFailed($e)) {
-                $this->markAttemptFailed($attempt, $e);
-            }
+        } catch (ValidationException $e) {
+            $this->markAttemptFailed(
+                userId: $user->id,
+                idempotencyKey: $idempotencyKey,
+                attemptType: RaceAttemptType::Npc,
+                raceId: $race->id,
+                defenderUserId: null,
+                exception: $e,
+            );
 
             throw $e;
         }
@@ -406,32 +406,32 @@ class RaceService
         $car->save();
     }
 
-    private function shouldMarkAttemptFailed(Throwable $exception): bool
-    {
-        return $exception instanceof ValidationException;
-    }
-
-    private function markAttemptFailed(?RaceAttempt $attempt, Throwable $exception): void
-    {
-        if ($attempt === null || $attempt->status !== RaceAttemptStatus::Pending) {
-            return;
-        }
-
+    private function markAttemptFailed(
+        int $userId,
+        string $idempotencyKey,
+        RaceAttemptType $attemptType,
+        ?int $raceId,
+        ?int $defenderUserId,
+        Throwable $exception,
+    ): void {
         $errorCode = $exception instanceof ValidationException
             ? 'validation_failed'
             : 'race_failed';
 
-        DB::transaction(function () use ($attempt, $errorCode) {
-            $locked = RaceAttempt::query()
-                ->whereKey($attempt->id)
-                ->lockForUpdate()
-                ->first();
+        DB::transaction(function () use ($userId, $idempotencyKey, $attemptType, $raceId, $defenderUserId, $errorCode) {
+            $attempt = $this->resolveOrCreateAttempt(
+                userId: $userId,
+                idempotencyKey: $idempotencyKey,
+                attemptType: $attemptType,
+                raceId: $raceId,
+                defenderUserId: $defenderUserId,
+            );
 
-            if ($locked === null || $locked->status !== RaceAttemptStatus::Pending) {
+            if ($attempt->status !== RaceAttemptStatus::Pending) {
                 return;
             }
 
-            $locked->update([
+            $attempt->update([
                 'status' => RaceAttemptStatus::Failed,
                 'error_code' => $errorCode,
             ]);
@@ -445,12 +445,24 @@ class RaceService
         return in_array($sqlState, ['23000', '23505'], true);
     }
 
-    private function isDeadlock(QueryException $exception): bool
+    private function isDeadlock(Throwable $exception): bool
     {
-        $sqlState = $exception->errorInfo[0] ?? null;
-        $driverCode = $exception->errorInfo[1] ?? null;
+        if ($exception instanceof QueryException) {
+            $sqlState = $exception->errorInfo[0] ?? null;
+            $driverCode = $exception->errorInfo[1] ?? null;
 
-        return $sqlState === '40001' || $driverCode === 1213;
+            if ($sqlState === '40001' || $driverCode === 1213) {
+                return true;
+            }
+        }
+
+        if ($exception instanceof \PDOException && (int) $exception->getCode() === 1213) {
+            return true;
+        }
+
+        $previous = $exception->getPrevious();
+
+        return $previous !== null && $this->isDeadlock($previous);
     }
 
     private function randomUnitCallable(): callable
