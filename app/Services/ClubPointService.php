@@ -11,7 +11,7 @@ use Illuminate\Validation\ValidationException;
 class ClubPointService
 {
     /**
-     * Club rankings tie-break: higher points first, then earlier updated_at (club that reached the score first).
+     * Recalculates club points from counted tournament entries for the active season.
      */
     public function setPointsFromCountedEntries(Club $club, ClubTournament $tournament): void
     {

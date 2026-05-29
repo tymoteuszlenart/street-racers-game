@@ -10,6 +10,7 @@ use App\Models\ClubMember;
 use App\Models\ClubTournament;
 use App\Models\ClubTournamentRewardGrant;
 use App\Models\PlayerProfile;
+use App\Services\ClubTournamentSeasonRankingService;
 use App\Services\ClubTournamentSeasonService;
 use App\Services\PremiumFuelService;
 use App\Services\TransactionService;
@@ -25,6 +26,7 @@ class CloseClubTournamentSeasonCommand extends Command
 
     public function handle(
         ClubTournamentSeasonService $seasonService,
+        ClubTournamentSeasonRankingService $rankingService,
         PremiumFuelService $premiumFuelService,
         TransactionService $transactionService,
     ): int {
@@ -39,7 +41,7 @@ class CloseClubTournamentSeasonCommand extends Command
             return self::SUCCESS;
         }
 
-        DB::transaction(function () use ($tournament, $seasonService, $premiumFuelService, $transactionService) {
+        DB::transaction(function () use ($tournament, $seasonService, $rankingService, $premiumFuelService, $transactionService) {
             $tournament = ClubTournament::query()
                 ->whereKey($tournament->id)
                 ->lockForUpdate()
@@ -54,11 +56,7 @@ class CloseClubTournamentSeasonCommand extends Command
             $topClubs = (int) config('game.tournaments.weekly_reward_top_clubs', 3);
             $rewardTable = config('game.tournaments.weekly_rewards', []);
 
-            $rankedClubs = Club::query()
-                ->orderByDesc('points')
-                ->orderBy('updated_at')
-                ->limit($topClubs)
-                ->get();
+            $rankedClubs = $rankingService->topClubsForSeason($tournament, $topClubs);
 
             foreach ($rankedClubs as $index => $club) {
                 $rank = $index + 1;
