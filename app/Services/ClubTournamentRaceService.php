@@ -10,6 +10,7 @@ use App\Enums\TransactionType;
 use App\Exceptions\IdempotencyKeyExpiredException;
 use App\Exceptions\RaceAttemptFailedException;
 use App\Exceptions\RaceAttemptPendingException;
+use App\Exceptions\RaceStartRateLimitedException;
 use App\Models\Car;
 use App\Models\Club;
 use App\Models\ClubMember;
@@ -20,6 +21,7 @@ use App\Models\RaceResult;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -55,7 +57,13 @@ class ClubTournamentRaceService
 
         for ($attemptNumber = 1; $attemptNumber <= $maxAttempts; $attemptNumber++) {
             try {
-                return $this->startOnce($user, $club, $idempotencyKey);
+                $result = $this->startOnce($user, $club, $idempotencyKey);
+
+                if (! $result->replayed) {
+                    $this->recordRaceStartRateLimitHit($user->id);
+                }
+
+                return $result;
             } catch (Throwable $exception) {
                 if ($attemptNumber < $maxAttempts && $this->isDeadlock($exception)) {
                     continue;
@@ -101,6 +109,7 @@ class ClubTournamentRaceService
 
                 [$profile, $car, $membership] = $this->lockPlayerState($user->id);
 
+                $this->assertRaceStartNotRateLimited($user->id);
                 $this->assertEligible($profile, $car, $club, $membership, $tournament);
 
                 $entryCost = (int) config('game.premium_fuel.tournament_entry_cost', 1);
@@ -327,5 +336,22 @@ class ClubTournamentRaceService
     private function randomUnitCallable(): callable
     {
         return $this->randomUnit ?? fn (): float => mt_rand() / (mt_getrandmax() + 1);
+    }
+
+    private function assertRaceStartNotRateLimited(int $userId): void
+    {
+        $rateLimitKey = RaceService::raceStartRateLimitKey($userId);
+        $maxAttempts = (int) config('game.race.start_rate_limit_per_minute', 30);
+
+        if (RateLimiter::tooManyAttempts($rateLimitKey, $maxAttempts)) {
+            throw new RaceStartRateLimitedException(
+                retryAfterSeconds: max(1, RateLimiter::availableIn($rateLimitKey)),
+            );
+        }
+    }
+
+    private function recordRaceStartRateLimitHit(int $userId): void
+    {
+        RateLimiter::hit(RaceService::raceStartRateLimitKey($userId), 60);
     }
 }

@@ -6,6 +6,7 @@ use App\Exceptions\IdempotencyKeyConflictException;
 use App\Exceptions\IdempotencyKeyExpiredException;
 use App\Exceptions\RaceAttemptFailedException;
 use App\Exceptions\RaceAttemptPendingException;
+use App\Exceptions\RaceStartRateLimitedException;
 use App\Http\Requests\StartClubTournamentRaceRequest;
 use App\Models\Club;
 use App\Models\ClubTournamentEntry;
@@ -18,6 +19,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 class ClubTournamentController extends Controller
 {
@@ -83,6 +85,20 @@ class ClubTournamentController extends Controller
             );
         } catch (RaceAttemptPendingException|IdempotencyKeyConflictException|IdempotencyKeyExpiredException|RaceAttemptFailedException $exception) {
             return $this->raceStartConflictResponse($request, $exception->getMessage());
+        } catch (RaceStartRateLimitedException $exception) {
+            if ($request->expectsJson()) {
+                return response()->json(
+                    ['message' => $exception->getMessage()],
+                    Response::HTTP_TOO_MANY_REQUESTS,
+                    ['Retry-After' => (string) $exception->retryAfterSeconds],
+                );
+            }
+
+            throw new TooManyRequestsHttpException(
+                $exception->retryAfterSeconds,
+                $exception->getMessage(),
+                $exception,
+            );
         } catch (ValidationException $exception) {
             if ($request->expectsJson()) {
                 return response()->json([
