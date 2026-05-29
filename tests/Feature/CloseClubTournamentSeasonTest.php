@@ -6,6 +6,7 @@ use App\Enums\ClubTournamentStatus;
 use App\Models\Club;
 use App\Models\ClubMember;
 use App\Models\ClubTournament;
+use App\Models\ClubTournamentEntry;
 use App\Models\ClubTournamentRewardGrant;
 use App\Models\User;
 use Carbon\Carbon;
@@ -44,5 +45,74 @@ class CloseClubTournamentSeasonTest extends TestCase
         );
 
         Carbon::setTestNow();
+    }
+
+    public function test_close_command_awards_first_place_to_club_that_reached_tied_score_first(): void
+    {
+        Carbon::setTestNow('2026-05-25 12:00:00');
+
+        $tournament = ClubTournament::factory()->create([
+            'starts_at' => now()->subWeek(),
+            'ends_at' => now()->subMinute(),
+            'status' => ClubTournamentStatus::Active,
+        ]);
+
+        $winnerClub = Club::factory()->create([
+            'points' => 50,
+            'updated_at' => '2026-05-24 12:00:00',
+        ]);
+        $runnerUpClub = Club::factory()->create([
+            'points' => 50,
+            'updated_at' => '2026-05-20 12:00:00',
+        ]);
+
+        $winnerUser = User::factory()->create();
+        $winnerUser->playerProfile()->update(['level' => 15, 'cash' => 1000]);
+        ClubMember::factory()->owner()->create(['club_id' => $winnerClub->id, 'user_id' => $winnerUser->id]);
+
+        $runnerUpUser = User::factory()->create();
+        $runnerUpUser->playerProfile()->update(['level' => 15, 'cash' => 1000]);
+
+        $this->createCountedEntry($tournament, $winnerClub, $winnerUser, 50, '2026-05-18 10:00:00');
+        $this->createCountedEntry($tournament, $runnerUpClub, $runnerUpUser, 50, '2026-05-22 10:00:00');
+
+        Artisan::call('club-tournament:close');
+
+        $this->assertSame(6000, $winnerUser->playerProfile->fresh()->cash);
+        $this->assertSame(1000, $runnerUpUser->playerProfile->fresh()->cash);
+        $this->assertTrue(
+            ClubTournamentRewardGrant::query()
+                ->where('club_tournament_id', $tournament->id)
+                ->where('user_id', $winnerUser->id)
+                ->exists(),
+        );
+        $this->assertFalse(
+            ClubTournamentRewardGrant::query()
+                ->where('club_tournament_id', $tournament->id)
+                ->where('user_id', $runnerUpUser->id)
+                ->exists(),
+        );
+
+        Carbon::setTestNow();
+    }
+
+    private function createCountedEntry(
+        ClubTournament $tournament,
+        Club $club,
+        User $user,
+        int $points,
+        string $createdAt,
+    ): ClubTournamentEntry {
+        $entry = ClubTournamentEntry::query()->create([
+            'club_tournament_id' => $tournament->id,
+            'club_id' => $club->id,
+            'user_id' => $user->id,
+            'points' => $points,
+            'counts_toward_club' => true,
+        ]);
+        $entry->created_at = $createdAt;
+        $entry->saveQuietly();
+
+        return $entry;
     }
 }
