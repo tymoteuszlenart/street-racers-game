@@ -4,15 +4,16 @@ namespace Tests\Unit;
 
 use App\Models\Club;
 use App\Models\ClubTournament;
-use App\Models\ClubTournamentEntry;
 use App\Models\User;
 use App\Services\ClubTournamentSeasonRankingService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\CreatesClubTournamentCountedEntries;
 use Tests\TestCase;
 
 class ClubTournamentSeasonRankingServiceTest extends TestCase
 {
+    use CreatesClubTournamentCountedEntries;
     use RefreshDatabase;
 
     private ClubTournamentSeasonRankingService $rankingService;
@@ -67,23 +68,20 @@ class ClubTournamentSeasonRankingServiceTest extends TestCase
         $this->assertSame(30, $this->rankingService->seasonPoints($club, $tournament));
     }
 
-    private function createCountedEntry(
-        ClubTournament $tournament,
-        Club $club,
-        User $user,
-        int $points,
-        string $createdAt,
-    ): ClubTournamentEntry {
-        $entry = ClubTournamentEntry::query()->create([
-            'club_tournament_id' => $tournament->id,
-            'club_id' => $club->id,
-            'user_id' => $user->id,
-            'points' => $points,
-            'counts_toward_club' => true,
-        ]);
-        $entry->created_at = $createdAt;
-        $entry->saveQuietly();
+    public function test_ranked_clubs_exclude_zero_point_clubs(): void
+    {
+        $tournament = ClubTournament::factory()->create();
+        $user = User::factory()->create();
 
-        return $entry;
+        $scoringClub = Club::factory()->create(['points' => 5]);
+        $emptyClub = Club::factory()->create(['points' => 100]);
+
+        $this->createCountedEntry($tournament, $scoringClub, $user, 5, '2026-05-18 10:00:00');
+
+        $ranked = $this->rankingService->rankedClubsForSeason($tournament);
+
+        $this->assertCount(1, $ranked);
+        $this->assertSame($scoringClub->id, $ranked->first()->id);
+        $this->assertEmpty($this->rankingService->topClubsForSeason($tournament, 3)->where('id', $emptyClub->id));
     }
 }

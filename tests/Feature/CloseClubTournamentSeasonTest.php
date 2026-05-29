@@ -6,16 +6,17 @@ use App\Enums\ClubTournamentStatus;
 use App\Models\Club;
 use App\Models\ClubMember;
 use App\Models\ClubTournament;
-use App\Models\ClubTournamentEntry;
 use App\Models\ClubTournamentRewardGrant;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
+use Tests\Support\CreatesClubTournamentCountedEntries;
 use Tests\TestCase;
 
 class CloseClubTournamentSeasonTest extends TestCase
 {
+    use CreatesClubTournamentCountedEntries;
     use RefreshDatabase;
 
     public function test_close_command_distributes_rewards_idempotently(): void
@@ -32,6 +33,8 @@ class CloseClubTournamentSeasonTest extends TestCase
         $user = User::factory()->create();
         $user->playerProfile()->update(['level' => 15, 'cash' => 1000]);
         ClubMember::factory()->owner()->create(['club_id' => $club->id, 'user_id' => $user->id]);
+
+        $this->createCountedEntry($tournament, $club, $user, 100, '2026-05-20 10:00:00');
 
         Artisan::call('club-tournament:close');
         Artisan::call('club-tournament:close');
@@ -96,23 +99,31 @@ class CloseClubTournamentSeasonTest extends TestCase
         Carbon::setTestNow();
     }
 
-    private function createCountedEntry(
-        ClubTournament $tournament,
-        Club $club,
-        User $user,
-        int $points,
-        string $createdAt,
-    ): ClubTournamentEntry {
-        $entry = ClubTournamentEntry::query()->create([
-            'club_tournament_id' => $tournament->id,
-            'club_id' => $club->id,
-            'user_id' => $user->id,
-            'points' => $points,
-            'counts_toward_club' => true,
-        ]);
-        $entry->created_at = $createdAt;
-        $entry->saveQuietly();
+    public function test_close_command_skips_club_with_zero_counted_season_points(): void
+    {
+        Carbon::setTestNow('2026-05-25 12:00:00');
 
-        return $entry;
+        $tournament = ClubTournament::factory()->create([
+            'starts_at' => now()->subWeek(),
+            'ends_at' => now()->subMinute(),
+            'status' => ClubTournamentStatus::Active,
+        ]);
+
+        $club = Club::factory()->create(['points' => 100]);
+        $user = User::factory()->create();
+        $user->playerProfile()->update(['level' => 15, 'cash' => 1000]);
+        ClubMember::factory()->owner()->create(['club_id' => $club->id, 'user_id' => $user->id]);
+
+        Artisan::call('club-tournament:close');
+
+        $this->assertSame(1000, $user->playerProfile->fresh()->cash);
+        $this->assertFalse(
+            ClubTournamentRewardGrant::query()
+                ->where('club_tournament_id', $tournament->id)
+                ->where('user_id', $user->id)
+                ->exists(),
+        );
+
+        Carbon::setTestNow();
     }
 }
