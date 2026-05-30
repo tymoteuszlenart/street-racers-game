@@ -35,8 +35,10 @@
                             @endphp
                             <tr class="{{ $isCurrentUser ? 'bg-racing-700/60' : '' }}">
                                 <td class="px-4 py-3 text-sm text-gray-300">{{ $rank }}</td>
-                                <td class="px-4 py-3 text-sm font-medium {{ $isCurrentUser ? 'text-accent-neon' : 'text-white' }}">
-                                    {{ $profile->user->name }}
+                                <td class="px-4 py-3 text-sm font-medium">
+                                    <a href="{{ route('players.show', $profile->user) }}" class="{{ $isCurrentUser ? 'text-accent-neon' : 'text-white hover:text-accent-neon' }}">
+                                        {{ $profile->user->name }}
+                                    </a>
                                     @if ($isCurrentUser)
                                         <span class="text-gray-500 font-normal">({{ __('you') }})</span>
                                     @endif

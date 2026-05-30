@@ -56,6 +56,33 @@
                         </div>
                     </div>
 
+                    @if ($profile && $profile->unspent_stat_points > 0)
+                        <div class="bg-racing-700 rounded-lg p-6 border border-accent-neon mb-8">
+                            <h4 class="text-accent-neon font-semibold text-lg mb-2">{{ __('Stat points available') }}</h4>
+                            <p class="text-gray-400 text-sm mb-3">
+                                {{ __('You have :count point(s) to allocate after leveling up.', ['count' => $profile->unspent_stat_points]) }}
+                            </p>
+                            <a href="{{ route('players.show', auth()->user()) }}" class="inline-block text-sm text-accent-blue hover:text-accent-neon">
+                                {{ __('Allocate driver stats') }}
+                            </a>
+                        </div>
+                    @endif
+
+                    @if ($profile)
+                        <div class="bg-racing-700 rounded-lg p-6 border border-racing-600 mb-8">
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                                <h4 class="text-accent-neon font-semibold text-lg">{{ __('Driver stats') }}</h4>
+                                <a href="{{ route('players.show', auth()->user()) }}" class="text-sm text-accent-blue hover:text-accent-neon">
+                                    {{ __('View racer profile') }}
+                                </a>
+                            </div>
+                            <x-driver-stats
+                                :stats="$profile->driverStats()"
+                                :labels="config('game.player.driver_stats.labels', [])"
+                            />
+                        </div>
+                    @endif
+
                     @if ($dailyRewardAvailable ?? false)
                         <div class="bg-racing-700 rounded-lg p-6 border border-accent-orange mb-8">
                             <h4 class="text-accent-orange font-semibold text-lg mb-2">{{ __('Daily fuel ready') }}</h4>

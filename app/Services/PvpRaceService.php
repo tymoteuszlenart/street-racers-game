@@ -129,13 +129,13 @@ class PvpRaceService
 
                 $challengerOutcome = $this->scoreCalculator->calculate(
                     $challengerSnapshot['stats'],
-                    $challengerProfile->level,
+                    $challengerProfile->driverStats(),
                     $randomFactor,
                 );
 
                 $defenderOutcome = $this->scoreCalculator->calculate(
                     $defenderSnapshot['stats'],
-                    $playerStates[$defender->id]['profile']->level,
+                    $playerStates[$defender->id]['profile']->driverStats(),
                     $randomFactor,
                 );
 

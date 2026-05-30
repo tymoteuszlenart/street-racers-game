@@ -37,6 +37,20 @@
                     </div>
                 </dl>
 
+                <x-race-score-breakdown
+                    :score-breakdown="$raceResult->score_breakdown"
+                    :driver-stat-labels="config('game.player.driver_stats.labels', [])"
+                />
+
+                @if (auth()->user()?->playerProfile?->unspent_stat_points > 0)
+                    <div class="border-t border-racing-600 pt-4">
+                        <p class="text-accent-neon text-sm font-medium mb-2">{{ __('Level up! You have stat points to spend.') }}</p>
+                        <a href="{{ route('players.show', auth()->user()) }}" class="text-accent-blue hover:text-accent-neon text-sm">
+                            {{ __('Allocate driver stats') }}
+                        </a>
+                    </div>
+                @endif
+
                 @if ($rewards)
                     <div class="border-t border-racing-600 pt-4">
                         <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wider mb-3">{{ __('Rewards earned') }}</h3>

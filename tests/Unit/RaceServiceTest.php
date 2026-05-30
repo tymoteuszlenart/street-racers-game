@@ -99,6 +99,7 @@ class RaceServiceTest extends TestCase
         $profile->refresh();
         $this->assertSame(2, $profile->level);
         $this->assertSame(100, $profile->experience);
+        $this->assertSame(3, $profile->unspent_stat_points);
     }
 
     public function test_tie_records_is_tie_and_applies_loss_rewards(): void

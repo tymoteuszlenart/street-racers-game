@@ -28,6 +28,21 @@ php artisan db:seed
 
 The car catalog (`CarModelSeeder`) is required for starter cars on registration and the dealer.
 
+`RaceSeeder` seeds three NPC street races — **Amateur**, **Semi-Pro**, and **Pro** — each with its own car stats and opponent driver stats.
+
+After pulling changes that add columns or tables, run migrations:
+
+```bash
+php artisan migrate
+```
+
+## Game features (dev)
+
+- **Racer profiles** — `/players/{user}` shows level, reputation, driver stats, active car, and club. Linked from rankings, PvP, clubs, and the dashboard.
+- **Driver stats** — Force, Reaction, Control, and Technique add a weighted bonus to race scores. Level-ups grant **3 unspent stat points** to allocate on your own profile (`POST /players/stats`).
+- **NPC races** — **Amateur**, **Semi-Pro**, and **Pro** are always available; difficulty comes from stronger opponent car and driver stats, not player level gates.
+- **Score breakdown** — NPC, PvP, and tournament result pages show car base, driver bonus, luck, condition, and driver stats used (older results still show legacy `driver_level_bonus` as driver bonus).
+
 ## Development
 
 ```bash

@@ -71,7 +71,7 @@ class CarStatAggregatorTest extends TestCase
         $stats = app(CarStatAggregator::class)->aggregate($car);
         $calculator = app(RaceScoreCalculator::class);
 
-        $outcome = $calculator->calculate($stats, 1, 0.0);
+        $outcome = $calculator->calculate($stats, config('game.player.driver_stats.base'), 0.0);
 
         $this->assertEquals(5, $outcome['breakdown']['condition_penalty']);
         $this->assertEqualsWithDelta(50.0, $stats['condition_percent'], 0.01);

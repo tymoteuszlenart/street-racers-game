@@ -44,6 +44,11 @@
                     </div>
                 </dl>
 
+                <x-race-score-breakdown
+                    :score-breakdown="$raceResult->score_breakdown"
+                    :driver-stat-labels="config('game.player.driver_stats.labels', [])"
+                />
+
                 <p class="text-gray-500 text-sm">{{ __('No cash, XP, or reputation from tournament races.') }}</p>
 
                 @if ($raceResult->clubTournament && auth()->user()->clubMember)

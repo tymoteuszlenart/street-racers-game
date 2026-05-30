@@ -22,7 +22,7 @@ class RaceHistoryTest extends TestCase
     {
         $user = User::factory()->create();
         $other = User::factory()->create();
-        $race = Race::query()->where('name', 'Downtown Sprint')->firstOrFail();
+        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
 
         $older = RaceResult::query()->create([
             'user_id' => $user->id,

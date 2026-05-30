@@ -8,6 +8,8 @@ use App\Http\Controllers\ClubRankingController;
 use App\Http\Controllers\ClubTournamentController;
 use App\Http\Controllers\DailyRewardController;
 use App\Http\Controllers\DealerController;
+use App\Http\Controllers\DriverStatController;
+use App\Http\Controllers\GamePlayerController;
 use App\Http\Controllers\GarageController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\PremiumFuelController;
@@ -113,6 +115,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/race-history', [RaceHistoryController::class, 'index'])->name('race-history.index');
 
     Route::get('/rankings', [LeaderboardController::class, 'index'])->name('leaderboard.index');
+    Route::get('/players/{user}', [GamePlayerController::class, 'show'])->name('players.show');
+    Route::post('/players/stats', [DriverStatController::class, 'store'])->name('players.stats.store');
 
     Route::middleware('clubs.unlocked')->group(function () {
         Route::get('/clubs', [ClubController::class, 'index'])->name('clubs.index');

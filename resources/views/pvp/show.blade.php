@@ -39,6 +39,11 @@
                     </div>
                 </dl>
 
+                <x-race-score-breakdown
+                    :score-breakdown="$raceResult->score_breakdown"
+                    :driver-stat-labels="config('game.player.driver_stats.labels', [])"
+                />
+
                 <div class="flex flex-wrap gap-4">
                     <a href="{{ route('pvp.index') }}" class="inline-block text-accent-orange hover:underline">
                         {{ __('Back to PvP') }}

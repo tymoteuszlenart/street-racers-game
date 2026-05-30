@@ -16,6 +16,11 @@ class PlayerProfile extends Model
         'reputation',
         'level',
         'experience',
+        'stat_power',
+        'stat_acceleration',
+        'stat_grip',
+        'stat_handling',
+        'unspent_stat_points',
         'fuel_current',
         'fuel_max',
         'fuel_updated_at',
@@ -37,6 +42,19 @@ class PlayerProfile extends Model
     public function activeCar(): BelongsTo
     {
         return $this->belongsTo(Car::class, 'active_car_id');
+    }
+
+    /**
+     * @return array{power: int, acceleration: int, grip: int, handling: int}
+     */
+    public function driverStats(): array
+    {
+        return [
+            'power' => (int) $this->stat_power,
+            'acceleration' => (int) $this->stat_acceleration,
+            'grip' => (int) $this->stat_grip,
+            'handling' => (int) $this->stat_handling,
+        ];
     }
 
     public function setActiveCarId(?int $carId): void

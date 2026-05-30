@@ -33,7 +33,7 @@ class RaceController extends Controller
         $races = Race::query()
             ->active()
             ->unlockedForLevel($profile->level)
-            ->orderBy('unlock_level')
+            ->orderBy('fuel_cost')
             ->orderBy('name')
             ->get();
 
