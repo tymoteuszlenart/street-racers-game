@@ -20,6 +20,7 @@ class PlayerLevelService
     {
         $maxLevel = (int) config('game.player.max_level', 50);
         $experiencePerLevel = (int) config('game.player.experience_per_level', 100);
+        $previousLevel = $profile->level;
 
         while ($profile->level < $maxLevel) {
             $requiredExperience = $profile->level * $experiencePerLevel;
@@ -30,6 +31,22 @@ class PlayerLevelService
 
             $profile->level++;
         }
+
+        if ($profile->level > $previousLevel) {
+            $this->grantStatPointsForLevels($profile, $previousLevel, $profile->level);
+        }
+    }
+
+    public function grantStatPointsForLevels(PlayerProfile $profile, int $fromLevel, int $toLevel): void
+    {
+        if ($toLevel <= $fromLevel) {
+            return;
+        }
+
+        $pointsPerLevel = (int) config('game.player.driver_stats.points_per_level', 3);
+        $levelsGained = $toLevel - $fromLevel;
+
+        $profile->unspent_stat_points += $levelsGained * $pointsPerLevel;
     }
 
     public function experienceRequiredForLevel(int $level): int

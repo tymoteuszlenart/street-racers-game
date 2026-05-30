@@ -99,7 +99,7 @@
                         @foreach ($members as $member)
                             <tr>
                                 <td class="px-4 py-3 text-sm text-white">
-                                    {{ $member->user->name }}
+                                    <a href="{{ route('players.show', $member->user) }}" class="hover:text-accent-neon">{{ $member->user->name }}</a>
                                     @if ($member->user_id === auth()->id())
                                         <span class="text-gray-500">({{ __('you') }})</span>
                                     @endif

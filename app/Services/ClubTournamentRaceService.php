@@ -124,7 +124,7 @@ class ClubTournamentRaceService
                 $playerStats = $this->carStatAggregator->aggregate($car);
                 $playerOutcome = $this->scoreCalculator->calculate(
                     $playerStats,
-                    $profile->level,
+                    $profile->driverStats(),
                     $randomFactor,
                 );
 
@@ -137,7 +137,7 @@ class ClubTournamentRaceService
                         'handling' => (int) $opponentConfig['handling'],
                         'condition_percent' => 100,
                     ],
-                    1,
+                    config('game.player.driver_stats.base', []),
                     0,
                 );
 

@@ -16,11 +16,12 @@ class PlayerLevelServiceTest extends TestCase
         config([
             'game.player.max_level' => 50,
             'game.player.experience_per_level' => 100,
+            'game.player.driver_stats.points_per_level' => 3,
         ]);
 
         $user = User::factory()->create();
         $profile = $user->playerProfile()->firstOrFail();
-        $profile->update(['level' => 1, 'experience' => 0]);
+        $profile->update(['level' => 1, 'experience' => 0, 'unspent_stat_points' => 0]);
 
         app(PlayerLevelService::class)->addExperience($profile, 100);
         $profile->save();
@@ -28,6 +29,8 @@ class PlayerLevelServiceTest extends TestCase
         $profile->refresh();
         $this->assertSame(2, $profile->level);
         $this->assertSame(100, $profile->experience);
+        $this->assertSame(3, $profile->unspent_stat_points);
+        $this->assertSame(1, $profile->stat_power);
     }
 
     public function test_level_does_not_exceed_configured_max(): void
@@ -46,6 +49,30 @@ class PlayerLevelServiceTest extends TestCase
 
         $profile->refresh();
         $this->assertSame(2, $profile->level);
+    }
+
+    public function test_multiple_level_ups_grant_stat_points_for_each_level(): void
+    {
+        config([
+            'game.player.max_level' => 50,
+            'game.player.experience_per_level' => 100,
+            'game.player.driver_stats.points_per_level' => 3,
+        ]);
+
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update([
+            'level' => 1,
+            'experience' => 0,
+            'unspent_stat_points' => 0,
+        ]);
+
+        app(PlayerLevelService::class)->addExperience($profile, 250);
+        $profile->save();
+        $profile->refresh();
+
+        $this->assertSame(3, $profile->level);
+        $this->assertSame(6, $profile->unspent_stat_points);
     }
 
     public function test_progress_toward_next_level_reports_current_band(): void

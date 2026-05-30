@@ -24,6 +24,27 @@ return [
     'player' => [
         'max_level' => 50,
         'experience_per_level' => 100,
+        'driver_stats' => [
+            'base' => [
+                'power' => 1,
+                'acceleration' => 1,
+                'grip' => 1,
+                'handling' => 1,
+            ],
+            'points_per_level' => 3,
+            'race_weights' => [
+                'power' => 0.15,
+                'acceleration' => 0.12,
+                'grip' => 0.10,
+                'handling' => 0.08,
+            ],
+            'labels' => [
+                'power' => 'Force',
+                'acceleration' => 'Reaction',
+                'grip' => 'Control',
+                'handling' => 'Technique',
+            ],
+        ],
     ],
 
     'daily_rewards' => [

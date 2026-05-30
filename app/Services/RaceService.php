@@ -104,7 +104,7 @@ class RaceService
                 $playerStats = $this->statsFromCar($car);
                 $playerOutcome = $this->scoreCalculator->calculate(
                     $playerStats,
-                    $profile->level,
+                    $profile->driverStats(),
                     $randomFactor,
                 );
 
@@ -116,7 +116,7 @@ class RaceService
                         'handling' => $race->opponent_handling,
                         'condition_percent' => 100,
                     ],
-                    1,
+                    config('game.player.driver_stats.base', []),
                     0,
                 );
 

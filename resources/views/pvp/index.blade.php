@@ -34,7 +34,15 @@
                 @forelse ($opponents as $opponent)
                     <div class="bg-racing-800 border border-racing-600 rounded-lg p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <h3 class="text-lg font-bold text-white">{{ $opponent->name }}</h3>
+                            <h3 class="text-lg font-bold text-white">
+                                <a href="{{ route('players.show', $opponent) }}" class="hover:text-accent-neon">{{ $opponent->name }}</a>
+                            </h3>
+                            @if ($opponent->playerProfile)
+                                <p class="text-gray-500 text-xs mt-1">
+                                    {{ __('Level') }} {{ $opponent->playerProfile->level }}
+                                    · {{ __('Rep') }} {{ number_format($opponent->playerProfile->reputation) }}
+                                </p>
+                            @endif
                             @if ($opponent->playerProfile?->activeCar)
                                 <p class="text-gray-400 text-sm">
                                     {{ $opponent->playerProfile->activeCar->nickname }}

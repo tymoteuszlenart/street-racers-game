@@ -43,7 +43,9 @@ class RaceResultShowTest extends TestCase
             ->assertSee('+$200', false)
             ->assertSee('+12', false)
             ->assertSee('+75', false)
-            ->assertSee(__('XP'), false);
+            ->assertSee(__('XP'), false)
+            ->assertSee(__('Score breakdown'), false)
+            ->assertSee(__('Driver stats used'), false);
     }
 
     public function test_pvp_race_result_page_does_not_show_npc_rewards(): void
@@ -59,13 +61,30 @@ class RaceResultShowTest extends TestCase
             'is_tie' => false,
             'player_score' => 100,
             'opponent_score' => 50,
-            'score_breakdown' => [],
+            'score_breakdown' => [
+                'player' => [
+                    'base' => 80.5,
+                    'driver_bonus' => 1.8,
+                    'driver_stats' => ['power' => 2, 'acceleration' => 2, 'grip' => 2, 'handling' => 2],
+                    'random_adjustment' => 0.5,
+                    'condition_penalty' => 0,
+                ],
+                'opponent' => [
+                    'base' => 40.0,
+                    'driver_bonus' => 0.45,
+                    'driver_stats' => ['power' => 1, 'acceleration' => 1, 'grip' => 1, 'handling' => 1],
+                    'random_adjustment' => 0,
+                    'condition_penalty' => 0,
+                ],
+            ],
             'random_factor' => 0,
         ]);
 
         $this->actingAs($user)
             ->get(route('pvp.show', $raceResult))
             ->assertOk()
-            ->assertDontSee(__('Rewards earned'), false);
+            ->assertDontSee(__('Rewards earned'), false)
+            ->assertSee(__('Score breakdown'), false)
+            ->assertSee(__('Driver bonus'), false);
     }
 }
