@@ -47,4 +47,23 @@ class DriverStatAllocationTest extends TestCase
             'stat_handling' => 0,
         ])->assertRedirect(route('login'));
     }
+
+    public function test_allocation_rejects_more_points_than_unspent(): void
+    {
+        $user = User::factory()->create();
+        $user->playerProfile()->firstOrFail()->update([
+            'unspent_stat_points' => 2,
+        ]);
+
+        $this->actingAs($user)
+            ->from(route('players.show', $user))
+            ->post(route('players.stats.store'), [
+                'stat_power' => 2,
+                'stat_acceleration' => 2,
+                'stat_grip' => 0,
+                'stat_handling' => 0,
+            ])
+            ->assertRedirect(route('players.show', $user))
+            ->assertSessionHasErrors('stats');
+    }
 }

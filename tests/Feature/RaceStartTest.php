@@ -26,14 +26,14 @@ class RaceStartTest extends TestCase
         $profile = $user->playerProfile()->firstOrFail();
         $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
 
-        $race = Race::query()->where('name', 'Downtown Sprint')->firstOrFail();
+        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
 
         $response = $this->actingAs($user)->post(route('races.start', $race), [
             'idempotency_key' => (string) Str::uuid(),
         ]);
 
         $response->assertRedirect();
-        $this->assertSame(90, $profile->fresh()->fuel_current);
+        $this->assertSame(100 - $race->fuel_cost, $profile->fresh()->fuel_current);
     }
 
     public function test_insufficient_fuel_is_rejected(): void
@@ -42,7 +42,7 @@ class RaceStartTest extends TestCase
         $profile = $user->playerProfile()->firstOrFail();
         $profile->update(['fuel_current' => 0, 'fuel_updated_at' => now()]);
 
-        $race = Race::query()->where('name', 'Downtown Sprint')->firstOrFail();
+        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
 
         $response = $this->actingAs($user)->from(route('races.index'))->post(route('races.start', $race), [
             'idempotency_key' => (string) Str::uuid(),
@@ -63,7 +63,7 @@ class RaceStartTest extends TestCase
             'fuel_updated_at' => now(),
         ])->save();
 
-        $race = Race::query()->where('name', 'Downtown Sprint')->firstOrFail();
+        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
 
         $response = $this->actingAs($user)->from(route('races.index'))->post(route('races.start', $race), [
             'idempotency_key' => (string) Str::uuid(),
@@ -106,7 +106,7 @@ class RaceStartTest extends TestCase
         $response->assertRedirect(route('races.index'));
         $response->assertSessionHasErrors('race');
 
-        $this->assertSame(90, $profile->fresh()->fuel_current);
+        $this->assertSame(100 - $firstRace->fuel_cost, $profile->fresh()->fuel_current);
     }
 
     public function test_failed_idempotency_key_shows_error_on_retry(): void
@@ -115,7 +115,7 @@ class RaceStartTest extends TestCase
         $profile = $user->playerProfile()->firstOrFail();
         $profile->update(['fuel_current' => 0, 'fuel_updated_at' => now()]);
 
-        $race = Race::query()->where('name', 'Downtown Sprint')->firstOrFail();
+        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
         $key = (string) Str::uuid();
 
         $this->actingAs($user)->from(route('races.index'))->post(route('races.start', $race), [
@@ -137,7 +137,7 @@ class RaceStartTest extends TestCase
         $profile = $user->playerProfile()->firstOrFail();
         $profile->update(['fuel_current' => 0, 'fuel_updated_at' => now()]);
 
-        $race = Race::query()->where('name', 'Downtown Sprint')->firstOrFail();
+        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
 
         $this->actingAs($user)->from(route('races.index'))->post(route('races.start', $race), [
             'idempotency_key' => (string) Str::uuid(),
@@ -150,7 +150,7 @@ class RaceStartTest extends TestCase
         ])->assertRedirect();
 
         $this->assertSame(1, RaceResult::query()->count());
-        $this->assertSame(90, $profile->fresh()->fuel_current);
+        $this->assertSame(100 - $race->fuel_cost, $profile->fresh()->fuel_current);
     }
 
     public function test_race_start_is_rate_limited(): void
@@ -374,7 +374,7 @@ class RaceStartTest extends TestCase
         $profile = $user->playerProfile()->firstOrFail();
         $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
 
-        $race = Race::query()->where('name', 'Downtown Sprint')->firstOrFail();
+        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
         $key = (string) Str::uuid();
 
         $this->actingAs($user)->post(route('races.start', $race), [
@@ -387,6 +387,6 @@ class RaceStartTest extends TestCase
 
         $response->assertRedirect();
         $response->assertSessionHas('status', 'race-existing-result');
-        $this->assertSame(90, $profile->fresh()->fuel_current);
+        $this->assertSame(100 - $race->fuel_cost, $profile->fresh()->fuel_current);
     }
 }

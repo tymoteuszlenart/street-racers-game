@@ -32,7 +32,14 @@
 
             <div class="space-y-4">
                 @forelse ($opponents as $opponent)
-                    <div class="bg-racing-800 border border-racing-600 rounded-lg p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div
+                        id="opponent-{{ $opponent->id }}"
+                        @class([
+                            'bg-racing-800 rounded-lg p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4',
+                            'border-2 border-accent-orange' => ($challengeUserId ?? null) === $opponent->id,
+                            'border border-racing-600' => ($challengeUserId ?? null) !== $opponent->id,
+                        ])
+                    >
                         <div>
                             <h3 class="text-lg font-bold text-white">
                                 <a href="{{ route('players.show', $opponent) }}" class="hover:text-accent-neon">{{ $opponent->name }}</a>

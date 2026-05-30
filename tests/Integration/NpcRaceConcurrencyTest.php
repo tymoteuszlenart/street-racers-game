@@ -21,7 +21,7 @@ class NpcRaceConcurrencyTest extends TestCase
         $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
         $initialCash = $profile->cash;
 
-        $race = Race::query()->where('name', 'Downtown Sprint')->firstOrFail();
+        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
         $service = app(RaceService::class)->withRandomUnit(fn (): float => 0.9);
 
         $result = $service->startNpcRace($user, $race, (string) Str::uuid());
@@ -40,7 +40,7 @@ class NpcRaceConcurrencyTest extends TestCase
         $profile = $user->playerProfile()->firstOrFail();
         $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
 
-        $race = Race::query()->where('name', 'Downtown Sprint')->firstOrFail();
+        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
         $service = app(RaceService::class)->withRandomUnit(fn (): float => 0.9);
         $key = (string) Str::uuid();
 
@@ -59,7 +59,7 @@ class NpcRaceConcurrencyTest extends TestCase
         $profile = $user->playerProfile()->firstOrFail();
         $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
 
-        $race = Race::query()->where('name', 'Downtown Sprint')->firstOrFail();
+        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
         $key = (string) Str::uuid();
 
         $outputs = $this->runParallelNpcRaceStarts($user->id, $race->id, [$key, $key]);
@@ -81,7 +81,7 @@ class NpcRaceConcurrencyTest extends TestCase
         $profile = $user->playerProfile()->firstOrFail();
         $profile->update(['fuel_current' => 10, 'fuel_updated_at' => now()]);
 
-        $race = Race::query()->where('name', 'Downtown Sprint')->firstOrFail();
+        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
 
         $outputs = $this->runParallelNpcRaceStarts($user->id, $race->id, [
             (string) Str::uuid(),
@@ -105,7 +105,7 @@ class NpcRaceConcurrencyTest extends TestCase
         $profile = $user->playerProfile()->firstOrFail();
         $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
 
-        $race = Race::query()->where('name', 'Downtown Sprint')->firstOrFail();
+        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
         $key = (string) Str::uuid();
 
         RaceAttempt::query()->create([

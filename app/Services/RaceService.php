@@ -116,7 +116,7 @@ class RaceService
                         'handling' => $race->opponent_handling,
                         'condition_percent' => 100,
                     ],
-                    config('game.player.driver_stats.base', []),
+                    $race->opponentDriverStats(),
                     0,
                 );
 

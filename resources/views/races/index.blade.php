@@ -27,6 +27,7 @@
                             <h3 class="text-xl font-bold text-white">{{ $race->name }}</h3>
                             <p class="text-gray-400 text-sm">{{ $race->description }}</p>
                             <p class="text-gray-400 text-sm mt-1">
+                                {{ __('Difficulty:') }} {{ $race->difficultyLabel() }} ·
                                 {{ __('Cost:') }} {{ $race->fuel_cost }} {{ __('fuel') }} ·
                                 {{ __('Win:') }} ${{ number_format($race->cash_reward_win) }}
                             </p>

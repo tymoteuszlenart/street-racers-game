@@ -87,4 +87,43 @@ class RaceResultShowTest extends TestCase
             ->assertSee(__('Score breakdown'), false)
             ->assertSee(__('Driver bonus'), false);
     }
+
+    public function test_npc_race_result_shows_legacy_driver_level_bonus_in_breakdown(): void
+    {
+        $user = User::factory()->create();
+        $race = Race::factory()->create();
+
+        $raceResult = RaceResult::query()->create([
+            'user_id' => $user->id,
+            'attempt_type' => RaceAttemptType::Npc,
+            'race_id' => $race->id,
+            'pvp_race_id' => null,
+            'won' => true,
+            'is_tie' => false,
+            'player_score' => 52.5,
+            'opponent_score' => 40.5,
+            'random_factor' => 0,
+            'score_breakdown' => [
+                'player' => [
+                    'base' => 50.0,
+                    'driver_level_bonus' => 2.5,
+                    'random_adjustment' => 0,
+                    'condition_penalty' => 0,
+                ],
+                'opponent' => [
+                    'base' => 40.0,
+                    'driver_level_bonus' => 0.5,
+                    'random_adjustment' => 0,
+                    'condition_penalty' => 0,
+                ],
+            ],
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('races.show', $raceResult))
+            ->assertOk()
+            ->assertSee(__('Driver bonus'), false)
+            ->assertSee('2.5', false)
+            ->assertSee('0.5', false);
+    }
 }

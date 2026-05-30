@@ -2,6 +2,7 @@
 
 @php
     $driverStats = $breakdown['driver_stats'] ?? [];
+    $driverBonus = $breakdown['driver_bonus'] ?? $breakdown['driver_level_bonus'] ?? null;
 @endphp
 
 <div class="bg-racing-700 rounded-lg p-4 border border-racing-600 space-y-3 text-sm">
@@ -14,12 +15,12 @@
                 <dd class="text-white font-medium">{{ $breakdown['base'] }}</dd>
             </div>
         @endisset
-        @isset($breakdown['driver_bonus'])
+        @if ($driverBonus !== null)
             <div class="flex justify-between gap-4">
                 <dt class="text-gray-500">{{ __('Driver bonus') }}</dt>
-                <dd class="text-accent-green font-medium">+{{ $breakdown['driver_bonus'] }}</dd>
+                <dd class="text-accent-green font-medium">+{{ $driverBonus }}</dd>
             </div>
-        @endisset
+        @endif
         @isset($breakdown['random_adjustment'])
             <div class="flex justify-between gap-4">
                 <dt class="text-gray-500">{{ __('Luck') }}</dt>

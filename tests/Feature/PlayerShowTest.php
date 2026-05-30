@@ -35,8 +35,10 @@ class PlayerShowTest extends TestCase
             ->assertOk()
             ->assertSee('Street Legend')
             ->assertSee(__('Driver stats'))
-            ->assertSee('420')
-            ->assertSee('7', false);
+            ->assertSee(__('Reputation'), false)
+            ->assertSee('420', false)
+            ->assertSee(__('Force'), false)
+            ->assertSee(__('Level'), false);
     }
 
     public function test_player_profile_shows_own_level_progress(): void

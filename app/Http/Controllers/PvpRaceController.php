@@ -30,13 +30,21 @@ class PvpRaceController extends Controller
     public function index(): View
     {
         $user = auth()->user();
+        $challengeUserId = request()->integer('challenge');
 
-        $opponents = User::query()
+        $opponentsQuery = User::query()
             ->whereKeyNot($user->id)
             ->whereHas('playerProfile', fn ($query) => $query->whereNotNull('active_car_id'))
-            ->with('playerProfile.activeCar.carModel')
-            ->orderBy('name')
-            ->paginate(20);
+            ->with('playerProfile.activeCar.carModel');
+
+        if ($challengeUserId > 0) {
+            $opponentsQuery->orderByRaw('CASE WHEN users.id = ? THEN 0 ELSE 1 END', [$challengeUserId])
+                ->orderBy('name');
+        } else {
+            $opponentsQuery->orderBy('name');
+        }
+
+        $opponents = $opponentsQuery->paginate(20);
 
         $opponentIdempotencyKeys = collect($opponents->items())->mapWithKeys(
             fn (User $opponent) => [$opponent->id => (string) Str::uuid()],
@@ -46,6 +54,7 @@ class PvpRaceController extends Controller
             'profile' => $user->playerProfile->load('activeCar.carModel'),
             'opponents' => $opponents,
             'opponentIdempotencyKeys' => $opponentIdempotencyKeys,
+            'challengeUserId' => $challengeUserId > 0 ? $challengeUserId : null,
         ]);
     }
 

@@ -8,7 +8,7 @@
                 @endif
             </h2>
             @if (! $isSelf && $profile->active_car_id)
-                <a href="{{ route('pvp.index') }}" class="text-accent-orange hover:underline text-sm">
+                <a href="{{ route('pvp.index', ['challenge' => $player->id]) }}" class="text-accent-orange hover:underline text-sm">
                     {{ __('Challenge in PvP') }}
                 </a>
             @endif

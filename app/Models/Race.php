@@ -27,6 +27,10 @@ class Race extends Model
         'opponent_acceleration',
         'opponent_grip',
         'opponent_handling',
+        'opponent_stat_power',
+        'opponent_stat_acceleration',
+        'opponent_stat_grip',
+        'opponent_stat_handling',
         'condition_damage_min',
         'condition_damage_max',
         'random_factor_variance',
@@ -59,5 +63,28 @@ class Race extends Model
     public function scopeUnlockedForLevel($query, int $level)
     {
         return $query->where('unlock_level', '<=', $level);
+    }
+
+    /**
+     * @return array{power: int, acceleration: int, grip: int, handling: int}
+     */
+    public function opponentDriverStats(): array
+    {
+        return [
+            'power' => (int) $this->opponent_stat_power,
+            'acceleration' => (int) $this->opponent_stat_acceleration,
+            'grip' => (int) $this->opponent_stat_grip,
+            'handling' => (int) $this->opponent_stat_handling,
+        ];
+    }
+
+    public function difficultyLabel(): string
+    {
+        return match ($this->name) {
+            'Amateur' => __('Easy'),
+            'Semi-Pro' => __('Medium'),
+            'Pro' => __('Hard'),
+            default => __('Standard'),
+        };
     }
 }
