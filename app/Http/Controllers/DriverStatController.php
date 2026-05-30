@@ -25,8 +25,6 @@ class DriverStatController extends Controller
                 ->withInput();
         }
 
-        return redirect()
-            ->route('players.show', $request->user())
-            ->with('status', 'stats-allocated');
+        return back()->with('status', 'stats-allocated');
     }
 }

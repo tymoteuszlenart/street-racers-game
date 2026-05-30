@@ -23,6 +23,7 @@ class DriverStatAllocationTest extends TestCase
         ]);
 
         $this->actingAs($user)
+            ->from(route('players.show', $user))
             ->post(route('players.stats.store'), [
                 'stat_power' => 2,
                 'stat_acceleration' => 1,

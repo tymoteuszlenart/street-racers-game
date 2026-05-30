@@ -42,12 +42,19 @@
                     :driver-stat-labels="config('game.player.driver_stats.labels', [])"
                 />
 
+                @if (session('status') === 'stats-allocated')
+                    <div class="bg-racing-700 border border-accent-green text-accent-green px-4 py-3 rounded-lg text-sm">
+                        {{ __('Driver stats updated.') }}
+                    </div>
+                @endif
+
                 @if (auth()->user()?->playerProfile?->unspent_stat_points > 0)
-                    <div class="border-t border-racing-600 pt-4">
-                        <p class="text-accent-neon text-sm font-medium mb-2">{{ __('Level up! You have stat points to spend.') }}</p>
-                        <a href="{{ route('players.show', auth()->user()) }}" class="text-accent-blue hover:text-accent-neon text-sm">
-                            {{ __('Allocate driver stats') }}
-                        </a>
+                    <div class="border-t border-racing-600 pt-4 space-y-3">
+                        <p class="text-accent-neon text-sm font-medium">{{ __('Level up! You have stat points to spend.') }}</p>
+                        <x-allocate-driver-stats
+                            :profile="auth()->user()->playerProfile"
+                            :labels="config('game.player.driver_stats.labels', [])"
+                        />
                     </div>
                 @endif
 
