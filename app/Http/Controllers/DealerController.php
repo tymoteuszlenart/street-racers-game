@@ -31,6 +31,7 @@ class DealerController extends Controller
         return view('dealer.index', [
             'carModels' => $carModels,
             'cash' => $profile?->cash ?? 0,
+            'playerLevel' => $level,
         ]);
     }
 

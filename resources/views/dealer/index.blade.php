@@ -21,6 +21,9 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 @foreach ($carModels as $carModel)
+                    @php
+                        $overlevelGap = max(0, $carModel->unlock_level - $playerLevel);
+                    @endphp
                     <div class="bg-racing-800 border border-racing-600 rounded-lg p-6">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div>
@@ -29,7 +32,12 @@
                             <div class="space-y-3">
                                 <div>
                                     <h3 class="text-xl font-bold text-white">{{ $carModel->name }}</h3>
-                                    <p class="text-gray-400 text-sm">Class {{ $carModel->class->value }} · Lvl {{ $carModel->unlock_level }}+ · ${{ number_format($carModel->price) }}</p>
+                                    <p class="text-gray-400 text-sm">Class {{ $carModel->class->value }} · Lvl {{ $carModel->unlock_level }}-{{ $carModel->block_level }} · ${{ number_format($carModel->price) }}</p>
+                                    @if ($overlevelGap > 0)
+                                        <p class="text-accent-orange text-xs mt-1">
+                                            {{ __('Overlevel purchase: -:penalty% effective stats until level :level.', ['penalty' => $overlevelGap * 10, 'level' => $carModel->unlock_level]) }}
+                                        </p>
+                                    @endif
                                 </div>
                                 <x-car-stats :car-model="$carModel" />
                                 <form method="POST" action="{{ route('dealer.purchase', $carModel) }}" class="space-y-3 pt-2 border-t border-racing-600">

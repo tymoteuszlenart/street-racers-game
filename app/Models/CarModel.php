@@ -32,6 +32,7 @@ class CarModel extends Model
         'price',
         'starter',
         'unlock_level',
+        'block_level',
         'active',
     ];
 
@@ -57,7 +58,9 @@ class CarModel extends Model
 
     public function scopeUnlockedForLevel($query, int $level)
     {
-        return $query->where('unlock_level', '<=', $level);
+        return $query
+            ->where('unlock_level', '<=', $level + 5)
+            ->where('block_level', '>=', $level);
     }
 
     public function scopeStarter($query)

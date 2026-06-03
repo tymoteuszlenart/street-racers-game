@@ -16,9 +16,9 @@ class DealerPurchaseTest extends TestCase
     {
         $user = User::factory()->create();
         $profile = $user->playerProfile()->firstOrFail();
-        $profile->update(['cash' => 100]);
+        $profile->update(['cash' => 100, 'level' => 4]);
 
-        $carModel = CarModel::query()->where('name', 'Neon Hatch')->firstOrFail();
+        $carModel = CarModel::query()->where('name', 'Kurama Echo')->firstOrFail();
 
         $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
             'nickname' => 'Dream Car',
@@ -52,7 +52,7 @@ class DealerPurchaseTest extends TestCase
         $profile = $user->playerProfile()->firstOrFail();
         $profile->update(['cash' => 100000]);
 
-        $carModel = CarModel::query()->where('name', 'Voltage GT')->firstOrFail();
+        $carModel = CarModel::query()->where('name', 'Shogun Apex VIII')->firstOrFail();
 
         $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
             'nickname' => 'Dream Car',
@@ -62,13 +62,50 @@ class DealerPurchaseTest extends TestCase
         $this->assertSame(1, Car::query()->where('user_id', $user->id)->count());
     }
 
+    public function test_dealer_purchase_rejects_level_too_high(): void
+    {
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['cash' => 100000, 'level' => 10]);
+
+        $carModel = CarModel::query()->where('name', 'Kurama Echo')->firstOrFail();
+
+        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
+            'nickname' => 'Too Late',
+        ]);
+
+        $response->assertSessionHasErrors('car_model');
+        $this->assertSame(1, Car::query()->where('user_id', $user->id)->count());
+    }
+
+    public function test_dealer_purchase_allows_cars_up_to_five_levels_above_player(): void
+    {
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['cash' => 100000, 'level' => 1]);
+
+        $carModel = CarModel::query()->where('name', 'Kurama Echo')->firstOrFail();
+
+        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
+            'nickname' => 'Too Soon',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('cars', [
+            'user_id' => $user->id,
+            'car_model_id' => $carModel->id,
+            'nickname' => 'Too Soon',
+        ]);
+    }
+
     public function test_dealer_purchase_creates_car_and_deducts_cash(): void
     {
         $user = User::factory()->create();
         $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['level' => 4]);
         $starterCarId = $profile->active_car_id;
 
-        $carModel = CarModel::query()->where('name', 'Neon Hatch')->firstOrFail();
+        $carModel = CarModel::query()->where('name', 'Kurama Echo')->firstOrFail();
         $expectedCash = $profile->cash - $carModel->price;
 
         $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
@@ -97,9 +134,9 @@ class DealerPurchaseTest extends TestCase
         $user = User::factory()->create();
         $profile = $user->playerProfile()->firstOrFail();
         $profile->setActiveCarId(null);
-        $profile->update(['cash' => 20000]);
+        $profile->update(['cash' => 20000, 'level' => 4]);
 
-        $carModel = CarModel::query()->where('name', 'Neon Hatch')->firstOrFail();
+        $carModel = CarModel::query()->where('name', 'Kurama Echo')->firstOrFail();
 
         $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
             'nickname' => 'First Ride',
@@ -142,8 +179,9 @@ class DealerPurchaseTest extends TestCase
     public function test_dealer_purchase_rejects_whitespace_nickname(): void
     {
         $user = User::factory()->create();
+        $user->playerProfile()->update(['level' => 4]);
 
-        $carModel = CarModel::query()->where('name', 'Neon Hatch')->firstOrFail();
+        $carModel = CarModel::query()->where('name', 'Kurama Echo')->firstOrFail();
 
         $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
             'nickname' => '   ',
@@ -155,9 +193,9 @@ class DealerPurchaseTest extends TestCase
     public function test_player_can_buy_same_model_multiple_times(): void
     {
         $user = User::factory()->create();
-        $user->playerProfile()->update(['cash' => 20000]);
+        $user->playerProfile()->update(['cash' => 20000, 'level' => 4]);
 
-        $carModel = CarModel::query()->where('name', 'Neon Hatch')->firstOrFail();
+        $carModel = CarModel::query()->where('name', 'Kurama Echo')->firstOrFail();
 
         $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
             'nickname' => 'Copy One',

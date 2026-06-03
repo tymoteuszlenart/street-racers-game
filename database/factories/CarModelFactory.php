@@ -30,6 +30,7 @@ class CarModelFactory extends Factory
             'price' => fake()->numberBetween(1000, 10000),
             'starter' => false,
             'unlock_level' => 1,
+            'block_level' => fn (array $attributes) => ($attributes['unlock_level'] ?? 1) + 5,
             'active' => true,
         ];
     }

@@ -27,6 +27,7 @@ class GarageTest extends TestCase
 
         $response->assertOk();
         $response->assertSee($car->nickname);
+        $response->assertSee(asset('garage.png'), false);
     }
 
     public function test_user_cannot_view_another_players_car(): void

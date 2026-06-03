@@ -7,12 +7,27 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="flex flex-wrap gap-4 justify-between items-center">
-                <p class="text-gray-400">{{ __('Your owned cars. The active car is used for races.') }}</p>
-                <a href="{{ route('dealer.index') }}" class="inline-flex items-center px-4 py-2 bg-accent-orange text-white rounded-md font-semibold text-sm hover:opacity-90">
-                    {{ __('Visit Dealer') }}
-                </a>
-            </div>
+            @php
+                $activeCar = $activeCarId ? $cars->firstWhere('id', $activeCarId) : null;
+            @endphp
+
+            <x-garage-scene :car-model="$activeCar?->carModel">
+                <div class="flex flex-wrap gap-4 justify-between items-start">
+                    <div>
+                        <p class="text-gray-300 text-sm sm:text-base max-w-xl">
+                            {{ __('Your owned cars. The active car is used for races.') }}
+                        </p>
+                        @if ($activeCar)
+                            <p class="mt-2 text-white font-semibold">
+                                {{ __('Active') }}: {{ $activeCar->nickname }}
+                            </p>
+                        @endif
+                    </div>
+                    <a href="{{ route('dealer.index') }}" class="inline-flex items-center px-4 py-2 bg-accent-orange text-white rounded-md font-semibold text-sm hover:opacity-90 shrink-0">
+                        {{ __('Visit Dealer') }}
+                    </a>
+                </div>
+            </x-garage-scene>
 
             @if ($cars->isEmpty())
                 <div class="bg-racing-800 border border-racing-600 rounded-lg p-8 text-center text-gray-400">

@@ -36,8 +36,12 @@ trait ValidatesDealerPurchase
             return ['car_model' => ['This car is not available at the dealer.']];
         }
 
-        if ($carModel->unlock_level > $profile->level) {
+        if ($carModel->unlock_level > $profile->level + 5) {
             return ['car_model' => ['Your level is too low to purchase this car.']];
+        }
+
+        if ($profile->level > $carModel->block_level) {
+            return ['car_model' => ['Your level is too high to purchase this car.']];
         }
 
         if ($profile->cash < $carModel->price) {

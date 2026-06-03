@@ -23,7 +23,7 @@
             <div class="bg-racing-800 border border-racing-600 rounded-lg overflow-hidden">
                 <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
-                        <x-car-image :car-model="$car->carModel" class="h-48 w-full object-contain" />
+                        <x-garage-scene :car-model="$car->carModel" car-image-class="h-36 sm:h-44 w-auto max-w-full object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.85)]" />
                         @if ($isActive)
                             <p class="mt-3 text-accent-neon font-semibold text-sm uppercase">{{ __('Active car') }}</p>
                         @else
