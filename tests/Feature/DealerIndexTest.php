@@ -16,7 +16,7 @@ class DealerIndexTest extends TestCase
         $user = User::factory()->create();
         $starter = CarModel::query()->where('starter', true)->firstOrFail();
 
-        $response = $this->actingAs($user)->get(route('dealer.index'));
+        $response = $this->actingAs($user)->get(route('shop.index'));
 
         $response->assertOk();
         $response->assertDontSee($starter->name);
@@ -28,7 +28,7 @@ class DealerIndexTest extends TestCase
         $user->playerProfile()->update(['level' => 4]);
         $locked = CarModel::query()->where('name', 'Shogun Apex VIII')->firstOrFail();
 
-        $response = $this->actingAs($user)->get(route('dealer.index'));
+        $response = $this->actingAs($user)->get(route('shop.index'));
 
         $response->assertOk();
         $response->assertDontSee($locked->name);
@@ -40,7 +40,7 @@ class DealerIndexTest extends TestCase
         $user = User::factory()->create();
         $user->playerProfile()->update(['level' => 1]);
 
-        $response = $this->actingAs($user)->get(route('dealer.index'));
+        $response = $this->actingAs($user)->get(route('shop.index'));
 
         $response->assertOk();
         $response->assertSee('Kurama Echo');
@@ -53,7 +53,7 @@ class DealerIndexTest extends TestCase
         $user->playerProfile()->update(['level' => 10]);
         $outgrown = CarModel::query()->where('name', 'Kurama Echo')->firstOrFail();
 
-        $response = $this->actingAs($user)->get(route('dealer.index'));
+        $response = $this->actingAs($user)->get(route('shop.index'));
 
         $response->assertOk();
         $response->assertDontSee($outgrown->name);
@@ -61,7 +61,7 @@ class DealerIndexTest extends TestCase
 
     public function test_guest_cannot_view_dealer(): void
     {
-        $response = $this->get(route('dealer.index'));
+        $response = $this->get(route('shop.index'));
 
         $response->assertRedirect(route('login'));
     }

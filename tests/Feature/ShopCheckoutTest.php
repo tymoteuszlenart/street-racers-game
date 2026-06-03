@@ -58,7 +58,7 @@ class ShopCheckoutTest extends TestCase
                 ]));
         });
 
-        $response = $this->actingAs($user)->post(route('shop.checkout', $product));
+        $response = $this->actingAs($user)->post(route('premium.checkout', $product));
 
         $response->assertRedirect('https://checkout.stripe.com/c/pay/cs_test_checkout123');
 
@@ -77,7 +77,7 @@ class ShopCheckoutTest extends TestCase
         $product = ShopProduct::factory()->inactive()->create();
 
         $this->actingAs($user)
-            ->post(route('shop.checkout', $product))
+            ->post(route('premium.checkout', $product))
             ->assertNotFound();
     }
 
@@ -96,26 +96,26 @@ class ShopCheckoutTest extends TestCase
 
         RateLimiter::clear(PaymentCheckoutService::checkoutRateLimitKey($user->id));
 
-        $response = $this->actingAs($user)->post(route('shop.checkout', $product));
+        $response = $this->actingAs($user)->post(route('premium.checkout', $product));
 
-        $response->assertRedirect(route('shop.index'));
+        $response->assertRedirect(route('premium.index'));
         $response->assertSessionHasErrors('premium_fuel');
         $this->assertDatabaseCount('payment_orders', 0);
     }
 
-    public function test_shop_index_lists_active_products(): void
+    public function test_premium_index_lists_active_products(): void
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->get(route('shop.index'));
+        $response = $this->actingAs($user)->get(route('premium.index'));
 
         $response->assertOk();
         $response->assertSee('Fuel +50');
         $response->assertSee('Premium Fuel (5)');
     }
 
-    public function test_guest_cannot_access_shop(): void
+    public function test_guest_cannot_access_premium(): void
     {
-        $this->get(route('shop.index'))->assertRedirect(route('login'));
+        $this->get(route('premium.index'))->assertRedirect(route('login'));
     }
 }
