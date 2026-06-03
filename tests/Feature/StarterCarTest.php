@@ -15,24 +15,6 @@ class StarterCarTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_registration_truncates_starter_nickname_when_name_is_very_long(): void
-    {
-        $longName = str_repeat('A', 255);
-
-        $this->post('/register', [
-            'name' => $longName,
-            'email' => 'longname@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
-        ]);
-
-        $user = User::query()->where('email', 'longname@example.com')->firstOrFail();
-        $car = Car::query()->findOrFail($user->playerProfile->active_car_id);
-
-        $this->assertLessThanOrEqual(64, mb_strlen($car->nickname));
-        $this->assertNotEmpty($car->nickname);
-    }
-
     public function test_registration_creates_starter_car_and_sets_active_car_id(): void
     {
         $this->post('/register', [
@@ -55,7 +37,6 @@ class StarterCarTest extends TestCase
 
         $starterModel = CarModel::query()->where('starter', true)->firstOrFail();
         $this->assertSame($starterModel->id, $car->car_model_id);
-        $this->assertStringContainsString($starterModel->name, $car->nickname);
     }
 
     public function test_registration_fails_gracefully_when_starter_catalog_is_missing(): void

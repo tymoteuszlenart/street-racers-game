@@ -7,15 +7,11 @@ use App\Exceptions\StarterCarCatalogNotConfiguredException;
 use App\Models\Car;
 use App\Models\CarModel;
 use App\Models\PlayerProfile;
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class StarterCarService
 {
-    private const NICKNAME_MAX_LENGTH = 64;
-
     public function assignToProfile(PlayerProfile $profile): Car
     {
         return DB::transaction(function () use ($profile) {
@@ -57,7 +53,6 @@ class StarterCarService
             $car = Car::query()->create([
                 'user_id' => $user->id,
                 'car_model_id' => $carModel->id,
-                'nickname' => $this->generateNickname($user, $carModel),
                 'acquired_via' => AcquiredVia::Starter,
                 'purchase_price' => null,
             ]);
@@ -66,12 +61,5 @@ class StarterCarService
 
             return $car;
         });
-    }
-
-    private function generateNickname(User $user, CarModel $carModel): string
-    {
-        $nickname = "{$user->name}'s {$carModel->name}";
-
-        return Str::limit($nickname, self::NICKNAME_MAX_LENGTH, '');
     }
 }

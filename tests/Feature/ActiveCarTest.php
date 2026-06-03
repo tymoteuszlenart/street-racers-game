@@ -19,7 +19,6 @@ class ActiveCarTest extends TestCase
 
         $secondCar = Car::factory()->create([
             'user_id' => $user->id,
-            'nickname' => 'Backup Ride',
         ]);
 
         $profile->setActiveCarId($starterCar->id);

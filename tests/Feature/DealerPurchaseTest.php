@@ -20,9 +20,7 @@ class DealerPurchaseTest extends TestCase
 
         $carModel = CarModel::query()->where('name', 'Kurama Echo')->firstOrFail();
 
-        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
-            'nickname' => 'Dream Car',
-        ]);
+        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel));
 
         $response->assertSessionHasErrors('cash');
         $this->assertSame(100, $profile->fresh()->cash);
@@ -37,9 +35,7 @@ class DealerPurchaseTest extends TestCase
 
         $carModel = CarModel::query()->where('starter', true)->firstOrFail();
 
-        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
-            'nickname' => 'Extra Starter',
-        ]);
+        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel));
 
         $response->assertSessionHasErrors('car_model');
         $this->assertSame($initialCash, $profile->fresh()->cash);
@@ -54,9 +50,7 @@ class DealerPurchaseTest extends TestCase
 
         $carModel = CarModel::query()->where('name', 'Shogun Apex VIII')->firstOrFail();
 
-        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
-            'nickname' => 'Dream Car',
-        ]);
+        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel));
 
         $response->assertSessionHasErrors('car_model');
         $this->assertSame(1, Car::query()->where('user_id', $user->id)->count());
@@ -70,9 +64,7 @@ class DealerPurchaseTest extends TestCase
 
         $carModel = CarModel::query()->where('name', 'Kurama Echo')->firstOrFail();
 
-        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
-            'nickname' => 'Too Late',
-        ]);
+        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel));
 
         $response->assertSessionHasErrors('car_model');
         $this->assertSame(1, Car::query()->where('user_id', $user->id)->count());
@@ -86,15 +78,12 @@ class DealerPurchaseTest extends TestCase
 
         $carModel = CarModel::query()->where('name', 'Kurama Echo')->firstOrFail();
 
-        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
-            'nickname' => 'Too Soon',
-        ]);
+        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel));
 
         $response->assertRedirect();
         $this->assertDatabaseHas('cars', [
             'user_id' => $user->id,
             'car_model_id' => $carModel->id,
-            'nickname' => 'Too Soon',
         ]);
     }
 
@@ -108,9 +97,7 @@ class DealerPurchaseTest extends TestCase
         $carModel = CarModel::query()->where('name', 'Kurama Echo')->firstOrFail();
         $expectedCash = $profile->cash - $carModel->price;
 
-        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
-            'nickname' => 'Street Legend',
-        ]);
+        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel));
 
         $response->assertRedirect();
         $profile->refresh();
@@ -120,11 +107,11 @@ class DealerPurchaseTest extends TestCase
 
         $purchased = Car::query()
             ->where('user_id', $user->id)
-            ->where('nickname', 'Street Legend')
+            ->where('car_model_id', $carModel->id)
+            ->where('id', '!=', $starterCarId)
             ->first();
 
         $this->assertNotNull($purchased);
-        $this->assertSame($carModel->id, $purchased->car_model_id);
         $this->assertSame('dealer', $purchased->acquired_via->value);
         $this->assertSame($carModel->price, $purchased->purchase_price);
     }
@@ -138,16 +125,15 @@ class DealerPurchaseTest extends TestCase
 
         $carModel = CarModel::query()->where('name', 'Kurama Echo')->firstOrFail();
 
-        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
-            'nickname' => 'First Ride',
-        ]);
+        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel));
 
         $response->assertRedirect();
         $profile->refresh();
 
         $purchased = Car::query()
             ->where('user_id', $user->id)
-            ->where('nickname', 'First Ride')
+            ->where('car_model_id', $carModel->id)
+            ->latest('id')
             ->firstOrFail();
 
         $this->assertSame($purchased->id, $profile->active_car_id);
@@ -167,27 +153,11 @@ class DealerPurchaseTest extends TestCase
             'price' => 1000,
         ]);
 
-        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
-            'nickname' => 'Should Fail',
-        ]);
+        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel));
 
         $response->assertSessionHasErrors('car_model');
         $this->assertSame($initialCash, $profile->fresh()->cash);
         $this->assertSame(1, Car::query()->where('user_id', $user->id)->count());
-    }
-
-    public function test_dealer_purchase_rejects_whitespace_nickname(): void
-    {
-        $user = User::factory()->create();
-        $user->playerProfile()->update(['level' => 4]);
-
-        $carModel = CarModel::query()->where('name', 'Kurama Echo')->firstOrFail();
-
-        $response = $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
-            'nickname' => '   ',
-        ]);
-
-        $response->assertSessionHasErrors('nickname');
     }
 
     public function test_player_can_buy_same_model_multiple_times(): void
@@ -197,13 +167,8 @@ class DealerPurchaseTest extends TestCase
 
         $carModel = CarModel::query()->where('name', 'Kurama Echo')->firstOrFail();
 
-        $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
-            'nickname' => 'Copy One',
-        ]);
-
-        $this->actingAs($user)->post(route('dealer.purchase', $carModel), [
-            'nickname' => 'Copy Two',
-        ]);
+        $this->actingAs($user)->post(route('dealer.purchase', $carModel));
+        $this->actingAs($user)->post(route('dealer.purchase', $carModel));
 
         $this->assertSame(3, Car::query()->where('user_id', $user->id)->count());
     }
