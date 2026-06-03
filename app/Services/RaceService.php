@@ -34,6 +34,8 @@ class RaceService
         private readonly PlayerLevelService $playerLevelService,
         private readonly CarStatAggregator $carStatAggregator,
         private readonly RaceAttemptService $raceAttemptService,
+        private readonly NpcOpponentScaler $npcOpponentScaler,
+        private readonly ConditionWearService $conditionWearService,
     ) {}
 
     /**
@@ -96,28 +98,29 @@ class RaceService
                 $this->fuelService->regenerate($profile);
                 $this->fuelService->spend($profile, $race->fuel_cost);
 
-                $randomFactor = $this->scoreCalculator->randomFactorInRange(
-                    (float) $race->random_factor_variance,
-                    $this->randomUnitCallable(),
-                );
+                $variance = (float) $race->random_factor_variance;
+                $randomUnit = $this->randomUnitCallable();
+                $playerRandomFactor = $this->scoreCalculator->randomFactorInRange($variance, $randomUnit);
+                $opponentRandomFactor = $this->scoreCalculator->randomFactorInRange($variance, $randomUnit);
 
                 $playerStats = $this->statsFromCar($car);
+                $scaledOpponent = $this->npcOpponentScaler->buildForRace(
+                    $race,
+                    $profile->level,
+                    $playerStats,
+                    $profile->driverStats(),
+                );
+
                 $playerOutcome = $this->scoreCalculator->calculate(
                     $playerStats,
                     $profile->driverStats(),
-                    $randomFactor,
+                    $playerRandomFactor,
                 );
 
                 $opponentOutcome = $this->scoreCalculator->calculate(
-                    [
-                        'power' => $race->opponent_power,
-                        'acceleration' => $race->opponent_acceleration,
-                        'grip' => $race->opponent_grip,
-                        'handling' => $race->opponent_handling,
-                        'condition_percent' => 100,
-                    ],
-                    $race->opponentDriverStats(),
-                    0,
+                    $scaledOpponent['car'],
+                    $scaledOpponent['driver'],
+                    $opponentRandomFactor,
                 );
 
                 $playerScore = $playerOutcome['score'];
@@ -126,7 +129,11 @@ class RaceService
                 $won = $playerScore > $opponentScore;
 
                 $this->applyRewards($profile, $race, $won);
-                $this->applyConditionDamage($car, $race);
+                $this->conditionWearService->applyRaceWear(
+                    $car,
+                    $race->condition_damage_min,
+                    $race->condition_damage_max,
+                );
 
                 $raceResult = RaceResult::query()->create([
                     'user_id' => $user->id,
@@ -140,8 +147,10 @@ class RaceService
                     'score_breakdown' => [
                         'player' => $playerOutcome['breakdown'],
                         'opponent' => $opponentOutcome['breakdown'],
+                        'opponent_scaled' => $scaledOpponent,
+                        'opponent_random_factor' => $opponentRandomFactor,
                     ],
-                    'random_factor' => $randomFactor,
+                    'random_factor' => $playerRandomFactor,
                 ]);
 
                 $attempt->update([
@@ -309,18 +318,6 @@ class RaceService
         }
 
         $profile->save();
-    }
-
-    private function applyConditionDamage(Car $car, Race $race): void
-    {
-        $percentLost = random_int(
-            $race->condition_damage_min,
-            $race->condition_damage_max,
-        );
-
-        $damage = (int) floor($car->condition_max * ($percentLost / 100));
-        $car->condition_current = max(0, $car->condition_current - $damage);
-        $car->save();
     }
 
     private function markAttemptFailed(

@@ -12,7 +12,7 @@
             <dd class="text-white font-semibold">
                 {{ $effective }}
                 @if ($delta > 0)
-                    <span class="text-accent-green text-xs font-normal">(+{{ $delta }})</span>
+                    <span class="text-accent-green text-xs font-normal">({{ $delta }})</span>
                 @elseif ($delta < 0)
                     <span class="text-accent-orange text-xs font-normal">({{ $delta }})</span>
                 @endif

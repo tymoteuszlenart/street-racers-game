@@ -29,6 +29,7 @@ class PartModel extends Model
         'handling_bonus',
         'price',
         'unlock_level',
+        'block_level',
         'min_car_class',
         'active',
     ];
@@ -58,6 +59,7 @@ class PartModel extends Model
         return $query
             ->active()
             ->where('unlock_level', '<=', $playerLevel)
+            ->where('block_level', '>=', $playerLevel)
             ->orderBy('slot')
             ->orderBy('unlock_level')
             ->orderBy('price');

@@ -31,6 +31,7 @@ class PvpRaceService
         private readonly RaceScoreCalculator $scoreCalculator,
         private readonly RaceAttemptService $raceAttemptService,
         private readonly PvpRaceSnapshotBuilder $snapshotBuilder,
+        private readonly ConditionWearService $conditionWearService,
     ) {}
 
     /**
@@ -168,7 +169,11 @@ class PvpRaceService
                     'error_code' => null,
                 ]);
 
-                $this->applyChallengerConditionDamage($challengerCar);
+                $this->conditionWearService->applyRaceWear(
+                    $challengerCar,
+                    (int) config('game.pvp.condition_damage_min', 1),
+                    (int) config('game.pvp.condition_damage_max', 3),
+                );
 
                 return new PvpRaceStartResult(
                     raceResult: $raceResult->fresh(),
@@ -288,18 +293,6 @@ class PvpRaceService
                 'pvp' => 'Daily race limit reached for this opponent pair.',
             ]);
         }
-    }
-
-    private function applyChallengerConditionDamage(Car $car): void
-    {
-        $percentLost = random_int(
-            (int) config('game.pvp.condition_damage_min', 1),
-            (int) config('game.pvp.condition_damage_max', 3),
-        );
-
-        $damage = (int) floor($car->condition_max * ($percentLost / 100));
-        $car->condition_current = max(0, $car->condition_current - $damage);
-        $car->save();
     }
 
     private function fuelCost(): int

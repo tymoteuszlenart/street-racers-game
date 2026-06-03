@@ -20,7 +20,7 @@ class PvpRaceSnapshotBuilder
         return [
             'car_id' => $car->id,
             'car_model_id' => $car->car_model_id,
-            'car_name' => $car->nickname,
+            'car_name' => $car->carModel->name,
             'stats' => $this->carStatAggregator->aggregate($car),
         ];
     }

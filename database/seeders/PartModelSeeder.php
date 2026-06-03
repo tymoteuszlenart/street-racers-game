@@ -64,6 +64,7 @@ class PartModelSeeder extends Seeder
                         'handling_bonus' => $part['handling_bonus'],
                         'price' => $part['price'],
                         'unlock_level' => $part['unlock_level'],
+                        'block_level' => $part['unlock_level'] + 5,
                         'min_car_class' => $part['min_car_class'],
                         'active' => true,
                     ],

@@ -26,6 +26,9 @@ class PartFactory extends Factory
             'slot' => $partModel->slot,
             'acquired_via' => PartAcquiredVia::Shop,
             'purchase_price' => $partModel->price,
+            'condition_current' => null,
+            'condition_max' => null,
+            'upgrade_level' => 0,
         ];
     }
 }

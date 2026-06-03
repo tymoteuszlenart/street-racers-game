@@ -20,9 +20,8 @@ class CarFactory extends Factory
         return [
             'user_id' => User::factory(),
             'car_model_id' => CarModel::factory(),
-            'nickname' => fake()->unique()->words(2, true),
-            'condition_current' => 100,
-            'condition_max' => 100,
+            'condition_current' => null,
+            'condition_max' => null,
             'acquired_via' => AcquiredVia::Dealer,
             'purchase_price' => fake()->numberBetween(1000, 10000),
         ];

@@ -25,7 +25,7 @@ class CarModelFactory extends Factory
             'weight' => fake()->numberBetween(40, 80),
             'grip' => fake()->numberBetween(40, 80),
             'handling' => fake()->numberBetween(40, 80),
-            'durability' => fake()->numberBetween(40, 80),
+            'durability' => (int) config('game.condition.car_max', 999),
             'upgrade_slots' => null,
             'price' => fake()->numberBetween(1000, 10000),
             'starter' => false,
