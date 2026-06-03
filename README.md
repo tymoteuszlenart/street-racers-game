@@ -40,7 +40,7 @@ php artisan migrate
 
 - **Racer profiles** — `/players/{user}` shows level, reputation, driver stats, active car, and club. Linked from rankings, PvP, clubs, and the dashboard.
 - **Driver stats** — Force, Reaction, Control, and Technique add a weighted bonus to race scores. Level-ups grant **3 unspent stat points** to allocate on your own profile (`POST /players/stats`).
-- **NPC races** — **Amateur**, **Semi-Pro**, and **Pro** are always available; difficulty comes from stronger opponent car and driver stats, not player level gates.
+- **NPC races** — **Amateur**, **Semi-Pro**, and **Pro** are always available; opponents scale to your level’s expected build (tuning and upgrades improve your odds), with tier-specific target difficulty.
 - **Score breakdown** — NPC, PvP, and tournament result pages show car base, driver bonus, luck, condition, and driver stats used (older results still show legacy `driver_level_bonus` as driver bonus).
 
 ## Development

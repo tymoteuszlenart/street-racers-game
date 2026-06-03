@@ -11,7 +11,6 @@ declare(strict_types=1);
  *
  * Usage: php scripts/remove-car-backgrounds.php [directory]
  */
-
 $directory = $argv[1] ?? 'public/cars';
 $threshold = 45.0;
 $saturationLimit = 55;
@@ -75,9 +74,9 @@ function sampleBackgroundColor(GdImage $src, int $width, int $height): array
 function collectNeutralSample(GdImage $src, int $x, int $y, array &$reds, array &$greens, array &$blues): void
 {
     $rgb = imagecolorat($src, $x, $y);
-    $r = ($rgb >> 16) & 0xff;
-    $g = ($rgb >> 8) & 0xff;
-    $b = $rgb & 0xff;
+    $r = ($rgb >> 16) & 0xFF;
+    $g = ($rgb >> 8) & 0xFF;
+    $b = $rgb & 0xFF;
 
     if (max($r, $g, $b) - min($r, $g, $b) <= 45) {
         $reds[] = $r;
@@ -97,9 +96,9 @@ function colorDistance(int $r, int $g, int $b, array $bg): float
 
 function isBackgroundCandidate(int $rgb, array $bg, float $threshold, int $saturationLimit): bool
 {
-    $r = ($rgb >> 16) & 0xff;
-    $g = ($rgb >> 8) & 0xff;
-    $b = $rgb & 0xff;
+    $r = ($rgb >> 16) & 0xFF;
+    $g = ($rgb >> 8) & 0xFF;
+    $b = $rgb & 0xFF;
 
     if (max($r, $g, $b) - min($r, $g, $b) > $saturationLimit) {
         return false;
@@ -120,7 +119,7 @@ function processImage(
     $height = imagesy($src);
     $bg = sampleBackgroundColor($src, $width, $height);
 
-    $queue = new SplQueue();
+    $queue = new SplQueue;
     $visited = array_fill(0, $width * $height, false);
     $background = array_fill(0, $width * $height, false);
 
@@ -187,9 +186,9 @@ function processImage(
             }
 
             $rgb = imagecolorat($src, $x, $y);
-            $r = ($rgb >> 16) & 0xff;
-            $g = ($rgb >> 8) & 0xff;
-            $b = $rgb & 0xff;
+            $r = ($rgb >> 16) & 0xFF;
+            $g = ($rgb >> 8) & 0xFF;
+            $b = $rgb & 0xFF;
             $color = imagecolorallocatealpha($out, $r, $g, $b, 0);
             imagesetpixel($out, $x, $y, $color);
             $kept++;

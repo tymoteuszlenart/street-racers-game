@@ -117,7 +117,7 @@
                             <h4 class="text-accent-neon font-semibold text-lg">Active Car</h4>
                             <div class="flex gap-3 text-sm">
                                 <a href="{{ route('garage.index') }}" class="text-accent-blue hover:text-accent-neon">Garage</a>
-                                <a href="{{ route('dealer.index') }}" class="text-accent-blue hover:text-accent-neon">Dealer</a>
+                                <a href="{{ route('shop.index') }}" class="text-accent-blue hover:text-accent-neon">{{ __('Shop') }}</a>
                             </div>
                         </div>
                         @if ($profile?->activeCar)
@@ -125,9 +125,11 @@
                             <div class="flex flex-col sm:flex-row gap-6 items-start">
                                 <x-car-image :car-model="$active->carModel" class="h-24 w-40 object-contain" />
                                 <div>
-                                    <p class="text-xl font-bold text-white">{{ $active->nickname }}</p>
-                                    <p class="text-gray-400">{{ $active->carModel->name }} · Class {{ $active->carModel->class->value }}</p>
-                                    <p class="text-gray-500 text-sm mt-1">{{ __('Condition') }}: {{ $active->condition_current }}/{{ $active->condition_max }}</p>
+                                    <p class="text-xl font-bold text-white">{{ $active->carModel->name }}</p>
+                                    <p class="text-gray-400">{{ __('Class') }} {{ $active->carModel->class->value }}</p>
+                                    <p class="text-sm mt-1">
+                                        <x-condition-meter :current="$active->condition_current" :max="$active->condition_max" class="text-sm" />
+                                    </p>
                                     <a href="{{ route('garage.show', $active) }}" class="inline-block mt-3 text-sm text-accent-blue hover:text-accent-neon">{{ __('View car') }}</a>
                                 </div>
                             </div>
