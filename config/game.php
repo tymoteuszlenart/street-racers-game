@@ -13,6 +13,38 @@ return [
         'start_rate_limit_per_minute' => 30,
     ],
 
+    /*
+   * NPC opponents scale to a per-level "expected" build (anchor), not the player's exact car.
+   * Beating the anchor through tuning/gear raises win odds; tier multipliers set Amateur / Semi-Pro / Pro difficulty.
+   * Opponents use their own luck roll so close matchups are not deterministic when stats are similar.
+   */
+    'npc_races' => [
+        'anchor' => [
+            'car' => [
+                'power' => 44,
+                'acceleration' => 49,
+                'grip' => 46,
+                'handling' => 48,
+            ],
+            'car_per_level' => [
+                'power' => 2.0,
+                'acceleration' => 2.0,
+                'grip' => 1.5,
+                'handling' => 1.5,
+            ],
+            'driver_stat_per_level' => 0.75,
+        ],
+        'tuning_blend' => [
+            'max' => 0.85,
+            'slope' => 3.2,
+        ],
+        'tiers' => [
+            'Amateur' => ['strength_multiplier' => 0.87],
+            'Semi-Pro' => ['strength_multiplier' => 0.975],
+            'Pro' => ['strength_multiplier' => 0.995],
+        ],
+    ],
+
     'pvp' => [
         'daily_pair_cap' => 10,
         'fuel_cost' => 10,
@@ -113,6 +145,48 @@ return [
                 'active' => true,
             ],
         ],
+    ],
+
+    'condition' => [
+        'car_max' => 999,
+        'part_max' => 200,
+        'tiers' => [
+            'good_min_percent' => 70,
+            'worn_min_percent' => 40,
+            'critical_max_percent' => 10,
+        ],
+        'penalties' => [
+            'worn' => 5,
+            'damaged' => 8,
+            'critical' => 12,
+        ],
+        'ui' => [
+            'green' => '#10b981',
+            'yellow' => '#facc15',
+            'red' => '#ef4444',
+        ],
+    ],
+
+    'mechanic' => [
+        'unlock_level' => 5,
+        'max_upgrade_level' => 9,
+        'bonus_percent_per_level' => 10,
+        'upgrade_cost_percent_of_price_per_level' => 15,
+        'repair' => [
+            'car_base_cost' => 50,
+            'part_base_cost' => 25,
+            'cost_per_missing_condition_point' => 2,
+        ],
+    ],
+
+    'sell' => [
+        'car_refund_percent' => 65,
+        'part_refund_percent' => 65,
+        'bundled_part_refund_percent' => 70,
+        'reward_car_refund_percent' => 80,
+        'reward_part_refund_percent' => 80,
+        'reward_bundled_part_refund_percent' => 80,
+        'min_refund' => 1,
     ],
 
     'tournaments' => [
