@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <h2 class="font-semibold text-xl text-gray-200 leading-tight">
-                {{ __('Tune') }}: {{ $car->nickname }}
+                {{ __('Tune') }}: {{ $car->carModel->name }}
             </h2>
             <a href="{{ route('garage.show', $car) }}" class="text-sm text-accent-blue hover:text-accent-neon">{{ __('Back to car') }}</a>
         </div>
@@ -66,7 +66,7 @@
                 <h3 class="text-accent-orange font-semibold mb-4">{{ __('Inventory (compatible)') }}</h3>
                 @if ($inventory->isEmpty())
                     <p class="text-gray-500">{{ __('No compatible parts in inventory. Visit the tuning shop to buy upgrades.') }}</p>
-                    <a href="{{ route('tuning.index') }}" class="inline-block mt-4 text-accent-blue hover:text-accent-neon text-sm">{{ __('Tuning Shop') }}</a>
+                    <a href="{{ route('shop.index', ['tab' => 'parts']) }}" class="inline-block mt-4 text-accent-blue hover:text-accent-neon text-sm">{{ __('Visit Shop') }}</a>
                 @else
                     <div class="space-y-3">
                         @foreach ($inventory as $part)
