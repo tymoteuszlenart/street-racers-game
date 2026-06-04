@@ -33,9 +33,10 @@ class RaceController extends Controller
         $races = Race::query()
             ->active()
             ->unlockedForLevel($profile->level)
-            ->orderBy('fuel_cost')
-            ->orderBy('name')
+            ->orderedForCatalog()
             ->get();
+
+        $racesByType = $races->groupBy(fn (Race $race) => $race->resolvedRaceType()->value);
 
         $raceIdempotencyKeys = $races->mapWithKeys(
             fn (Race $race) => [$race->id => (string) Str::uuid()],
@@ -44,6 +45,7 @@ class RaceController extends Controller
         return view('races.index', [
             'profile' => $profile->load('activeCar.carModel'),
             'races' => $races,
+            'racesByType' => $racesByType,
             'raceIdempotencyKeys' => $raceIdempotencyKeys,
         ]);
     }

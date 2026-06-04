@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Enums\RaceAttemptType;
+use App\Enums\RaceTier;
+use App\Enums\RaceType;
 use App\Models\Race;
 use App\Models\RaceResult;
 use App\Models\User;
@@ -22,7 +24,7 @@ class RaceHistoryTest extends TestCase
     {
         $user = User::factory()->create();
         $other = User::factory()->create();
-        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
+        $race = Race::findByTypeAndTier(RaceType::Sprint, RaceTier::Amateur);
 
         $older = RaceResult::query()->create([
             'user_id' => $user->id,

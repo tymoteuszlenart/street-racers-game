@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\RaceType;
 use App\Models\Race;
 
 class NpcOpponentScaler
@@ -24,7 +25,7 @@ class NpcOpponentScaler
         array $playerCarStats,
         array $playerDriverStats,
     ): array {
-        $tier = config("game.npc_races.tiers.{$race->name}") ?? [
+        $tier = config("game.npc_races.tiers.{$race->resolvedTier()->configKey()}") ?? [
             'strength_multiplier' => 1.0,
         ];
 
@@ -34,13 +35,14 @@ class NpcOpponentScaler
         ];
         $anchorDriver = $this->anchorDriverStatsForLevel($playerLevel);
 
-        $anchorScore = $this->neutralScore($anchorCar, $anchorDriver);
-        $playerScore = $this->neutralScore($playerCarStats, $playerDriverStats);
+        $anchorScore = $this->neutralScore($anchorCar, $anchorDriver, $race->resolvedRaceType());
+        $playerScore = $this->neutralScore($playerCarStats, $playerDriverStats, $race->resolvedRaceType());
 
         $blend = $this->tuningBlend($anchorScore, $playerScore);
         $referenceScore = $anchorScore + max(0.0, $playerScore - $anchorScore) * $blend;
         $targetScore = $referenceScore * (float) $tier['strength_multiplier'];
         $scale = $targetScore / max(0.01, $anchorScore);
+        $raceType = $race->resolvedRaceType();
 
         return [
             'car' => [
@@ -48,6 +50,7 @@ class NpcOpponentScaler
                 'condition_percent' => 100.0,
             ],
             'driver' => $this->scaleStatLine($anchorDriver, $scale),
+            'race_type' => $raceType->value,
         ];
     }
 
@@ -89,9 +92,9 @@ class NpcOpponentScaler
      * @param  array{power: int, acceleration: int, grip: int, handling: int, condition_percent: float}  $carStats
      * @param  array{power: int, acceleration: int, grip: int, handling: int}  $driverStats
      */
-    private function neutralScore(array $carStats, array $driverStats): float
+    private function neutralScore(array $carStats, array $driverStats, RaceType $raceType): float
     {
-        return $this->scoreCalculator->calculate($carStats, $driverStats, 0.0)['score'];
+        return $this->scoreCalculator->calculate($carStats, $driverStats, 0.0, $raceType)['score'];
     }
 
     private function tuningBlend(float $anchorScore, float $playerScore): float

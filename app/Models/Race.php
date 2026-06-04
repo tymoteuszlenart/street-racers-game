@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\RaceTier;
+use App\Enums\RaceType;
 use Database\Factories\RaceFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,6 +17,8 @@ class Race extends Model
 
     protected $fillable = [
         'name',
+        'race_type',
+        'race_tier',
         'description',
         'unlock_level',
         'fuel_cost',
@@ -40,6 +45,8 @@ class Race extends Model
     protected function casts(): array
     {
         return [
+            'race_type' => RaceType::class,
+            'race_tier' => RaceTier::class,
             'random_factor_variance' => 'float',
             'active' => 'boolean',
         ];
@@ -65,6 +72,23 @@ class Race extends Model
         return $query->where('unlock_level', '<=', $level);
     }
 
+    public function scopeOrderedForCatalog(Builder $query): Builder
+    {
+        return $query
+            ->orderBy('race_type')
+            ->orderByRaw("CASE race_tier WHEN 'amateur' THEN 1 WHEN 'semi_pro' THEN 2 WHEN 'pro' THEN 3 ELSE 4 END")
+            ->orderBy('fuel_cost')
+            ->orderBy('name');
+    }
+
+    public static function findByTypeAndTier(RaceType $raceType, RaceTier $raceTier): self
+    {
+        return static::query()
+            ->where('race_type', $raceType)
+            ->where('race_tier', $raceTier)
+            ->firstOrFail();
+    }
+
     /**
      * @return array{power: int, acceleration: int, grip: int, handling: int}
      */
@@ -80,11 +104,16 @@ class Race extends Model
 
     public function difficultyLabel(): string
     {
-        return match ($this->name) {
-            'Amateur' => __('Easy'),
-            'Semi-Pro' => __('Medium'),
-            'Pro' => __('Hard'),
-            default => __('Standard'),
-        };
+        return $this->resolvedTier()->difficultyLabel();
+    }
+
+    public function resolvedRaceType(): RaceType
+    {
+        return $this->race_type ?? RaceType::Circuit;
+    }
+
+    public function resolvedTier(): RaceTier
+    {
+        return $this->race_tier ?? RaceTier::Amateur;
     }
 }

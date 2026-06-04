@@ -20,26 +20,40 @@
                 </div>
             @endif
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                @foreach ($races as $race)
-                    <div class="bg-racing-800 border border-racing-600 rounded-lg p-6 space-y-4">
+            <div class="space-y-8">
+                @foreach ($racesByType as $typeValue => $typeRaces)
+                    @php
+                        $raceType = $typeRaces->first()->resolvedRaceType();
+                    @endphp
+                    <section class="space-y-4">
                         <div>
-                            <h3 class="text-xl font-bold text-white">{{ $race->name }}</h3>
-                            <p class="text-gray-400 text-sm">{{ $race->description }}</p>
-                            <p class="text-gray-400 text-sm mt-1">
-                                {{ __('Difficulty:') }} {{ $race->difficultyLabel() }} ·
-                                {{ __('Cost:') }} {{ $race->fuel_cost }} {{ __('fuel') }} ·
-                                {{ __('Win:') }} ${{ number_format($race->cash_reward_win) }}
-                            </p>
+                            <h3 class="text-lg font-bold text-accent-neon">{{ $raceType->label() }}</h3>
+                            <p class="text-gray-500 text-sm">{{ __('Amateur, Semi-Pro, and Pro tiers available for this race type.') }}</p>
                         </div>
-                        <form method="POST" action="{{ route('races.start', $race) }}">
-                            @csrf
-                            <input type="hidden" name="idempotency_key" value="{{ $raceIdempotencyKeys[$race->id] }}">
-                            <x-primary-button type="submit">
-                                {{ __('Race') }}
-                            </x-primary-button>
-                        </form>
-                    </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            @foreach ($typeRaces->sortBy(fn ($race) => $race->resolvedTier()->sortOrder()) as $race)
+                                <div class="bg-racing-800 border border-racing-600 rounded-lg p-6 space-y-4">
+                                    <div>
+                                        <h4 class="text-xl font-bold text-white">{{ $race->resolvedTier()->label() }}</h4>
+                                        <p class="text-gray-400 text-sm mt-1">{{ $race->description }}</p>
+                                        <p class="text-gray-400 text-sm mt-2">
+                                            {{ __('Difficulty:') }} {{ $race->difficultyLabel() }} ·
+                                            {{ __('Cost:') }} {{ $race->fuel_cost }} {{ __('fuel') }} ·
+                                            {{ __('Win:') }} ${{ number_format($race->cash_reward_win) }}
+                                        </p>
+                                    </div>
+                                    <form method="POST" action="{{ route('races.start', $race) }}">
+                                        @csrf
+                                        <input type="hidden" name="idempotency_key" value="{{ $raceIdempotencyKeys[$race->id] }}">
+                                        <x-primary-button type="submit">
+                                            {{ __('Race') }}
+                                        </x-primary-button>
+                                    </form>
+                                </div>
+                            @endforeach
+                        </div>
+                    </section>
                 @endforeach
             </div>
         </div>

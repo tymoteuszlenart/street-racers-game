@@ -66,7 +66,7 @@
                 <div>
                     <h3 class="text-lg font-semibold text-accent-neon">{{ __('Driver stats') }}</h3>
                     <p class="text-gray-500 text-sm mt-1">
-                        {{ __('Earn stat points when you level up and spend them here. Stats add a bonus to your race score.') }}
+                        {{ __('Earn stat points when you level up and spend them here. Each race type favors different driver stats (Force, Reaction, Control, Technique).') }}
                     </p>
                     @if ($isSelf && $profile->unspent_stat_points > 0)
                         <p class="text-accent-neon text-sm mt-2">
