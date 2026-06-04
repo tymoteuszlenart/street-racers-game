@@ -65,7 +65,7 @@ composer test:integration
 ./vendor/bin/pint --test
 ```
 
-On every push and pull request to `main`, [GitHub Actions](https://github.com/tymoteuszlenart/street-racers-game/actions/workflows/ci.yml) runs **Application tests** (PHPUnit on SQLite in-memory and Laravel Pint) and **Database integration tests** (`phpunit.mysql.xml` on MySQL 8.0 — race concurrency, locking, idempotency). Run the MySQL suite locally before merging race/PvP work if you change integration tests or database behavior.
+On every push to `main` and on pull requests, [GitHub Actions](https://github.com/tymoteuszlenart/street-racers-game/actions/workflows/ci.yml) runs **Application tests** (Composer/npm audits, frontend build, `/up` health check, PHPUnit on SQLite in-memory, and Laravel Pint) and **Database integration tests** (MySQL migrate + `phpunit.mysql.xml` — race concurrency, locking, idempotency). Dependabot proposes weekly dependency updates. Run the MySQL suite locally before merging race/PvP work if you change integration tests or database behavior.
 
 See `docs/04-technical-plan.md` (Testing strategy) and `docs/05-mvp-roadmap.md` for per-phase test requirements.
 
