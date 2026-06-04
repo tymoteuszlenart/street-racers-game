@@ -16,6 +16,7 @@ use App\Models\RaceAttempt;
 use App\Models\RaceResult;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\PlayerLevelService;
 use App\Services\RaceScoreCalculator;
 use App\Services\RaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -66,11 +67,6 @@ class RaceServiceTest extends TestCase
 
     public function test_winning_race_can_level_up_player(): void
     {
-        config([
-            'game.player.max_level' => 50,
-            'game.player.experience_per_level' => 100,
-        ]);
-
         $user = User::factory()->create();
         $profile = $user->playerProfile()->firstOrFail();
         $profile->update([
@@ -83,7 +79,7 @@ class RaceServiceTest extends TestCase
         $race = Race::factory()->create([
             'name' => 'Amateur',
             'fuel_cost' => 10,
-            'experience_reward_win' => 100,
+            'experience_reward_win' => 200,
         ]);
 
         app(RaceService::class)
@@ -92,8 +88,39 @@ class RaceServiceTest extends TestCase
 
         $profile->refresh();
         $this->assertSame(2, $profile->level);
-        $this->assertSame(100, $profile->experience);
+        $this->assertSame(200, $profile->experience);
         $this->assertSame(3, $profile->unspent_stat_points);
+    }
+
+    public function test_winning_race_at_max_level_grants_no_experience(): void
+    {
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $levelService = app(PlayerLevelService::class);
+        $profile->update([
+            'level' => 100,
+            'experience' => $levelService->maxExperience(),
+            'fuel_current' => 100,
+            'fuel_updated_at' => now(),
+        ]);
+
+        $race = Race::factory()->create([
+            'name' => 'Amateur',
+            'fuel_cost' => 10,
+            'experience_reward_win' => 200,
+        ]);
+
+        app(RaceService::class)
+            ->withRandomUnit(fn (): float => 0.9)
+            ->startNpcRace($user, $race, (string) Str::uuid());
+
+        $profile->refresh();
+        $this->assertSame(100, $profile->level);
+        $this->assertSame($levelService->maxExperience(), $profile->experience);
+        $this->assertDatabaseMissing('transactions', [
+            'user_id' => $user->id,
+            'currency' => TransactionCurrency::Experience->value,
+        ]);
     }
 
     public function test_tie_records_is_tie_and_applies_loss_rewards(): void
@@ -285,6 +312,7 @@ class RaceServiceTest extends TestCase
         $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
 
         $car = $profile->activeCar()->firstOrFail();
+        $car->parts()->where('slot', PartSlot::Engine)->forceDelete();
 
         $partModel = PartModel::factory()->create([
             'slot' => PartSlot::Engine,
@@ -414,6 +442,7 @@ class RaceServiceTest extends TestCase
         $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
 
         $car = $profile->activeCar()->firstOrFail();
+        $car->parts()->where('slot', PartSlot::Engine)->forceDelete();
 
         $race = Race::factory()->create([
             'fuel_cost' => 10,

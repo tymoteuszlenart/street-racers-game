@@ -43,18 +43,16 @@ class PlayerShowTest extends TestCase
 
     public function test_player_profile_shows_own_level_progress(): void
     {
-        config(['game.player.experience_per_level' => 100]);
-
         $user = User::factory()->create();
         $user->playerProfile()->firstOrFail()->update([
             'level' => 2,
-            'experience' => 150,
+            'experience' => 350,
         ]);
 
         $this->actingAs($user)
             ->get(route('players.show', $user))
             ->assertOk()
             ->assertSee(__('(you)'), false)
-            ->assertSee(__('50 / 100 XP to level 3'), false);
+            ->assertSee(__('150 / 450 XP to level 3'), false);
     }
 }

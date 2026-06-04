@@ -24,8 +24,6 @@ class DashboardTest extends TestCase
 
     public function test_dashboard_shows_experience_progress_and_rankings_link(): void
     {
-        config(['game.player.experience_per_level' => 100]);
-
         $user = User::factory()->create();
         $profile = $user->playerProfile()->firstOrFail();
         $profile->update(['level' => 1, 'experience' => 40]);
@@ -33,7 +31,7 @@ class DashboardTest extends TestCase
         $this->actingAs($user)
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertSee(__('40 / 100 XP to level 2'), false)
+            ->assertSee(__('40 / 200 XP to level 2'), false)
             ->assertSee(__('View rankings'), false);
     }
 }

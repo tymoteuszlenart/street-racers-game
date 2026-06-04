@@ -6,6 +6,7 @@ use App\Enums\RaceAttemptType;
 use App\Models\Race;
 use App\Models\RaceResult;
 use App\Models\User;
+use App\Services\PlayerLevelService;
 use App\Services\RaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -45,7 +46,36 @@ class RaceResultShowTest extends TestCase
             ->assertSee(__('Driver stats used'), false);
     }
 
-    public function test_pvp_race_result_page_does_not_show_npc_rewards(): void
+    public function test_npc_race_result_page_hides_experience_at_max_level(): void
+    {
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $levelService = app(PlayerLevelService::class);
+        $profile->update([
+            'level' => 100,
+            'experience' => $levelService->maxExperience(),
+            'fuel_current' => 100,
+            'fuel_updated_at' => now(),
+        ]);
+
+        $race = Race::factory()->create([
+            'name' => 'Amateur',
+            'fuel_cost' => 10,
+            'experience_reward_win' => 75,
+        ]);
+
+        $result = app(RaceService::class)
+            ->withRandomUnit(fn (): float => 0.9)
+            ->startNpcRace($user, $race, (string) Str::uuid());
+
+        $this->actingAs($user)
+            ->get(route('races.show', $result->raceResult))
+            ->assertOk()
+            ->assertSee(__('Rewards earned'), false)
+            ->assertDontSee(__('XP'), false);
+    }
+
+    public function test_pvp_race_result_page_shows_cash_and_reputation_rewards(): void
     {
         $user = User::factory()->create();
 
@@ -73,6 +103,11 @@ class RaceResultShowTest extends TestCase
                     'random_adjustment' => 0,
                     'condition_penalty' => 0,
                 ],
+                'rewards' => [
+                    'cash' => 250,
+                    'reputation' => 10,
+                    'opponent_level' => 5,
+                ],
             ],
             'random_factor' => 0,
         ]);
@@ -80,7 +115,10 @@ class RaceResultShowTest extends TestCase
         $this->actingAs($user)
             ->get(route('pvp.show', $raceResult))
             ->assertOk()
-            ->assertDontSee(__('Rewards earned'), false)
+            ->assertSee(__('Rewards earned'), false)
+            ->assertSee('+$250', false)
+            ->assertSee('+10', false)
+            ->assertDontSee(__('XP'), false)
             ->assertSee(__('Score breakdown'), false)
             ->assertSee(__('Driver bonus'), false);
     }

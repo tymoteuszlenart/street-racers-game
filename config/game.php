@@ -54,8 +54,10 @@ return [
     ],
 
     'player' => [
-        'max_level' => 50,
-        'experience_per_level' => 100,
+        'max_level' => 100,
+        'experience' => [
+            'multiplier' => 50,
+        ],
         'driver_stats' => [
             'base' => [
                 'power' => 1,
@@ -167,8 +169,27 @@ return [
         ],
     ],
 
+    'starter_parts' => [
+        'engine' => 'Stock Inline',
+        'brakes' => 'OEM Discs',
+    ],
+
+    'parts_shop' => [
+        'unlock_level' => 1,
+        'slot_unlock_levels' => [
+            'engine' => 1,
+            'brakes' => 1,
+            'suspension' => 2,
+            'tires' => 3,
+            'turbo' => 5,
+            'ecu' => 4,
+            'gearbox' => 6,
+            'nitrous' => 8,
+        ],
+    ],
+
     'mechanic' => [
-        'unlock_level' => 5,
+        'unlock_level' => 10,
         'max_upgrade_level' => 9,
         'bonus_percent_per_level' => 10,
         'upgrade_cost_percent_of_price_per_level' => 15,
@@ -187,6 +208,30 @@ return [
         'reward_part_refund_percent' => 80,
         'reward_bundled_part_refund_percent' => 80,
         'min_refund' => 1,
+    ],
+
+    'open_cup' => [
+        'unlock_level' => 5,
+        'join_window_minutes' => 45,
+        'settling_minutes' => 3,
+        'max_entrants' => 8,
+        'entry_fee_cash' => 2000,
+        'random_factor_variance' => 0.04,
+        'condition_damage_min' => 1,
+        'condition_damage_max' => 3,
+        'solo_npc_race_count' => 3,
+        'npc_strength_multiplier' => 0.92,
+        'rewards' => [
+            'participation_cups' => 1,
+            'participation_cash' => 1200,
+            'bracket_win_cups' => 3,
+            'champion_cash_percent_of_other_entries' => 40,
+            'solo' => [
+                'wins_3' => ['cups' => 3],
+                'wins_2' => ['cups' => 2],
+                'default' => ['cups' => 1],
+            ],
+        ],
     ],
 
     'tournaments' => [
