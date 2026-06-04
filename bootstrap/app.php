@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureClubsUnlocked;
+use App\Http\Middleware\EnsureOpenCupUnlocked;
 use App\Http\Middleware\EnsureTournamentsUnlocked;
 use App\Http\Middleware\EnsureTuningShopUnlocked;
 use App\Http\Middleware\EnsureUserIsAdmin;
@@ -20,6 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('club-tournament:close')
             ->weeklyOn(1, '00:05')
             ->withoutOverlapping();
+
+        $schedule->command('open-cup:advance')
+            ->everyMinute()
+            ->withoutOverlapping();
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->validateCsrfTokens(except: [
@@ -32,6 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'mechanic.unlocked' => EnsureTuningShopUnlocked::class,
             'clubs.unlocked' => EnsureClubsUnlocked::class,
             'tournaments.unlocked' => EnsureTournamentsUnlocked::class,
+            'open_cup.unlocked' => EnsureOpenCupUnlocked::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

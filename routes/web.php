@@ -14,6 +14,7 @@ use App\Http\Controllers\GameShopController;
 use App\Http\Controllers\GarageController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\MechanicController;
+use App\Http\Controllers\OpenCupController;
 use App\Http\Controllers\PartSellController;
 use App\Http\Controllers\PremiumController;
 use App\Http\Controllers\PremiumFuelController;
@@ -96,6 +97,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/races', [RaceController::class, 'index'])->name('races.index');
     Route::post('/races/{race}', [RaceController::class, 'store'])->name('races.start');
     Route::get('/races/results/{raceResult}', [RaceController::class, 'show'])->name('races.show');
+
+    Route::middleware('open_cup.unlocked')->group(function () {
+        Route::get('/cups', [OpenCupController::class, 'index'])->name('cups.index');
+        Route::post('/cups', [OpenCupController::class, 'store'])->name('cups.store');
+        Route::get('/cups/{cup}', [OpenCupController::class, 'show'])->name('cups.show');
+        Route::post('/cups/{cup}/join', [OpenCupController::class, 'join'])->name('cups.join');
+    });
 
     Route::get('/pvp', [PvpRaceController::class, 'index'])->name('pvp.index');
     Route::post('/pvp/{defender}', [PvpRaceController::class, 'store'])->name('pvp.start');

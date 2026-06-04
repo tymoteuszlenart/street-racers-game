@@ -189,6 +189,23 @@ return [
         'min_refund' => 1,
     ],
 
+    'open_cup' => [
+        'unlock_level' => 5,
+        'join_window_minutes' => 45,
+        'settling_minutes' => 3,
+        'entry_fee_cash' => 2000,
+        'max_entrants' => 8,
+        'solo_npc_races' => 3,
+        'participation_cash' => 1200,
+        'participation_cups' => 1,
+        'bracket_win_cups' => 3,
+        'champion_pot_share' => 0.40,
+        'random_factor_variance' => 0.03,
+        'condition_damage_min' => 1,
+        'condition_damage_max' => 3,
+        'npc_strength_multiplier' => 0.92,
+    ],
+
     'tournaments' => [
         'unlock_level' => 15,
         'max_attempts_per_player' => 20,

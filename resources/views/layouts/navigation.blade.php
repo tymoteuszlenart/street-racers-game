@@ -23,6 +23,11 @@
                             {{ __('Mechanic') }}
                         </x-nav-link>
                     @endif
+                    @if ((Auth::user()->playerProfile?->level ?? 1) >= config('game.open_cup.unlock_level', 5))
+                        <x-nav-link :href="route('cups.index')" :active="request()->routeIs('cups.*')">
+                            {{ __('Open Cup') }}
+                        </x-nav-link>
+                    @endif
                     @if ((Auth::user()->playerProfile?->level ?? 1) >= config('game.clubs.unlock_level'))
                         <x-nav-link :href="route('clubs.index')" :active="request()->routeIs('clubs.*')">
                             {{ __('Club') }}
@@ -112,6 +117,11 @@
             @if ((Auth::user()->playerProfile?->level ?? 1) >= config('game.mechanic.unlock_level', 5))
                 <x-responsive-nav-link :href="route('mechanic.index')" :active="request()->routeIs('mechanic.*')">
                     {{ __('Mechanic') }}
+                </x-responsive-nav-link>
+            @endif
+            @if ((Auth::user()->playerProfile?->level ?? 1) >= config('game.open_cup.unlock_level', 5))
+                <x-responsive-nav-link :href="route('cups.index')" :active="request()->routeIs('cups.*')">
+                    {{ __('Open Cup') }}
                 </x-responsive-nav-link>
             @endif
             @if ((Auth::user()->playerProfile?->level ?? 1) >= config('game.clubs.unlock_level'))
