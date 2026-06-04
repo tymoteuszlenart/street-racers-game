@@ -100,7 +100,7 @@ class CarSellTest extends TestCase
         $this->actingAs($user)->delete(route('garage.cars.sell', $dealerCar))->assertRedirect();
 
         $this->assertNull(Car::query()->find($dealerCar->id));
-        $this->assertSame(0, Part::query()->where('user_id', $user->id)->count());
+        $this->assertSame(2, Part::query()->where('user_id', $user->id)->count());
         $this->assertGreaterThan($cashBefore, $user->playerProfile()->firstOrFail()->fresh()->cash);
     }
 

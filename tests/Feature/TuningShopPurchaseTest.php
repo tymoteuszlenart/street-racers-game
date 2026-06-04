@@ -13,42 +13,56 @@ class TuningShopPurchaseTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function tuningReadyUser(): User
+    private function shopReadyUser(int $level = 1, int $cash = 10000): User
     {
         $user = User::factory()->create();
-        $user->playerProfile()->update(['level' => 5, 'cash' => 10000]);
+        $user->playerProfile()->update(['level' => $level, 'cash' => $cash]);
 
         return $user;
     }
 
-    public function test_shop_parts_purchase_forbidden_below_level_five(): void
+    public function test_shop_index_shows_level_one_engine_parts(): void
     {
-        $user = User::factory()->create();
-        $partModel = PartModel::query()->where('name', 'Street Block')->firstOrFail();
+        $user = $this->shopReadyUser();
 
-        $this->actingAs($user)->post(route('shop.parts.purchase', $partModel))->assertForbidden();
+        $response = $this->actingAs($user)->get(route('shop.index', ['tab' => 'engine']));
+
+        $response->assertOk();
+        $response->assertSee('Torque Four', false);
+        $response->assertSee('Revvy I4', false);
     }
 
-    public function test_shop_index_shows_engine_parts_tab_at_level_five(): void
+    public function test_shop_index_shows_locked_turbo_tab_before_level_five(): void
     {
-        $user = $this->tuningReadyUser();
+        $user = $this->shopReadyUser(level: 4);
+
+        $response = $this->actingAs($user)->get(route('shop.index', ['tab' => 'turbo']));
+
+        $response->assertOk();
+        $response->assertSee('Reach level 5 to buy turbo parts.', false);
+        $response->assertDontSee('Basic Boost');
+    }
+
+    public function test_shop_index_shows_engine_parts_tab_at_level_one(): void
+    {
+        $user = $this->shopReadyUser();
 
         $this->actingAs($user)->get(route('shop.index', ['tab' => 'engine']))->assertOk();
     }
 
     public function test_shop_index_legacy_parts_tab_redirects_to_first_slot(): void
     {
-        $user = $this->tuningReadyUser();
+        $user = $this->shopReadyUser();
 
         $this->actingAs($user)->get(route('shop.index', ['tab' => 'parts']))->assertOk();
     }
 
     public function test_part_purchase_deducts_cash_and_creates_inventory_row(): void
     {
-        $user = $this->tuningReadyUser();
+        $user = $this->shopReadyUser(cash: 10000);
         $profile = $user->playerProfile()->firstOrFail();
 
-        $partModel = PartModel::query()->where('name', 'Street Block')->firstOrFail();
+        $partModel = PartModel::query()->where('name', 'Torque Four')->firstOrFail();
         $expectedCash = $profile->cash - $partModel->price;
 
         $response = $this->actingAs($user)->post(route('tuning.purchase', $partModel));
@@ -75,46 +89,44 @@ class TuningShopPurchaseTest extends TestCase
 
     public function test_part_purchase_rejects_insufficient_cash(): void
     {
-        $user = $this->tuningReadyUser();
-        $user->playerProfile()->update(['cash' => 100]);
+        $user = $this->shopReadyUser(cash: 100);
 
-        $partModel = PartModel::query()->where('name', 'Street Block')->firstOrFail();
+        $partModel = PartModel::query()->where('name', 'Torque Four')->firstOrFail();
 
         $response = $this->actingAs($user)->post(route('tuning.purchase', $partModel));
 
         $response->assertSessionHasErrors('cash');
-        $this->assertSame(0, Part::query()->where('user_id', $user->id)->count());
+        $this->assertSame(2, Part::query()->where('user_id', $user->id)->count());
     }
 
     public function test_part_purchase_rejects_below_unlock_level(): void
     {
-        $user = $this->tuningReadyUser();
-        $user->playerProfile()->update(['level' => 5, 'cash' => 50000]);
+        $user = $this->shopReadyUser(level: 1, cash: 50000);
 
         $partModel = PartModel::query()->where('name', 'Competition Mill')->firstOrFail();
 
         $response = $this->actingAs($user)->post(route('tuning.purchase', $partModel));
 
         $response->assertSessionHasErrors('part_model');
-        $this->assertSame(0, Part::query()->where('user_id', $user->id)->count());
+        $this->assertSame(2, Part::query()->where('user_id', $user->id)->count());
     }
 
-    public function test_part_purchase_forbidden_below_level_five(): void
+    public function test_part_purchase_rejects_locked_slot(): void
     {
-        $user = User::factory()->create();
-        $user->playerProfile()->update(['cash' => 50000]);
+        $user = $this->shopReadyUser(level: 1, cash: 50000);
 
-        $partModel = PartModel::query()->where('name', 'Street Block')->firstOrFail();
+        $partModel = PartModel::query()->where('name', 'Basic Boost')->firstOrFail();
 
-        $this->actingAs($user)->post(route('tuning.purchase', $partModel))->assertForbidden();
+        $response = $this->actingAs($user)->post(route('tuning.purchase', $partModel));
+
+        $response->assertSessionHasErrors('part_model');
+        $this->assertSame(2, Part::query()->where('user_id', $user->id)->count());
     }
 
     public function test_tuning_shop_index_hides_parts_below_player_block_level(): void
     {
-        $user = $this->tuningReadyUser();
-        $user->playerProfile()->update(['level' => 11]);
-
-        $outgrown = PartModel::query()->where('name', 'Street Block')->firstOrFail();
+        $user = $this->shopReadyUser(level: 11);
+        $outgrown = PartModel::query()->where('name', 'Torque Four')->firstOrFail();
 
         $response = $this->actingAs($user)->get(route('shop.index', ['tab' => 'engine']));
 
@@ -124,14 +136,13 @@ class TuningShopPurchaseTest extends TestCase
 
     public function test_part_purchase_rejects_above_block_level(): void
     {
-        $user = $this->tuningReadyUser();
-        $user->playerProfile()->update(['level' => 11, 'cash' => 50000]);
+        $user = $this->shopReadyUser(level: 11, cash: 50000);
 
-        $partModel = PartModel::query()->where('name', 'Street Block')->firstOrFail();
+        $partModel = PartModel::query()->where('name', 'Torque Four')->firstOrFail();
 
         $response = $this->actingAs($user)->post(route('tuning.purchase', $partModel));
 
         $response->assertSessionHasErrors('part_model');
-        $this->assertSame(0, Part::query()->where('user_id', $user->id)->count());
+        $this->assertSame(2, Part::query()->where('user_id', $user->id)->count());
     }
 }

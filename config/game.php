@@ -167,8 +167,27 @@ return [
         ],
     ],
 
+    'starter_parts' => [
+        'engine' => 'Stock Inline',
+        'brakes' => 'OEM Discs',
+    ],
+
+    'parts_shop' => [
+        'unlock_level' => 1,
+        'slot_unlock_levels' => [
+            'engine' => 1,
+            'brakes' => 1,
+            'suspension' => 2,
+            'tires' => 3,
+            'turbo' => 5,
+            'ecu' => 4,
+            'gearbox' => 6,
+            'nitrous' => 8,
+        ],
+    ],
+
     'mechanic' => [
-        'unlock_level' => 5,
+        'unlock_level' => 10,
         'max_upgrade_level' => 9,
         'bonus_percent_per_level' => 10,
         'upgrade_cost_percent_of_price_per_level' => 15,

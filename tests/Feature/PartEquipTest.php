@@ -21,7 +21,7 @@ class PartEquipTest extends TestCase
     private function tuningReadyUser(): User
     {
         $user = User::factory()->create();
-        $user->playerProfile()->update(['level' => 5]);
+        $user->playerProfile()->update(['level' => 1]);
 
         return $user;
     }
@@ -141,6 +141,7 @@ class PartEquipTest extends TestCase
         $user->playerProfile()->update(['cash' => 20000]);
 
         $carA = $user->cars()->firstOrFail();
+        $carA->parts()->where('slot', PartSlot::Engine)->forceDelete();
         $carB = Car::query()->create([
             'user_id' => $user->id,
             'car_model_id' => $carA->car_model_id,
@@ -169,6 +170,7 @@ class PartEquipTest extends TestCase
         $user->playerProfile()->update(['cash' => 20000]);
 
         $carA = $user->cars()->firstOrFail();
+        $carA->parts()->where('slot', PartSlot::Engine)->forceDelete();
         $carB = Car::query()->create([
             'user_id' => $user->id,
             'car_model_id' => $carA->car_model_id,
