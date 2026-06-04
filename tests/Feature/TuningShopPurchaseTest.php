@@ -21,18 +21,26 @@ class TuningShopPurchaseTest extends TestCase
         return $user;
     }
 
-    public function test_tuning_shop_index_forbidden_below_level_five(): void
+    public function test_shop_parts_purchase_forbidden_below_level_five(): void
     {
         $user = User::factory()->create();
+        $partModel = PartModel::query()->where('name', 'Street Block')->firstOrFail();
 
-        $this->actingAs($user)->get(route('tuning.index'))->assertForbidden();
+        $this->actingAs($user)->post(route('shop.parts.purchase', $partModel))->assertForbidden();
     }
 
-    public function test_tuning_shop_index_available_at_level_five(): void
+    public function test_shop_index_shows_engine_parts_tab_at_level_five(): void
     {
         $user = $this->tuningReadyUser();
 
-        $this->actingAs($user)->get(route('tuning.index'))->assertOk();
+        $this->actingAs($user)->get(route('shop.index', ['tab' => 'engine']))->assertOk();
+    }
+
+    public function test_shop_index_legacy_parts_tab_redirects_to_first_slot(): void
+    {
+        $user = $this->tuningReadyUser();
+
+        $this->actingAs($user)->get(route('shop.index', ['tab' => 'parts']))->assertOk();
     }
 
     public function test_part_purchase_deducts_cash_and_creates_inventory_row(): void
@@ -45,7 +53,7 @@ class TuningShopPurchaseTest extends TestCase
 
         $response = $this->actingAs($user)->post(route('tuning.purchase', $partModel));
 
-        $response->assertRedirect(route('tuning.index'));
+        $response->assertRedirect(route('shop.index', ['tab' => $partModel->slot->value]));
         $this->assertSame($expectedCash, $profile->fresh()->cash);
 
         $part = Part::query()
@@ -99,5 +107,31 @@ class TuningShopPurchaseTest extends TestCase
         $partModel = PartModel::query()->where('name', 'Street Block')->firstOrFail();
 
         $this->actingAs($user)->post(route('tuning.purchase', $partModel))->assertForbidden();
+    }
+
+    public function test_tuning_shop_index_hides_parts_below_player_block_level(): void
+    {
+        $user = $this->tuningReadyUser();
+        $user->playerProfile()->update(['level' => 11]);
+
+        $outgrown = PartModel::query()->where('name', 'Street Block')->firstOrFail();
+
+        $response = $this->actingAs($user)->get(route('shop.index', ['tab' => 'engine']));
+
+        $response->assertOk();
+        $response->assertDontSee($outgrown->name);
+    }
+
+    public function test_part_purchase_rejects_above_block_level(): void
+    {
+        $user = $this->tuningReadyUser();
+        $user->playerProfile()->update(['level' => 11, 'cash' => 50000]);
+
+        $partModel = PartModel::query()->where('name', 'Street Block')->firstOrFail();
+
+        $response = $this->actingAs($user)->post(route('tuning.purchase', $partModel));
+
+        $response->assertSessionHasErrors('part_model');
+        $this->assertSame(0, Part::query()->where('user_id', $user->id)->count());
     }
 }

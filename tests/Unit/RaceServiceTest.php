@@ -38,11 +38,8 @@ class RaceServiceTest extends TestCase
         ]);
 
         $race = Race::factory()->create([
+            'name' => 'Amateur',
             'fuel_cost' => 10,
-            'opponent_power' => 1,
-            'opponent_acceleration' => 1,
-            'opponent_grip' => 1,
-            'opponent_handling' => 1,
         ]);
 
         $service = app(RaceService::class)->withRandomUnit(fn (): float => 0.9);
@@ -84,12 +81,9 @@ class RaceServiceTest extends TestCase
         ]);
 
         $race = Race::factory()->create([
+            'name' => 'Amateur',
             'fuel_cost' => 10,
             'experience_reward_win' => 100,
-            'opponent_power' => 1,
-            'opponent_acceleration' => 1,
-            'opponent_grip' => 1,
-            'opponent_handling' => 1,
         ]);
 
         app(RaceService::class)
@@ -106,7 +100,7 @@ class RaceServiceTest extends TestCase
     {
         $this->mock(RaceScoreCalculator::class, function ($mock): void {
             $mock->shouldReceive('randomFactorInRange')->andReturn(0.0);
-            $mock->shouldReceive('calculate')->twice()->andReturn(
+            $mock->shouldReceive('calculate')->times(4)->andReturn(
                 ['score' => 42.0, 'breakdown' => []],
                 ['score' => 42.0, 'breakdown' => []],
             );
@@ -282,6 +276,45 @@ class RaceServiceTest extends TestCase
         $this->expectException(IdempotencyKeyExpiredException::class);
 
         app(RaceService::class)->startNpcRace($user, $race, $key);
+    }
+
+    public function test_npc_race_applies_condition_damage_to_equipped_parts(): void
+    {
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
+
+        $car = $profile->activeCar()->firstOrFail();
+
+        $partModel = PartModel::factory()->create([
+            'slot' => PartSlot::Engine,
+        ]);
+
+        $part = Part::query()->create([
+            'user_id' => $user->id,
+            'part_model_id' => $partModel->id,
+            'car_id' => $car->id,
+            'slot' => PartSlot::Engine,
+            'acquired_via' => PartAcquiredVia::Shop,
+            'condition_current' => 200,
+            'condition_max' => 200,
+        ]);
+
+        $race = Race::factory()->create([
+            'fuel_cost' => 10,
+            'opponent_power' => 1,
+            'opponent_acceleration' => 1,
+            'opponent_grip' => 1,
+            'opponent_handling' => 1,
+            'condition_damage_min' => 5,
+            'condition_damage_max' => 5,
+        ]);
+
+        app(RaceService::class)
+            ->withRandomUnit(fn (): float => 0.9)
+            ->startNpcRace($user, $race, (string) Str::uuid());
+
+        $this->assertLessThan(200, $part->fresh()->condition_current);
     }
 
     public function test_npc_race_applies_condition_damage(): void

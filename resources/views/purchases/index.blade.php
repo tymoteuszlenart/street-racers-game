@@ -4,8 +4,8 @@
             <h2 class="font-semibold text-xl text-gray-200 leading-tight">
                 {{ __('Purchase History') }}
             </h2>
-            <a href="{{ route('shop.index') }}" class="text-accent-orange hover:underline text-sm">
-                {{ __('Back to shop') }}
+            <a href="{{ route('premium.index') }}" class="text-accent-orange hover:underline text-sm">
+                {{ __('Back to Premium') }}
             </a>
         </div>
     </x-slot>

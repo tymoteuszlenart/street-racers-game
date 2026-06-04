@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" fill="none">
-  <rect width="200" height="80" rx="8" fill="#1a1a24"/>
-  <path d="M30 50h140l-15-20H45L30 50z" fill="#22d3ee" opacity="0.8"/>
-  <circle cx="55" cy="52" r="10" fill="#252532" stroke="#94a3b8" stroke-width="2"/>
-  <circle cx="145" cy="52" r="10" fill="#252532" stroke="#94a3b8" stroke-width="2"/>
-  <text x="100" y="28" text-anchor="middle" fill="#94a3b8" font-family="sans-serif" font-size="10">Rust Runner</text>
-</svg>

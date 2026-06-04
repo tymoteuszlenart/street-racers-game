@@ -13,7 +13,7 @@ class EnsureTuningShopUnlocked
         $level = $request->user()?->playerProfile?->level ?? 1;
 
         if ($level < 5) {
-            abort(403, 'Reach level 5 to access the tuning shop.');
+            abort(403, 'Reach level 5 to access the mechanic and parts shop.');
         }
 
         return $next($request);

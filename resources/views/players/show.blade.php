@@ -84,10 +84,10 @@
                     <div class="flex flex-col sm:flex-row gap-6 items-start">
                         <x-car-image :car-model="$active->carModel" class="h-24 w-40 object-contain" />
                         <div>
-                            <p class="text-xl font-bold text-white">{{ $active->nickname }}</p>
-                            <p class="text-gray-400">{{ $active->carModel->name }} · {{ __('Class') }} {{ $active->carModel->class->value }}</p>
+                            <p class="text-xl font-bold text-white">{{ $active->carModel->name }}</p>
+                            <p class="text-gray-400">{{ __('Class') }} {{ $active->carModel->class->value }}</p>
                             <p class="text-gray-500 text-sm mt-1">
-                                {{ __('Condition') }}: {{ $active->condition_current }}/{{ $active->condition_max }}
+                                <x-condition-meter :current="$active->condition_current" :max="$active->condition_max" />
                             </p>
                         </div>
                     </div>

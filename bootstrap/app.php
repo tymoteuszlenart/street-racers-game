@@ -29,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
             'tuning.unlocked' => EnsureTuningShopUnlocked::class,
+            'mechanic.unlocked' => EnsureTuningShopUnlocked::class,
             'clubs.unlocked' => EnsureClubsUnlocked::class,
             'tournaments.unlocked' => EnsureTournamentsUnlocked::class,
         ]);

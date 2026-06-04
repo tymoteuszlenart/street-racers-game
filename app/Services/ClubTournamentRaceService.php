@@ -38,6 +38,7 @@ class ClubTournamentRaceService
         private readonly RaceAttemptService $raceAttemptService,
         private readonly ClubTournamentSeasonService $seasonService,
         private readonly ClubTournamentScoringService $scoringService,
+        private readonly ConditionWearService $conditionWearService,
     ) {}
 
     /**
@@ -146,7 +147,11 @@ class ClubTournamentRaceService
                 $isTie = $playerScore === $opponentScore;
                 $won = $playerScore > $opponentScore;
 
-                $this->applyConditionDamage($car);
+                $this->conditionWearService->applyRaceWear(
+                    $car,
+                    (int) config('game.tournaments.condition_damage_min', 2),
+                    (int) config('game.tournaments.condition_damage_max', 5),
+                );
 
                 $raceResult = RaceResult::query()->create([
                     'user_id' => $user->id,
@@ -299,18 +304,6 @@ class ClubTournamentRaceService
                 'premium_fuel' => 'Not enough premium fuel for this tournament race.',
             ]);
         }
-    }
-
-    private function applyConditionDamage(Car $car): void
-    {
-        $percentLost = random_int(
-            (int) config('game.tournaments.condition_damage_min', 2),
-            (int) config('game.tournaments.condition_damage_max', 5),
-        );
-
-        $damage = (int) floor($car->condition_max * ($percentLost / 100));
-        $car->condition_current = max(0, $car->condition_current - $damage);
-        $car->save();
     }
 
     private function isDeadlock(Throwable $exception): bool

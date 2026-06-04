@@ -22,14 +22,11 @@ class RaceResultShowTest extends TestCase
         $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
 
         $race = Race::factory()->create([
+            'name' => 'Amateur',
             'fuel_cost' => 10,
             'cash_reward_win' => 200,
             'reputation_reward_win' => 12,
             'experience_reward_win' => 75,
-            'opponent_power' => 1,
-            'opponent_acceleration' => 1,
-            'opponent_grip' => 1,
-            'opponent_handling' => 1,
         ]);
 
         $result = app(RaceService::class)

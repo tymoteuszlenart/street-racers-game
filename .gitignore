@@ -6,8 +6,11 @@
 .env.testing
 .phpactor.json
 .phpunit.result.cache
+/.agents/
 /.codex
 /.cursor/
+/skills-lock.json
+/docs/
 /.idea
 /.nova
 /.phpunit.cache

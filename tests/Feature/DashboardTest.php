@@ -19,7 +19,6 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($user)->get(route('dashboard'));
 
         $response->assertOk();
-        $response->assertSee($activeCar->nickname);
         $response->assertSee($activeCar->carModel->name);
     }
 

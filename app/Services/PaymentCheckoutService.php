@@ -101,8 +101,8 @@ class PaymentCheckoutService
                 'payment_order_uuid' => $order->uuid,
             ],
             'line_items' => [$lineItem],
-            'success_url' => route('shop.success', [], true).'?session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url' => route('shop.cancel', [], true),
+            'success_url' => route('premium.success', [], true).'?session_id={CHECKOUT_SESSION_ID}',
+            'cancel_url' => route('premium.cancel', [], true),
         ];
     }
 

@@ -4,10 +4,13 @@ namespace Tests\Unit;
 
 use App\Enums\PartAcquiredVia;
 use App\Enums\PartSlot;
+use App\Models\Car;
+use App\Models\CarModel;
 use App\Models\Part;
 use App\Models\PartModel;
 use App\Models\User;
 use App\Services\CarStatAggregator;
+use App\Services\ConditionService;
 use App\Services\RaceScoreCalculator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -60,6 +63,104 @@ class CarStatAggregatorTest extends TestCase
         $this->assertSame($model->acceleration + 5, $stats['acceleration']);
         $this->assertSame($model->grip + 3, $stats['grip']);
         $this->assertSame($model->handling + 2, $stats['handling']);
+    }
+
+    public function test_aggregate_penalizes_overlevel_car_stats_until_player_reaches_unlock_level(): void
+    {
+        $user = User::factory()->create();
+        $user->playerProfile()->update(['level' => 1]);
+
+        $model = CarModel::factory()->create([
+            'power' => 100,
+            'acceleration' => 90,
+            'grip' => 80,
+            'handling' => 70,
+            'unlock_level' => 4,
+            'block_level' => 9,
+        ]);
+        $car = Car::factory()
+            ->for($user)
+            ->for($model, 'carModel')
+            ->create();
+
+        $stats = app(CarStatAggregator::class)->aggregate($car->fresh());
+
+        $this->assertSame(70, $stats['power']);
+        $this->assertSame(63, $stats['acceleration']);
+        $this->assertSame(56, $stats['grip']);
+        $this->assertSame(49, $stats['handling']);
+        $this->assertSame(30, $stats['level_penalty_percent']);
+
+        $user->playerProfile()->update(['level' => 4]);
+
+        $stats = app(CarStatAggregator::class)->aggregate($car->fresh());
+
+        $this->assertSame(100, $stats['power']);
+        $this->assertSame(90, $stats['acceleration']);
+        $this->assertSame(80, $stats['grip']);
+        $this->assertSame(70, $stats['handling']);
+        $this->assertSame(0, $stats['level_penalty_percent']);
+    }
+
+    public function test_aggregate_scales_equipped_part_bonuses_by_upgrade_level(): void
+    {
+        $user = User::factory()->create();
+        $car = $user->cars()->firstOrFail();
+        $model = $car->carModel;
+
+        $partModel = PartModel::factory()->create([
+            'slot' => PartSlot::Engine,
+            'power_bonus' => 10,
+            'acceleration_bonus' => 0,
+            'grip_bonus' => 0,
+            'handling_bonus' => 0,
+        ]);
+
+        Part::query()->create([
+            'user_id' => $user->id,
+            'part_model_id' => $partModel->id,
+            'car_id' => $car->id,
+            'slot' => PartSlot::Engine,
+            'acquired_via' => PartAcquiredVia::Shop,
+            'upgrade_level' => 2,
+        ]);
+
+        $stats = app(CarStatAggregator::class)->aggregate($car->fresh());
+
+        $this->assertSame($model->power + 12, $stats['power']);
+    }
+
+    public function test_worn_part_reduces_effective_stat_bonuses(): void
+    {
+        $user = User::factory()->create();
+        $car = $user->cars()->firstOrFail();
+        $model = $car->carModel;
+
+        $partModel = PartModel::factory()->create([
+            'slot' => PartSlot::Engine,
+            'power_bonus' => 100,
+            'acceleration_bonus' => 0,
+            'grip_bonus' => 0,
+            'handling_bonus' => 0,
+        ]);
+
+        Part::query()->create([
+            'user_id' => $user->id,
+            'part_model_id' => $partModel->id,
+            'car_id' => $car->id,
+            'slot' => PartSlot::Engine,
+            'acquired_via' => PartAcquiredVia::Shop,
+            'condition_current' => 2,
+            'condition_max' => 200,
+        ]);
+
+        $stats = app(CarStatAggregator::class)->aggregate($car->fresh());
+
+        $factor = app(ConditionService::class)->partStatFactor(2, 200);
+        $expectedBonus = (int) round(100 * $factor);
+
+        $this->assertSame($model->power + $expectedBonus, $stats['power']);
+        $this->assertLessThan($model->power + 100, $stats['power']);
     }
 
     public function test_condition_penalty_applies_in_score_calculator_not_aggregator(): void

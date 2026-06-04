@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" fill="none">
-  <rect width="200" height="80" rx="8" fill="#1a1a24"/>
-  <path d="M28 46h144l-18-22H46L28 46z" fill="#3b82f6" opacity="0.85"/>
-  <circle cx="52" cy="48" r="9" fill="#252532" stroke="#94a3b8" stroke-width="2"/>
-  <circle cx="148" cy="48" r="9" fill="#252532" stroke="#94a3b8" stroke-width="2"/>
-  <text x="100" y="24" text-anchor="middle" fill="#94a3b8" font-family="sans-serif" font-size="9">Midnight Coupe</text>
-</svg>

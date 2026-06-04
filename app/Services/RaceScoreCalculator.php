@@ -4,6 +4,10 @@ namespace App\Services;
 
 class RaceScoreCalculator
 {
+    public function __construct(
+        private readonly ConditionService $conditionService,
+    ) {}
+
     /**
      * @param  array{power: float|int, acceleration: float|int, grip: float|int, handling: float|int, condition_percent: float}  $stats
      * @param  array{power: int, acceleration: int, grip: int, handling: int}  $driverStats
@@ -52,12 +56,7 @@ class RaceScoreCalculator
 
     public function conditionPenalty(float $conditionPercent): float
     {
-        return match (true) {
-            $conditionPercent >= 90 => 0,
-            $conditionPercent >= 70 => 2,
-            $conditionPercent >= 50 => 5,
-            default => 10,
-        };
+        return $this->conditionService->carScorePenaltyFromPercent($conditionPercent);
     }
 
     public function randomFactorInRange(float $variance, callable $randomUnit): float

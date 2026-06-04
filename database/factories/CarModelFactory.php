@@ -25,11 +25,12 @@ class CarModelFactory extends Factory
             'weight' => fake()->numberBetween(40, 80),
             'grip' => fake()->numberBetween(40, 80),
             'handling' => fake()->numberBetween(40, 80),
-            'durability' => fake()->numberBetween(40, 80),
+            'durability' => (int) config('game.condition.car_max', 999),
             'upgrade_slots' => null,
             'price' => fake()->numberBetween(1000, 10000),
             'starter' => false,
             'unlock_level' => 1,
+            'block_level' => fn (array $attributes) => ($attributes['unlock_level'] ?? 1) + 5,
             'active' => true,
         ];
     }

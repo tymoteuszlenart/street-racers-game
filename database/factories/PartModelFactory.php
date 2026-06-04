@@ -28,6 +28,7 @@ class PartModelFactory extends Factory
             'handling_bonus' => fake()->numberBetween(0, 10),
             'price' => fake()->numberBetween(500, 5000),
             'unlock_level' => 5,
+            'block_level' => fn (array $attributes) => ($attributes['unlock_level'] ?? 5) + 5,
             'min_car_class' => CarClass::D,
             'active' => true,
         ];

@@ -40,6 +40,10 @@ trait ValidatesTuningPurchase
             return ['part_model' => ['Your level is too low to purchase this part.']];
         }
 
+        if ($profile->level > $partModel->block_level) {
+            return ['part_model' => ['Your level is too high to purchase this part.']];
+        }
+
         if ($profile->cash < $partModel->price) {
             return ['cash' => ['You do not have enough cash for this part.']];
         }

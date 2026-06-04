@@ -144,7 +144,6 @@ class PartEquipTest extends TestCase
         $carB = Car::query()->create([
             'user_id' => $user->id,
             'car_model_id' => $carA->car_model_id,
-            'nickname' => 'Second Ride',
             'acquired_via' => 'dealer',
         ]);
 
@@ -173,7 +172,6 @@ class PartEquipTest extends TestCase
         $carB = Car::query()->create([
             'user_id' => $user->id,
             'car_model_id' => $carA->car_model_id,
-            'nickname' => 'Second Ride',
             'acquired_via' => 'dealer',
         ]);
 

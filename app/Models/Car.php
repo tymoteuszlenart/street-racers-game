@@ -17,7 +17,6 @@ class Car extends Model
     protected $fillable = [
         'user_id',
         'car_model_id',
-        'nickname',
         'condition_current',
         'condition_max',
         'acquired_via',
@@ -44,5 +43,20 @@ class Car extends Model
     public function parts(): HasMany
     {
         return $this->hasMany(Part::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (Car $car): void {
+            if ($car->condition_max !== null) {
+                return;
+            }
+
+            $max = CarModel::query()->find($car->car_model_id)?->durability
+                ?? (int) config('game.condition.car_max', 999);
+
+            $car->condition_max = $max;
+            $car->condition_current ??= $max;
+        });
     }
 }

@@ -52,7 +52,7 @@
                             @endif
                             @if ($opponent->playerProfile?->activeCar)
                                 <p class="text-gray-400 text-sm">
-                                    {{ $opponent->playerProfile->activeCar->nickname }}
+                                    {{ $opponent->playerProfile->activeCar->carModel->name }}
                                 </p>
                             @endif
                         </div>

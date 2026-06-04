@@ -12,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 
 class DealerService
 {
-    public function purchase(User $user, CarModel $carModel, string $nickname): Car
+    public function purchase(User $user, CarModel $carModel): Car
     {
         $profile = $user->playerProfile ?? throw ValidationException::withMessages([
             'car_model' => 'Player profile not found.',
@@ -20,7 +20,7 @@ class DealerService
 
         $this->assertCanPurchase($profile, $carModel);
 
-        return DB::transaction(function () use ($user, $carModel, $nickname) {
+        return DB::transaction(function () use ($user, $carModel) {
             $profile = PlayerProfile::query()
                 ->where('user_id', $user->id)
                 ->lockForUpdate()
@@ -36,7 +36,6 @@ class DealerService
             $car = Car::query()->create([
                 'user_id' => $user->id,
                 'car_model_id' => $carModel->id,
-                'nickname' => $nickname,
                 'acquired_via' => AcquiredVia::Dealer,
                 'purchase_price' => $carModel->price,
             ]);

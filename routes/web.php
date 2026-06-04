@@ -2,27 +2,29 @@
 
 use App\Http\Controllers\ActiveCarController;
 use App\Http\Controllers\AdminPurchaseController;
+use App\Http\Controllers\CarSellController;
 use App\Http\Controllers\CarUpgradeController;
 use App\Http\Controllers\ClubController;
 use App\Http\Controllers\ClubRankingController;
 use App\Http\Controllers\ClubTournamentController;
 use App\Http\Controllers\DailyRewardController;
-use App\Http\Controllers\DealerController;
 use App\Http\Controllers\DriverStatController;
 use App\Http\Controllers\GamePlayerController;
+use App\Http\Controllers\GameShopController;
 use App\Http\Controllers\GarageController;
 use App\Http\Controllers\LeaderboardController;
+use App\Http\Controllers\MechanicController;
+use App\Http\Controllers\PartSellController;
+use App\Http\Controllers\PremiumController;
 use App\Http\Controllers\PremiumFuelController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseHistoryController;
 use App\Http\Controllers\PvpRaceController;
 use App\Http\Controllers\RaceController;
 use App\Http\Controllers\RaceHistoryController;
-use App\Http\Controllers\ShopController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\TournamentResultController;
 use App\Http\Controllers\TournamentRewardController;
-use App\Http\Controllers\TuningShopController;
 use App\Services\DailyRewardService;
 use App\Services\PlayerLevelService;
 use Illuminate\Support\Facades\Route;
@@ -66,15 +68,25 @@ Route::get('/dashboard', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/garage', [GarageController::class, 'index'])->name('garage.index');
+    Route::delete('/garage/parts/{part}', [PartSellController::class, 'destroy'])->name('garage.parts.sell');
     Route::get('/garage/{car}', [GarageController::class, 'show'])->name('garage.show');
+    Route::delete('/garage/{car}', [CarSellController::class, 'destroy'])->name('garage.cars.sell');
     Route::patch('/garage/{car}/active', [ActiveCarController::class, 'update'])->name('garage.active');
 
-    Route::get('/dealer', [DealerController::class, 'index'])->name('dealer.index');
-    Route::post('/dealer/{carModel}', [DealerController::class, 'store'])->name('dealer.purchase');
+    Route::get('/shop', [GameShopController::class, 'index'])->name('shop.index');
+    Route::post('/shop/cars/{carModel}', [GameShopController::class, 'purchaseCar'])->name('shop.cars.purchase');
+    Route::middleware('tuning.unlocked')->post('/shop/parts/{partModel}', [GameShopController::class, 'purchasePart'])->name('shop.parts.purchase');
+
+    Route::redirect('/dealer', '/shop')->name('dealer.index');
+    Route::post('/dealer/{carModel}', [GameShopController::class, 'purchaseCar'])->name('dealer.purchase');
+    Route::redirect('/tuning', '/shop?tab=parts')->name('tuning.index');
+    Route::middleware('tuning.unlocked')->post('/tuning/{partModel}', [GameShopController::class, 'purchasePart'])->name('tuning.purchase');
 
     Route::middleware('tuning.unlocked')->group(function () {
-        Route::get('/tuning', [TuningShopController::class, 'index'])->name('tuning.index');
-        Route::post('/tuning/{partModel}', [TuningShopController::class, 'store'])->name('tuning.purchase');
+        Route::get('/mechanic', [MechanicController::class, 'index'])->name('mechanic.index');
+        Route::post('/mechanic/parts/{part}/upgrade', [MechanicController::class, 'upgradePart'])->name('mechanic.parts.upgrade');
+        Route::post('/mechanic/cars/{car}/repair', [MechanicController::class, 'repairCar'])->name('mechanic.cars.repair');
+        Route::post('/mechanic/parts/{part}/repair', [MechanicController::class, 'repairPart'])->name('mechanic.parts.repair');
 
         Route::get('/garage/{car}/upgrades', [CarUpgradeController::class, 'show'])->name('garage.upgrades');
         Route::post('/garage/{car}/upgrades/{part}', [CarUpgradeController::class, 'equip'])->name('garage.upgrades.equip');
@@ -93,10 +105,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/daily-rewards', [DailyRewardController::class, 'index'])->name('daily-rewards.index');
     Route::post('/daily-rewards/login', [DailyRewardController::class, 'store'])->name('daily-rewards.claim');
 
-    Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
-    Route::post('/shop/checkout/{shopProduct:slug}', [ShopController::class, 'checkout'])->name('shop.checkout');
-    Route::get('/shop/success', [ShopController::class, 'success'])->name('shop.success');
-    Route::get('/shop/cancel', [ShopController::class, 'cancel'])->name('shop.cancel');
+    Route::get('/premium', [PremiumController::class, 'index'])->name('premium.index');
+    Route::post('/premium/checkout/{shopProduct:slug}', [PremiumController::class, 'checkout'])->name('premium.checkout');
+    Route::get('/premium/success', [PremiumController::class, 'success'])->name('premium.success');
+    Route::get('/premium/cancel', [PremiumController::class, 'cancel'])->name('premium.cancel');
+
+    Route::redirect('/shop/success', '/premium/success');
+    Route::redirect('/shop/cancel', '/premium/cancel');
 
     Route::get('/purchases', [PurchaseHistoryController::class, 'index'])->name('purchases.index');
 

@@ -15,12 +15,12 @@
                     <x-nav-link :href="route('garage.index')" :active="request()->routeIs('garage.*')">
                         {{ __('Garage') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('dealer.index')" :active="request()->routeIs('dealer.*')">
-                        {{ __('Dealer') }}
+                    <x-nav-link :href="route('shop.index')" :active="request()->routeIs('shop.*') && ! request()->routeIs('premium.*')">
+                        {{ __('Shop') }}
                     </x-nav-link>
-                    @if ((Auth::user()->playerProfile?->level ?? 1) >= 5)
-                        <x-nav-link :href="route('tuning.index')" :active="request()->routeIs('tuning.*')">
-                            {{ __('Tuning') }}
+                    @if ((Auth::user()->playerProfile?->level ?? 1) >= config('game.mechanic.unlock_level', 5))
+                        <x-nav-link :href="route('mechanic.index')" :active="request()->routeIs('mechanic.*')">
+                            {{ __('Mechanic') }}
                         </x-nav-link>
                     @endif
                     @if ((Auth::user()->playerProfile?->level ?? 1) >= config('game.clubs.unlock_level'))
@@ -43,14 +43,17 @@
                     <x-nav-link :href="route('daily-rewards.index')" :active="request()->routeIs('daily-rewards.*')">
                         {{ __('Daily') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('shop.index')" :active="request()->routeIs('shop.*')">
-                        {{ __('Shop') }}
+                    <x-nav-link :href="route('premium.index')" :active="request()->routeIs('premium.*')" variant="premium">
+                        {{ __('Premium') }}
                     </x-nav-link>
                     @if ((Auth::user()->playerProfile?->level ?? 1) >= config('game.tournaments.unlock_level'))
                         <x-nav-link :href="route('premium-fuel.index')" :active="request()->routeIs('premium-fuel.*')">
                             {{ __('Premium fuel') }}
                         </x-nav-link>
                     @endif
+                    <x-nav-link :href="route('players.show', Auth::user())" :active="request()->routeIs('players.show') && request()->route('user')?->is(Auth::user())">
+                        {{ __('Profile') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -69,7 +72,7 @@
 
                     <x-slot name="content">
                         <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('Profile') }}
+                            {{ __('Account settings') }}
                         </x-dropdown-link>
 
                         <form method="POST" action="{{ route('logout') }}">
@@ -103,12 +106,12 @@
             <x-responsive-nav-link :href="route('garage.index')" :active="request()->routeIs('garage.*')">
                 {{ __('Garage') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('dealer.index')" :active="request()->routeIs('dealer.*')">
-                {{ __('Dealer') }}
+            <x-responsive-nav-link :href="route('shop.index')" :active="request()->routeIs('shop.*') && ! request()->routeIs('premium.*')">
+                {{ __('Shop') }}
             </x-responsive-nav-link>
-            @if ((Auth::user()->playerProfile?->level ?? 1) >= 5)
-                <x-responsive-nav-link :href="route('tuning.index')" :active="request()->routeIs('tuning.*')">
-                    {{ __('Tuning') }}
+            @if ((Auth::user()->playerProfile?->level ?? 1) >= config('game.mechanic.unlock_level', 5))
+                <x-responsive-nav-link :href="route('mechanic.index')" :active="request()->routeIs('mechanic.*')">
+                    {{ __('Mechanic') }}
                 </x-responsive-nav-link>
             @endif
             @if ((Auth::user()->playerProfile?->level ?? 1) >= config('game.clubs.unlock_level'))
@@ -131,8 +134,11 @@
             <x-responsive-nav-link :href="route('daily-rewards.index')" :active="request()->routeIs('daily-rewards.*')">
                 {{ __('Daily') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('shop.index')" :active="request()->routeIs('shop.*')">
-                {{ __('Shop') }}
+            <x-responsive-nav-link :href="route('premium.index')" :active="request()->routeIs('premium.*')" variant="premium">
+                {{ __('Premium') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('players.show', Auth::user())" :active="request()->routeIs('players.show') && request()->route('user')?->is(Auth::user())">
+                {{ __('Profile') }}
             </x-responsive-nav-link>
         </div>
 
@@ -144,7 +150,7 @@
 
             <div class="mt-3 space-y-1">
                 <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('Profile') }}
+                    {{ __('Account settings') }}
                 </x-responsive-nav-link>
 
                 <form method="POST" action="{{ route('logout') }}">
