@@ -45,7 +45,7 @@ See `README.md` for standard commands. Key points:
 
 ### Testing
 
-- **CI**: GitHub Actions workflow `.github/workflows/tests.yml` runs on push to `main` and on all pull requests. The `tests` job runs `composer validate`, `composer audit`, `npm audit --audit-level=high`, `npm run build`, a `/up` health check, `php artisan test` (SQLite), and `./vendor/bin/pint --test`. The `integration` job starts MySQL 8.0, runs `php artisan migrate --force` against `street_racers_test`, then `composer test:integration` (no secrets required — credentials match `phpunit.mysql.xml`). Dependabot (`.github/dependabot.yml`) opens weekly update PRs for Composer, npm, and GitHub Actions.
+- **CI**: GitHub Actions workflow `.github/workflows/ci.yml` runs on push to `main` and on all pull requests. The **Application tests** job runs `composer validate`, `composer audit`, `npm audit --audit-level=high`, `npm run build`, a `/up` health check, `php artisan test` (SQLite), and `./vendor/bin/pint --test`. The **Database integration tests** job starts MySQL 8.0, runs `php artisan migrate --force` against `street_racers_test`, then `composer test:integration` (no secrets required — credentials match `phpunit.mysql.xml`). Dependabot (`.github/dependabot.yml`) opens weekly update PRs for Composer, npm, and GitHub Actions.
 - **Lint**: `./vendor/bin/pint --test`
 - **Tests**: `php artisan test` (uses SQLite in-memory by default via `phpunit.xml`)
 - **Integration tests**: `composer test:integration` (MySQL required locally; same suite runs in CI; extend `Tests\Integration\TestCase`). Do not use `php artisan test --configuration=…` — Collision always passes `phpunit.xml` and PHPUnit exits with a duplicate-configuration error.
