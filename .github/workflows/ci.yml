@@ -1,4 +1,4 @@
-name: Tests
+name: CI
 
 on:
   push:
@@ -9,25 +9,26 @@ on:
       - main
 
 jobs:
-  tests:
+  application-tests:
+    name: Application tests
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup PHP
+      - name: Set up PHP 8.3
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, pdo_mysql, bcmath, intl, gd, exif, iconv
           coverage: none
 
-      - name: Get Composer cache directory
+      - name: Resolve Composer cache directory
         id: composer-cache
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
-      - name: Cache Composer dependencies
+      - name: Cache Composer packages
         uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
@@ -38,29 +39,30 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist
 
-      - name: Setup Node
+      - name: Set up Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
 
-      - name: Build frontend assets
+      - name: Build production frontend assets
         run: |
           npm ci
           npm run build
 
-      - name: Prepare application
+      - name: Bootstrap Laravel environment
         run: |
           cp .env.example .env
           php artisan key:generate
 
-      - name: Run tests
+      - name: Run PHPUnit (SQLite in-memory)
         run: php artisan test
 
-      - name: Run Pint
+      - name: Run Laravel Pint (code style)
         run: ./vendor/bin/pint --test
 
-  integration:
+  integration-tests:
+    name: Database integration tests
     runs-on: ubuntu-latest
 
     services:
@@ -80,21 +82,21 @@ jobs:
           --health-retries=5
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup PHP
+      - name: Set up PHP 8.3
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_mysql, bcmath, intl
           coverage: none
 
-      - name: Get Composer cache directory
+      - name: Resolve Composer cache directory
         id: composer-cache
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
-      - name: Cache Composer dependencies
+      - name: Cache Composer packages
         uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
@@ -105,7 +107,7 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist
 
-      - name: Prepare MySQL for integration tests
+      - name: Provision MySQL test database
         run: |
           sudo apt-get update
           sudo apt-get install -y mysql-client
@@ -118,10 +120,10 @@ jobs:
             FLUSH PRIVILEGES;
           "
 
-      - name: Prepare application
+      - name: Bootstrap Laravel environment
         run: |
           cp .env.example .env
           php artisan key:generate
 
-      - name: Run MySQL integration tests
+      - name: Run PHPUnit (MySQL integration suite)
         run: composer test:integration

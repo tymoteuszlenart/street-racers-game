@@ -1,6 +1,6 @@
 # Street Racers Game
 
-[![Tests](https://github.com/tymoteuszlenart/street-racers-game/actions/workflows/tests.yml/badge.svg)](https://github.com/tymoteuszlenart/street-racers-game/actions/workflows/tests.yml)
+[![CI](https://github.com/tymoteuszlenart/street-racers-game/actions/workflows/ci.yml/badge.svg)](https://github.com/tymoteuszlenart/street-racers-game/actions/workflows/ci.yml)
 
 Browser-based street racing MMORPG project built with Laravel, MySQL, Blade, and Tailwind CSS.
 
@@ -65,7 +65,7 @@ composer test:integration
 ./vendor/bin/pint --test
 ```
 
-On every push and pull request to `main`, [GitHub Actions](https://github.com/tymoteuszlenart/street-racers-game/actions/workflows/tests.yml) runs the default test suite (SQLite) and Pint, plus a separate **integration** job that runs `phpunit.mysql.xml` against MySQL 8.0 (race concurrency, locking, idempotency). Run the MySQL suite locally before merging race/PvP work if you change integration tests or database behavior.
+On every push and pull request to `main`, [GitHub Actions](https://github.com/tymoteuszlenart/street-racers-game/actions/workflows/ci.yml) runs **Application tests** (PHPUnit on SQLite in-memory and Laravel Pint) and **Database integration tests** (`phpunit.mysql.xml` on MySQL 8.0 — race concurrency, locking, idempotency). Run the MySQL suite locally before merging race/PvP work if you change integration tests or database behavior.
 
 See `docs/04-technical-plan.md` (Testing strategy) and `docs/05-mvp-roadmap.md` for per-phase test requirements.
 

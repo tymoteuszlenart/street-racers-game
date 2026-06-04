@@ -45,7 +45,7 @@ See `README.md` for standard commands. Key points:
 
 ### Testing
 
-- **CI**: GitHub Actions workflow `.github/workflows/tests.yml` runs on push/PR to `main`: the `tests` job runs `php artisan test` (SQLite) and `./vendor/bin/pint --test`; the `integration` job starts MySQL 8.0 and runs `composer test:integration` (no secrets required — credentials match `phpunit.mysql.xml`).
+- **CI**: GitHub Actions workflow `.github/workflows/ci.yml` runs on push/PR to `main`: **Application tests** runs `php artisan test` (SQLite) and `./vendor/bin/pint --test`; **Database integration tests** starts MySQL 8.0 and runs `composer test:integration` (no secrets required — credentials match `phpunit.mysql.xml`).
 - **Lint**: `./vendor/bin/pint --test`
 - **Tests**: `php artisan test` (uses SQLite in-memory by default via `phpunit.xml`)
 - **Integration tests**: `composer test:integration` (MySQL required locally; same suite runs in CI; extend `Tests\Integration\TestCase`). Do not use `php artisan test --configuration=…` — Collision always passes `phpunit.xml` and PHPUnit exits with a duplicate-configuration error.
