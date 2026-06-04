@@ -18,7 +18,10 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('parts', function (Blueprint $table) {
-            $table->dropSoftDeletes();
+            if (Schema::hasColumn('parts', 'deleted_at')) {
+                $table->dropSoftDeletes();
+            }
+
             $table->dropColumn(['condition_current', 'condition_max']);
         });
     }

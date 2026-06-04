@@ -52,9 +52,33 @@ return new class extends Migration
 
     public function down(): void
     {
+        $legacyMax = 100;
+
+        Car::query()->eachById(function (Car $car) use ($legacyMax): void {
+            $percent = $car->condition_max > 0
+                ? $car->condition_current / $car->condition_max
+                : 1.0;
+
+            $car->update([
+                'condition_max' => $legacyMax,
+                'condition_current' => (int) round($percent * $legacyMax),
+            ]);
+        });
+
         Schema::table('cars', function (Blueprint $table) {
             $table->unsignedTinyInteger('condition_current')->default(100)->change();
             $table->unsignedTinyInteger('condition_max')->default(100)->change();
+        });
+
+        DB::table('parts')->orderBy('id')->eachById(function (object $part) use ($legacyMax): void {
+            $percent = $part->condition_max > 0
+                ? $part->condition_current / $part->condition_max
+                : 1.0;
+
+            DB::table('parts')->where('id', $part->id)->update([
+                'condition_max' => $legacyMax,
+                'condition_current' => (int) round($percent * $legacyMax),
+            ]);
         });
 
         Schema::table('parts', function (Blueprint $table) {
