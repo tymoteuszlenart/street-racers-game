@@ -26,6 +26,12 @@ class SellPriceCalculator
 
         if ($includeEquippedParts) {
             foreach ($car->parts as $part) {
+                if ($part->acquired_via === PartAcquiredVia::Starter) {
+                    $lines[] = $this->starterPartLineItem($part);
+
+                    continue;
+                }
+
                 $partBlocked = $this->partBlockedReason($part, requireInventory: false);
                 if ($partBlocked !== null) {
                     return new SellQuote([], 0, false, $partBlocked);
@@ -84,7 +90,7 @@ class SellPriceCalculator
 
     private function partBlockedReason(Part $part, bool $requireInventory): ?string
     {
-        if ($part->acquired_via === PartAcquiredVia::Admin) {
+        if (in_array($part->acquired_via, [PartAcquiredVia::Admin, PartAcquiredVia::Starter], true)) {
             return 'This part cannot be sold.';
         }
 
@@ -132,6 +138,21 @@ class SellPriceCalculator
             refundPercent: $percent,
             conditionPercent: $conditionPercent,
             refund: $refund,
+        );
+    }
+
+    private function starterPartLineItem(Part $part): SellLineItem
+    {
+        $conditionPercent = $this->conditionPercent($part->condition_current, $part->condition_max);
+
+        return new SellLineItem(
+            kind: 'part',
+            id: $part->id,
+            label: $part->partModel->name,
+            basis: 0,
+            refundPercent: 0,
+            conditionPercent: $conditionPercent,
+            refund: 0,
         );
     }
 

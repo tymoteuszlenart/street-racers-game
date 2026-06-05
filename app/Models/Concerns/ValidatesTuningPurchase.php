@@ -4,6 +4,7 @@ namespace App\Models\Concerns;
 
 use App\Models\PartModel;
 use App\Models\PlayerProfile;
+use App\Support\PartsShopUnlock;
 use Illuminate\Validation\ValidationException;
 
 trait ValidatesTuningPurchase
@@ -32,8 +33,16 @@ trait ValidatesTuningPurchase
             return ['part_model' => ['This part is not available in the tuning shop.']];
         }
 
-        if ($profile->level < 5) {
-            return ['tuning' => ['Reach level 5 to access the tuning shop.']];
+        $shopUnlockLevel = PartsShopUnlock::shopLevel();
+
+        if ($profile->level < $shopUnlockLevel) {
+            return ['tuning' => ["Reach level {$shopUnlockLevel} to access the parts shop."]];
+        }
+
+        $slotUnlockLevel = PartsShopUnlock::slotLevel($partModel->slot);
+
+        if ($profile->level < $slotUnlockLevel) {
+            return ['part_model' => ["Reach level {$slotUnlockLevel} to purchase {$partModel->slot->value} parts."]];
         }
 
         if ($partModel->unlock_level > $profile->level) {

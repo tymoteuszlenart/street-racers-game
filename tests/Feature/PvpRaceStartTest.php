@@ -181,6 +181,7 @@ class PvpRaceStartTest extends TestCase
         [$challenger, $defender] = $this->twoPlayersWithFuel();
 
         $defenderCar = $defender->playerProfile()->firstOrFail()->activeCar()->firstOrFail();
+        $defenderCar->parts()->where('slot', PartSlot::Engine)->forceDelete();
 
         $service = app(PvpRaceService::class)->withRandomUnit(fn (): float => 0.0);
 

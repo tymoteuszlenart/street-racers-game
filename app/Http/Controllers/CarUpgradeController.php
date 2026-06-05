@@ -23,11 +23,6 @@ class CarUpgradeController extends Controller
         $this->authorize('view', $car);
 
         $user = $request->user();
-        $profile = $user->playerProfile;
-
-        if (($profile?->level ?? 1) < 5) {
-            abort(403, 'Reach level 5 to tune your cars.');
-        }
 
         $car->load(['carModel', 'parts.partModel']);
 
