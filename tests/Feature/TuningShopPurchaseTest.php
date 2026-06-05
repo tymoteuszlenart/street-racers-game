@@ -21,6 +21,54 @@ class TuningShopPurchaseTest extends TestCase
         return $user;
     }
 
+    public function test_shop_tabs_are_ordered_by_slot_unlock_level(): void
+    {
+        $user = $this->shopReadyUser();
+
+        $response = $this->actingAs($user)->get(route('shop.index'));
+
+        $response->assertOk();
+
+        $content = $response->getContent();
+        $positions = [
+            'brakes' => strpos($content, "tab = 'brakes'"),
+            'engine' => strpos($content, "tab = 'engine'"),
+            'suspension' => strpos($content, "tab = 'suspension'"),
+            'tires' => strpos($content, "tab = 'tires'"),
+            'ecu' => strpos($content, "tab = 'ecu'"),
+            'turbo' => strpos($content, "tab = 'turbo'"),
+        ];
+
+        foreach ($positions as $slot => $position) {
+            $this->assertNotFalse($position, "Expected {$slot} tab in shop navigation.");
+        }
+
+        $this->assertLessThan($positions['engine'], $positions['brakes']);
+        $this->assertLessThan($positions['suspension'], $positions['engine']);
+        $this->assertLessThan($positions['tires'], $positions['suspension']);
+        $this->assertLessThan($positions['ecu'], $positions['tires']);
+        $this->assertLessThan($positions['turbo'], $positions['ecu']);
+    }
+
+    public function test_engine_tab_lists_parts_ordered_by_unlock_level(): void
+    {
+        $user = $this->shopReadyUser(level: 5);
+
+        $response = $this->actingAs($user)->get(route('shop.index', ['tab' => 'engine']));
+
+        $response->assertOk();
+
+        $content = $response->getContent();
+        $positions = [
+            'Stock Inline' => strpos($content, 'Stock Inline'),
+            'Street Block' => strpos($content, 'Street Block'),
+        ];
+
+        $this->assertNotFalse($positions['Stock Inline']);
+        $this->assertNotFalse($positions['Street Block']);
+        $this->assertLessThan($positions['Street Block'], $positions['Stock Inline']);
+    }
+
     public function test_shop_index_shows_level_one_engine_parts(): void
     {
         $user = $this->shopReadyUser();

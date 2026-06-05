@@ -10,6 +10,7 @@ use App\Models\Part;
 use App\Models\PartModel;
 use App\Models\User;
 use App\Services\PartEquipService;
+use App\Services\TuningShopService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -24,6 +25,43 @@ class PartEquipTest extends TestCase
         $user->playerProfile()->update(['level' => 1]);
 
         return $user;
+    }
+
+    public function test_level_one_player_can_open_upgrades_page(): void
+    {
+        $user = $this->tuningReadyUser();
+        $car = $user->cars()->firstOrFail();
+
+        $this->actingAs($user)
+            ->get(route('garage.upgrades', $car))
+            ->assertOk()
+            ->assertSee('Equipped slots', false);
+    }
+
+    public function test_level_one_player_can_buy_and_equip_shop_part(): void
+    {
+        $user = $this->tuningReadyUser();
+        $user->playerProfile()->update(['cash' => 10000]);
+        $car = $user->cars()->firstOrFail();
+
+        $partModel = PartModel::query()->where('name', 'Torque Four')->firstOrFail();
+        app(TuningShopService::class)->purchase($user, $partModel);
+
+        $part = Part::query()
+            ->where('user_id', $user->id)
+            ->where('part_model_id', $partModel->id)
+            ->firstOrFail();
+
+        $this->actingAs($user)
+            ->get(route('garage.show', $car))
+            ->assertOk()
+            ->assertSee(route('garage.upgrades', $car), false);
+
+        $this->actingAs($user)
+            ->post(route('garage.upgrades.equip', [$car, $part]))
+            ->assertRedirect(route('garage.upgrades', $car));
+
+        $this->assertSame($car->id, $part->fresh()->car_id);
     }
 
     public function test_player_can_equip_and_unequip_part(): void

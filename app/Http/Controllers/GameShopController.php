@@ -42,8 +42,20 @@ class GameShopController extends Controller
                 ->filter(fn (PartModel $partModel) => PartsShopUnlock::slotUnlocked($partModel->slot, $level))
             : collect();
 
-        $partSlots = PartSlot::cases();
-        $partModelsBySlot = $partModels->groupBy(fn (PartModel $partModel) => $partModel->slot->value);
+        $partSlots = collect(PartSlot::cases())
+            ->sortBy(fn (PartSlot $slot) => [PartsShopUnlock::slotLevel($slot), $slot->value])
+            ->values()
+            ->all();
+
+        $partModelsBySlot = $partModels
+            ->groupBy(fn (PartModel $partModel) => $partModel->slot->value)
+            ->map(fn ($slotParts) => $slotParts
+                ->sortBy([
+                    ['unlock_level', 'asc'],
+                    ['price', 'asc'],
+                    ['name', 'asc'],
+                ])
+                ->values());
         $slotUnlockLevels = collect($partSlots)
             ->mapWithKeys(fn (PartSlot $slot) => [$slot->value => PartsShopUnlock::slotLevel($slot)]);
 

@@ -8,6 +8,7 @@ use App\Models\Car;
 use App\Models\Part;
 use App\Services\CarStatAggregator;
 use App\Services\SellPriceCalculator;
+use App\Support\PartsShopUnlock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
@@ -88,7 +89,8 @@ class GarageController extends Controller
             'sellQuote' => $sellQuote,
             'isActive' => $profile?->active_car_id === $car->id,
             'playerLevel' => $playerLevel,
-            'tuningUnlocked' => $playerLevel >= (int) config('game.mechanic.unlock_level', 5),
+            'partsEquipUnlocked' => $playerLevel >= PartsShopUnlock::shopLevel(),
+            'mechanicUnlocked' => $playerLevel >= (int) config('game.mechanic.unlock_level', 10),
             'baseStats' => $baseStats,
             'effectiveStats' => $this->carStatAggregator->aggregate($car),
         ]);
