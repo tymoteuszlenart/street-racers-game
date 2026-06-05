@@ -1,5 +1,18 @@
 # AGENTS.md
 
+## Starting work
+
+Before making any changes, sync with the remote and start from a fresh branch:
+
+```bash
+git fetch origin
+git checkout main
+git pull origin main
+git checkout -b <branch-name>
+```
+
+Use a short, descriptive branch name (for example `fix/pvp-reward-calculator` or `feat/race-lobby-ui`). Skip creating a new branch only when the user explicitly asks you to continue on the current branch.
+
 ## Cursor Cloud specific instructions
 
 ### System dependencies
