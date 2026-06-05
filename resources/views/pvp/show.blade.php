@@ -44,6 +44,22 @@
                     :driver-stat-labels="config('game.player.driver_stats.labels', [])"
                 />
 
+                @if ($rewards)
+                    <div class="border-t border-racing-600 pt-4">
+                        <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wider mb-3">{{ __('Rewards earned') }}</h3>
+                        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-300">
+                            <div>
+                                <dt class="text-gray-500 text-sm">{{ __('Cash') }}</dt>
+                                <dd class="text-white font-semibold">+${{ number_format($rewards['cash']) }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-gray-500 text-sm">{{ __('Reputation') }}</dt>
+                                <dd class="text-white font-semibold">+{{ number_format($rewards['reputation']) }}</dd>
+                            </div>
+                        </dl>
+                    </div>
+                @endif
+
                 <div class="flex flex-wrap gap-4">
                     <a href="{{ route('pvp.index') }}" class="inline-block text-accent-orange hover:underline">
                         {{ __('Back to PvP') }}

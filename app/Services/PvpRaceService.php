@@ -5,6 +5,8 @@ namespace App\Services;
 use App\DTOs\PvpRaceStartResult;
 use App\Enums\RaceAttemptStatus;
 use App\Enums\RaceAttemptType;
+use App\Enums\TransactionCurrency;
+use App\Enums\TransactionType;
 use App\Exceptions\IdempotencyKeyExpiredException;
 use App\Exceptions\RaceAttemptFailedException;
 use App\Exceptions\RaceAttemptPendingException;
@@ -32,6 +34,8 @@ class PvpRaceService
         private readonly RaceAttemptService $raceAttemptService,
         private readonly PvpRaceSnapshotBuilder $snapshotBuilder,
         private readonly ConditionWearService $conditionWearService,
+        private readonly PvpRaceRewardCalculator $rewardCalculator,
+        private readonly TransactionService $transactionService,
     ) {}
 
     /**
@@ -145,6 +149,11 @@ class PvpRaceService
                 $isTie = $playerScore === $opponentScore;
                 $won = $playerScore > $opponentScore;
 
+                $defenderProfile = $playerStates[$defender->id]['profile'];
+                $rewards = $this->rewardCalculator->forOpponentLevel($defenderProfile->level, $won);
+
+                $this->applyRewards($challengerProfile, $rewards);
+
                 $raceResult = RaceResult::query()->create([
                     'user_id' => $challenger->id,
                     'attempt_type' => RaceAttemptType::Pvp,
@@ -157,6 +166,10 @@ class PvpRaceService
                     'score_breakdown' => [
                         'player' => $challengerOutcome['breakdown'],
                         'opponent' => $defenderOutcome['breakdown'],
+                        'rewards' => [
+                            ...$rewards,
+                            'opponent_level' => $defenderProfile->level,
+                        ],
                     ],
                     'random_factor' => $randomFactor,
                 ]);
@@ -168,6 +181,13 @@ class PvpRaceService
                     'race_result_id' => $raceResult->id,
                     'error_code' => null,
                 ]);
+
+                $this->logPvpRaceTransactions(
+                    $challenger->id,
+                    $challengerProfile,
+                    $raceResult,
+                    $rewards,
+                );
 
                 $this->conditionWearService->applyRaceWear(
                     $challengerCar,
@@ -345,5 +365,58 @@ class PvpRaceService
     private function randomUnitCallable(): callable
     {
         return $this->randomUnit ?? fn (): float => mt_rand() / (mt_getrandmax() + 1);
+    }
+
+    /**
+     * @param  array{cash: int, reputation: int}  $rewards
+     */
+    private function applyRewards(PlayerProfile $profile, array $rewards): void
+    {
+        $profile->cash += $rewards['cash'];
+        $profile->reputation += $rewards['reputation'];
+        $profile->save();
+    }
+
+    /**
+     * @param  array{cash: int, reputation: int}  $rewards
+     */
+    private function logPvpRaceTransactions(
+        int $userId,
+        PlayerProfile $profile,
+        RaceResult $raceResult,
+        array $rewards,
+    ): void {
+        $sourceType = $raceResult->getMorphClass();
+        $sourceId = $raceResult->id;
+
+        $this->transactionService->record(
+            userId: $userId,
+            type: TransactionType::PvpRace,
+            currency: TransactionCurrency::Fuel,
+            amount: -$this->fuelCost(),
+            balanceAfter: $profile->fuel_current,
+            sourceType: $sourceType,
+            sourceId: $sourceId,
+        );
+
+        $this->transactionService->record(
+            userId: $userId,
+            type: TransactionType::PvpRace,
+            currency: TransactionCurrency::Cash,
+            amount: $rewards['cash'],
+            balanceAfter: $profile->cash,
+            sourceType: $sourceType,
+            sourceId: $sourceId,
+        );
+
+        $this->transactionService->record(
+            userId: $userId,
+            type: TransactionType::PvpRace,
+            currency: TransactionCurrency::Reputation,
+            amount: $rewards['reputation'],
+            balanceAfter: $profile->reputation,
+            sourceType: $sourceType,
+            sourceId: $sourceId,
+        );
     }
 }
