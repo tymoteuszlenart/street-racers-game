@@ -103,24 +103,77 @@ class PvpRaceStartTest extends TestCase
         $this->assertSame($defenderConditionBefore, $defenderCar->condition_current);
     }
 
-    public function test_pvp_grants_no_economy_rewards(): void
+    public function test_pvp_win_grants_cash_and_reputation_scaled_to_defender_level(): void
     {
         [$challenger, $defender] = $this->twoPlayersWithFuel();
+
+        $defender->playerProfile()->firstOrFail()->activeCar()->firstOrFail()->update([
+            'condition_current' => 1,
+        ]);
 
         $profile = $challenger->playerProfile()->firstOrFail();
         $cashBefore = $profile->cash;
         $reputationBefore = $profile->reputation;
         $experienceBefore = $profile->experience;
 
-        app(PvpRaceService::class)
+        $result = app(PvpRaceService::class)
             ->withRandomUnit(fn (): float => 0.9)
             ->startPvpRace($challenger, $defender, (string) Str::uuid());
 
         $profile->refresh();
 
-        $this->assertSame($cashBefore, $profile->cash);
-        $this->assertSame($reputationBefore, $profile->reputation);
+        $this->assertTrue($result->raceResult->won);
+        $this->assertSame(140, $profile->cash - $cashBefore);
+        $this->assertSame(6, $profile->reputation - $reputationBefore);
         $this->assertSame($experienceBefore, $profile->experience);
+        $this->assertSame(
+            ['cash' => 140, 'reputation' => 6, 'opponent_level' => 1],
+            $result->raceResult->score_breakdown['rewards'],
+        );
+    }
+
+    public function test_pvp_loss_pays_more_cash_against_higher_level_defender(): void
+    {
+        [$challenger, $lowDefender] = $this->twoPlayersWithFuel();
+        [, $highDefender] = $this->twoPlayersWithFuel();
+
+        $highDefender->playerProfile()->firstOrFail()->update(['level' => 12]);
+
+        $service = app(PvpRaceService::class)->withRandomUnit(fn (): float => 0.0);
+
+        $lowResult = $service->startPvpRace($challenger, $lowDefender, (string) Str::uuid());
+        $this->assertFalse($lowResult->raceResult->won);
+
+        $challenger->playerProfile()->firstOrFail()->update(['fuel_current' => 100]);
+
+        $highResult = $service->startPvpRace($challenger, $highDefender, (string) Str::uuid());
+        $this->assertFalse($highResult->raceResult->won);
+
+        $this->assertGreaterThan(
+            $lowResult->raceResult->score_breakdown['rewards']['cash'],
+            $highResult->raceResult->score_breakdown['rewards']['cash'],
+        );
+    }
+
+    public function test_pvp_loss_grants_consolation_rewards_without_experience(): void
+    {
+        [$challenger, $defender] = $this->twoPlayersWithFuel();
+
+        $defender->playerProfile()->firstOrFail()->update(['level' => 3]);
+
+        $profile = $challenger->playerProfile()->firstOrFail();
+        $cashBefore = $profile->cash;
+        $reputationBefore = $profile->reputation;
+
+        $result = app(PvpRaceService::class)
+            ->withRandomUnit(fn (): float => 0.0)
+            ->startPvpRace($challenger, $defender, (string) Str::uuid());
+
+        $profile->refresh();
+
+        $this->assertFalse($result->raceResult->won);
+        $this->assertSame(49, $profile->cash - $cashBefore);
+        $this->assertSame(2, $profile->reputation - $reputationBefore);
     }
 
     public function test_snapshots_remain_stable_after_later_garage_changes(): void

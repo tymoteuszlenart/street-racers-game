@@ -51,6 +51,20 @@ return [
         'condition_damage_min' => 1,
         'condition_damage_max' => 3,
         'random_factor_variance' => 0.05,
+        'rewards' => [
+            'cash_win_base' => 140,
+            'cash_loss_base' => 35,
+            'cash_per_opponent_level_win' => 28,
+            'cash_per_opponent_level_loss' => 7,
+            'reputation_win_base' => 6,
+            'reputation_loss_base' => 2,
+            'reputation_per_opponent_level_win' => 1,
+            'reputation_per_opponent_level_loss' => 0,
+            'cash_min' => 1,
+            'cash_max' => 5000,
+            'reputation_min' => 0,
+            'reputation_max' => 100,
+        ],
     ],
 
     'player' => [
