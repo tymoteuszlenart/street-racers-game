@@ -115,12 +115,14 @@ class RaceService
                     $playerStats,
                     $profile->driverStats(),
                     $playerRandomFactor,
+                    $race->resolvedRaceType(),
                 );
 
                 $opponentOutcome = $this->scoreCalculator->calculate(
                     $scaledOpponent['car'],
                     $scaledOpponent['driver'],
                     $opponentRandomFactor,
+                    $race->resolvedRaceType(),
                 );
 
                 $playerScore = $playerOutcome['score'];

@@ -68,6 +68,30 @@ class PlayerLevelServiceTest extends TestCase
         $this->assertSame(2, $profile->level);
     }
 
+    public function test_level_up_fills_fuel_tank(): void
+    {
+        config([
+            'game.player.max_level' => 50,
+            'game.player.experience.multiplier' => 50,
+        ]);
+
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update([
+            'level' => 1,
+            'experience' => 0,
+            'fuel_current' => 15,
+            'fuel_max' => 100,
+        ]);
+
+        app(PlayerLevelService::class)->addExperience($profile, 200);
+        $profile->save();
+        $profile->refresh();
+
+        $this->assertSame(2, $profile->level);
+        $this->assertSame(100, $profile->fuel_current);
+    }
+
     public function test_multiple_level_ups_grant_stat_points_for_each_level(): void
     {
         config(['game.player.driver_stats.points_per_level' => 3]);

@@ -9,6 +9,7 @@ use App\Models\CarModel;
 use App\Models\PartModel;
 use App\Services\DealerService;
 use App\Services\TuningShopService;
+use App\Support\PartsShopUnlock;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -24,7 +25,7 @@ class GameShopController extends Controller
     {
         $profile = $request->user()->playerProfile;
         $level = $profile?->level ?? 1;
-        $partsUnlocked = $level >= (int) config('game.mechanic.unlock_level', 5);
+        $partsUnlocked = $level >= PartsShopUnlock::shopLevel();
 
         $carModels = CarModel::query()
             ->active()
@@ -35,11 +36,28 @@ class GameShopController extends Controller
             ->get();
 
         $partModels = $partsUnlocked
-            ? PartModel::query()->shopCatalog($level)->get()
+            ? PartModel::query()
+                ->shopCatalog($level)
+                ->get()
+                ->filter(fn (PartModel $partModel) => PartsShopUnlock::slotUnlocked($partModel->slot, $level))
             : collect();
 
-        $partSlots = PartSlot::cases();
-        $partModelsBySlot = $partModels->groupBy(fn (PartModel $partModel) => $partModel->slot->value);
+        $partSlots = collect(PartSlot::cases())
+            ->sortBy(fn (PartSlot $slot) => [PartsShopUnlock::slotLevel($slot), $slot->value])
+            ->values()
+            ->all();
+
+        $partModelsBySlot = $partModels
+            ->groupBy(fn (PartModel $partModel) => $partModel->slot->value)
+            ->map(fn ($slotParts) => $slotParts
+                ->sortBy([
+                    ['unlock_level', 'asc'],
+                    ['price', 'asc'],
+                    ['name', 'asc'],
+                ])
+                ->values());
+        $slotUnlockLevels = collect($partSlots)
+            ->mapWithKeys(fn (PartSlot $slot) => [$slot->value => PartsShopUnlock::slotLevel($slot)]);
 
         $validTabs = array_merge(['cars'], PartSlot::values());
         $requestedTab = $request->string('tab')->toString();
@@ -57,7 +75,8 @@ class GameShopController extends Controller
             'cash' => $profile?->cash ?? 0,
             'playerLevel' => $level,
             'partsUnlocked' => $partsUnlocked,
-            'partsUnlockLevel' => (int) config('game.mechanic.unlock_level', 5),
+            'partsUnlockLevel' => PartsShopUnlock::shopLevel(),
+            'slotUnlockLevels' => $slotUnlockLevels,
             'initialTab' => $initialTab,
         ]);
     }

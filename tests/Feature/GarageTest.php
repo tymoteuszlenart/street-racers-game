@@ -73,8 +73,8 @@ class GarageTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Show equipped parts', false);
-        $response->assertSee('1 equipped', false);
-        $response->assertSee('0 spare', false);
+        $response->assertSee('2 equipped', false);
+        $response->assertSee('1 spare', false);
         $response->assertSee($partModel->name, false);
         $response->assertSee('Equipped on', false);
     }

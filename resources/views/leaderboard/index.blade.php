@@ -8,7 +8,7 @@
     <div class="py-12">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
             <p class="text-gray-500 text-sm">
-                {{ __('Players ranked by reputation. PvP races do not change reputation in the MVP.') }}
+                {{ __('Players ranked by reputation. PvP wins grant more reputation than NPC races, scaled to the opponent’s level.') }}
             </p>
 
             @if ($currentUserGlobalRank !== null)

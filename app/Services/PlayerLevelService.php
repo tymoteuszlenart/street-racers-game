@@ -34,6 +34,7 @@ class PlayerLevelService
 
         if ($profile->level > $previousLevel) {
             $this->grantStatPointsForLevels($profile, $previousLevel, $profile->level);
+            $profile->fuel_current = $profile->fuel_max;
         }
 
         $this->clampExperience($profile);

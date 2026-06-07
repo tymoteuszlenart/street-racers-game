@@ -14,6 +14,7 @@ use App\Http\Controllers\GameShopController;
 use App\Http\Controllers\GarageController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\MechanicController;
+use App\Http\Controllers\OpenCupController;
 use App\Http\Controllers\PartSellController;
 use App\Http\Controllers\PremiumController;
 use App\Http\Controllers\PremiumFuelController;
@@ -75,27 +76,36 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/shop', [GameShopController::class, 'index'])->name('shop.index');
     Route::post('/shop/cars/{carModel}', [GameShopController::class, 'purchaseCar'])->name('shop.cars.purchase');
-    Route::middleware('tuning.unlocked')->post('/shop/parts/{partModel}', [GameShopController::class, 'purchasePart'])->name('shop.parts.purchase');
+    Route::middleware('parts_shop.unlocked')->post('/shop/parts/{partModel}', [GameShopController::class, 'purchasePart'])->name('shop.parts.purchase');
 
     Route::redirect('/dealer', '/shop')->name('dealer.index');
     Route::post('/dealer/{carModel}', [GameShopController::class, 'purchaseCar'])->name('dealer.purchase');
     Route::redirect('/tuning', '/shop?tab=parts')->name('tuning.index');
-    Route::middleware('tuning.unlocked')->post('/tuning/{partModel}', [GameShopController::class, 'purchasePart'])->name('tuning.purchase');
+    Route::middleware('parts_shop.unlocked')->post('/tuning/{partModel}', [GameShopController::class, 'purchasePart'])->name('tuning.purchase');
 
-    Route::middleware('tuning.unlocked')->group(function () {
-        Route::get('/mechanic', [MechanicController::class, 'index'])->name('mechanic.index');
-        Route::post('/mechanic/parts/{part}/upgrade', [MechanicController::class, 'upgradePart'])->name('mechanic.parts.upgrade');
-        Route::post('/mechanic/cars/{car}/repair', [MechanicController::class, 'repairCar'])->name('mechanic.cars.repair');
-        Route::post('/mechanic/parts/{part}/repair', [MechanicController::class, 'repairPart'])->name('mechanic.parts.repair');
-
+    Route::middleware('parts_shop.unlocked')->group(function () {
         Route::get('/garage/{car}/upgrades', [CarUpgradeController::class, 'show'])->name('garage.upgrades');
         Route::post('/garage/{car}/upgrades/{part}', [CarUpgradeController::class, 'equip'])->name('garage.upgrades.equip');
         Route::delete('/garage/{car}/upgrades/{part}', [CarUpgradeController::class, 'unequip'])->name('garage.upgrades.unequip');
     });
 
+    Route::middleware('mechanic.unlocked')->group(function () {
+        Route::get('/mechanic', [MechanicController::class, 'index'])->name('mechanic.index');
+        Route::post('/mechanic/parts/{part}/upgrade', [MechanicController::class, 'upgradePart'])->name('mechanic.parts.upgrade');
+        Route::post('/mechanic/cars/{car}/repair', [MechanicController::class, 'repairCar'])->name('mechanic.cars.repair');
+        Route::post('/mechanic/parts/{part}/repair', [MechanicController::class, 'repairPart'])->name('mechanic.parts.repair');
+    });
+
     Route::get('/races', [RaceController::class, 'index'])->name('races.index');
     Route::post('/races/{race}', [RaceController::class, 'store'])->name('races.start');
     Route::get('/races/results/{raceResult}', [RaceController::class, 'show'])->name('races.show');
+
+    Route::middleware('open_cup.unlocked')->group(function () {
+        Route::get('/cups', [OpenCupController::class, 'index'])->name('cups.index');
+        Route::post('/cups', [OpenCupController::class, 'store'])->name('cups.store');
+        Route::get('/cups/{cup}', [OpenCupController::class, 'show'])->name('cups.show');
+        Route::post('/cups/{cup}/join', [OpenCupController::class, 'join'])->name('cups.join');
+    });
 
     Route::get('/pvp', [PvpRaceController::class, 'index'])->name('pvp.index');
     Route::post('/pvp/{defender}', [PvpRaceController::class, 'store'])->name('pvp.start');

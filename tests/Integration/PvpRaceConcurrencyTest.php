@@ -25,7 +25,9 @@ class PvpRaceConcurrencyTest extends TestCase
 
         $defenderCar = $defenderProfile->activeCar()->firstOrFail();
         $defenderConditionBefore = $defenderCar->condition_current;
-        $cashBefore = $challengerProfile->cash;
+        $challengerCashBefore = $challengerProfile->cash;
+        $challengerReputationBefore = $challengerProfile->reputation;
+        $defenderCashBefore = $defenderProfile->cash;
 
         $service = app(PvpRaceService::class)->withRandomUnit(fn (): float => 0.5);
         $result = $service->startPvpRace($challenger, $defender, (string) Str::uuid());
@@ -34,10 +36,14 @@ class PvpRaceConcurrencyTest extends TestCase
         $defenderProfile->refresh();
         $defenderCar->refresh();
 
+        $rewards = $result->raceResult->score_breakdown['rewards'];
+
         $this->assertSame(90, $challengerProfile->fuel_current);
         $this->assertSame(100, $defenderProfile->fuel_current);
         $this->assertSame($defenderConditionBefore, $defenderCar->condition_current);
-        $this->assertSame($cashBefore, $challengerProfile->cash);
+        $this->assertSame($challengerCashBefore + $rewards['cash'], $challengerProfile->cash);
+        $this->assertSame($challengerReputationBefore + $rewards['reputation'], $challengerProfile->reputation);
+        $this->assertSame($defenderCashBefore, $defenderProfile->cash);
         $this->assertDatabaseHas('pvp_races', ['id' => $result->pvpRace->id]);
         $this->assertDatabaseHas('race_results', ['id' => $result->raceResult->id, 'pvp_race_id' => $result->pvpRace->id]);
     }

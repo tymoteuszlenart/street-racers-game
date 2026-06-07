@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Enums\AcquiredVia;
 use App\Enums\PartAcquiredVia;
+use App\Enums\PartSlot;
 use App\Models\Car;
 use App\Models\Part;
 use App\Models\User;
@@ -159,6 +160,7 @@ class SellPriceCalculatorTest extends TestCase
         $car = $user->cars()->firstOrFail();
         $part = Part::factory()->for($user)->create([
             'car_id' => $car->id,
+            'slot' => PartSlot::Turbo,
             'purchase_price' => 1000,
         ]);
 
@@ -173,6 +175,19 @@ class SellPriceCalculatorTest extends TestCase
         $part = Part::factory()->for($user)->create([
             'acquired_via' => PartAcquiredVia::Admin,
             'purchase_price' => 1000,
+        ]);
+
+        $quote = $this->calculator->quotePart($part);
+
+        $this->assertFalse($quote->sellable);
+    }
+
+    public function test_starter_part_is_not_sellable(): void
+    {
+        $user = User::factory()->create();
+        $part = Part::factory()->for($user)->create([
+            'acquired_via' => PartAcquiredVia::Starter,
+            'purchase_price' => null,
         ]);
 
         $quote = $this->calculator->quotePart($part);

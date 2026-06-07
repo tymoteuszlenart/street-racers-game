@@ -123,10 +123,12 @@ class ClubTournamentRaceService
                 );
 
                 $playerStats = $this->carStatAggregator->aggregate($car);
+                $raceType = $this->scoreCalculator->defaultRaceType();
                 $playerOutcome = $this->scoreCalculator->calculate(
                     $playerStats,
                     $profile->driverStats(),
                     $randomFactor,
+                    $raceType,
                 );
 
                 $opponentConfig = config('game.tournaments.opponent');
@@ -140,6 +142,7 @@ class ClubTournamentRaceService
                     ],
                     config('game.player.driver_stats.base', []),
                     0,
+                    $raceType,
                 );
 
                 $playerScore = $playerOutcome['score'];

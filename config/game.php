@@ -51,6 +51,20 @@ return [
         'condition_damage_min' => 1,
         'condition_damage_max' => 3,
         'random_factor_variance' => 0.05,
+        'rewards' => [
+            'cash_win_base' => 140,
+            'cash_loss_base' => 35,
+            'cash_per_opponent_level_win' => 28,
+            'cash_per_opponent_level_loss' => 7,
+            'reputation_win_base' => 6,
+            'reputation_loss_base' => 2,
+            'reputation_per_opponent_level_win' => 1,
+            'reputation_per_opponent_level_loss' => 0,
+            'cash_min' => 1,
+            'cash_max' => 5000,
+            'reputation_min' => 0,
+            'reputation_max' => 100,
+        ],
     ],
 
     'player' => [
@@ -66,11 +80,36 @@ return [
                 'handling' => 1,
             ],
             'points_per_level' => 3,
-            'race_weights' => [
-                'power' => 0.15,
-                'acceleration' => 0.12,
-                'grip' => 0.10,
-                'handling' => 0.08,
+            'default_race_type' => 'circuit',
+            /*
+             * Driver bonus uses race-type stat affinity. Each type emphasizes different stats so
+             * builds matter across drag / sprint / drift / circuit events (PvP uses default_race_type).
+             */
+            'race_type_affinities' => [
+                'drag' => [
+                    'power' => 0.22,
+                    'acceleration' => 0.18,
+                    'grip' => 0.05,
+                    'handling' => 0.05,
+                ],
+                'sprint' => [
+                    'power' => 0.10,
+                    'acceleration' => 0.24,
+                    'grip' => 0.08,
+                    'handling' => 0.08,
+                ],
+                'drift' => [
+                    'power' => 0.06,
+                    'acceleration' => 0.08,
+                    'grip' => 0.22,
+                    'handling' => 0.18,
+                ],
+                'circuit' => [
+                    'power' => 0.12,
+                    'acceleration' => 0.12,
+                    'grip' => 0.12,
+                    'handling' => 0.12,
+                ],
             ],
             'labels' => [
                 'power' => 'Force',
@@ -214,24 +253,17 @@ return [
         'unlock_level' => 5,
         'join_window_minutes' => 45,
         'settling_minutes' => 3,
-        'max_entrants' => 8,
         'entry_fee_cash' => 2000,
-        'random_factor_variance' => 0.04,
+        'max_entrants' => 8,
+        'solo_npc_races' => 3,
+        'participation_cash' => 1200,
+        'participation_cups' => 1,
+        'bracket_win_cups' => 3,
+        'champion_pot_share' => 0.40,
+        'random_factor_variance' => 0.03,
         'condition_damage_min' => 1,
         'condition_damage_max' => 3,
-        'solo_npc_race_count' => 3,
         'npc_strength_multiplier' => 0.92,
-        'rewards' => [
-            'participation_cups' => 1,
-            'participation_cash' => 1200,
-            'bracket_win_cups' => 3,
-            'champion_cash_percent_of_other_entries' => 40,
-            'solo' => [
-                'wins_3' => ['cups' => 3],
-                'wins_2' => ['cups' => 2],
-                'default' => ['cups' => 1],
-            ],
-        ],
     ],
 
     'tournaments' => [

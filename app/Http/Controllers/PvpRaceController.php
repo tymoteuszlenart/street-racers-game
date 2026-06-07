@@ -13,6 +13,7 @@ use App\Models\PvpRace;
 use App\Models\RaceResult;
 use App\Models\User;
 use App\Services\PvpRaceService;
+use App\Support\PvpRaceResultRewards;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
@@ -119,6 +120,7 @@ class PvpRaceController extends Controller
 
         return view('pvp.show', [
             'raceResult' => $raceResult->load('pvpRace.defender'),
+            'rewards' => PvpRaceResultRewards::forResult($raceResult),
         ]);
     }
 

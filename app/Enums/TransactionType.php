@@ -5,6 +5,7 @@ namespace App\Enums;
 enum TransactionType: string
 {
     case NpcRace = 'npc_race';
+    case PvpRace = 'pvp_race';
     case PartPurchase = 'part_purchase';
     case PartUpgrade = 'part_upgrade';
     case CarRepair = 'car_repair';
@@ -17,4 +18,6 @@ enum TransactionType: string
     case ClubTournamentReward = 'club_tournament_reward';
     case PaidFuelPurchase = 'paid_fuel_purchase';
     case PaidPremiumFuelPurchase = 'paid_premium_fuel_purchase';
+    case OpenCupEntry = 'open_cup_entry';
+    case OpenCupReward = 'open_cup_reward';
 }

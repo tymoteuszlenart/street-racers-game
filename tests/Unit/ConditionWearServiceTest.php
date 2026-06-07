@@ -19,6 +19,7 @@ class ConditionWearServiceTest extends TestCase
     {
         $user = User::factory()->create();
         $car = $user->cars()->firstOrFail();
+        $car->parts()->where('slot', PartSlot::Engine)->forceDelete();
 
         $partModel = PartModel::factory()->create(['slot' => PartSlot::Engine]);
 
@@ -46,6 +47,7 @@ class ConditionWearServiceTest extends TestCase
     {
         $user = User::factory()->create();
         $car = $user->cars()->firstOrFail();
+        $car->parts()->where('slot', PartSlot::Engine)->forceDelete();
         $carInitial = $car->condition_current;
 
         $partModel = PartModel::factory()->create(['slot' => PartSlot::Engine]);

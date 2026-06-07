@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Enums\RaceTier;
+use App\Enums\RaceType;
 use App\Models\Race;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -19,6 +21,8 @@ class RaceFactory extends Factory
     {
         return [
             'name' => fake()->words(3, true),
+            'race_type' => RaceType::Circuit,
+            'race_tier' => RaceTier::Amateur,
             'description' => fake()->sentence(),
             'unlock_level' => 1,
             'fuel_cost' => 10,
