@@ -69,7 +69,9 @@ return [
 
     'player' => [
         'max_level' => 100,
-        'experience_per_level' => 100,
+        'experience' => [
+            'multiplier' => 50,
+        ],
         'driver_stats' => [
             'base' => [
                 'power' => 1,

@@ -70,10 +70,12 @@
                                 <dt class="text-gray-500 text-sm">{{ __('Reputation') }}</dt>
                                 <dd class="text-white font-semibold">+{{ number_format($rewards['reputation']) }}</dd>
                             </div>
-                            <div>
-                                <dt class="text-gray-500 text-sm">{{ __('Experience') }}</dt>
-                                <dd class="text-white font-semibold">+{{ number_format($rewards['experience']) }} {{ __('XP') }}</dd>
-                            </div>
+                            @if ($rewards['experience'] > 0)
+                                <div>
+                                    <dt class="text-gray-500 text-sm">{{ __('Experience') }}</dt>
+                                    <dd class="text-white font-semibold">+{{ number_format($rewards['experience']) }} {{ __('XP') }}</dd>
+                                </div>
+                            @endif
                         </dl>
                     </div>
                 @endif

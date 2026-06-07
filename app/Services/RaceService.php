@@ -130,7 +130,7 @@ class RaceService
                 $isTie = $playerScore === $opponentScore;
                 $won = $playerScore > $opponentScore;
 
-                $this->applyRewards($profile, $race, $won);
+                $experienceGranted = $this->applyRewards($profile, $race, $won);
                 $this->conditionWearService->applyRaceWear(
                     $car,
                     $race->condition_damage_min,
@@ -151,6 +151,11 @@ class RaceService
                         'opponent' => $opponentOutcome['breakdown'],
                         'opponent_scaled' => $scaledOpponent,
                         'opponent_random_factor' => $opponentRandomFactor,
+                        'rewards' => [
+                            'experience' => $experienceGranted
+                                ? ($won ? $race->experience_reward_win : $race->experience_reward_loss)
+                                : 0,
+                        ],
                     ],
                     'random_factor' => $playerRandomFactor,
                 ]);
@@ -161,7 +166,7 @@ class RaceService
                     'error_code' => null,
                 ]);
 
-                $this->logNpcRaceTransactions($user->id, $profile, $race, $raceResult, $won);
+                $this->logNpcRaceTransactions($user->id, $profile, $race, $raceResult, $won, $experienceGranted);
 
                 return new NpcRaceStartResult(
                     raceResult: $raceResult->fresh(),
@@ -259,6 +264,7 @@ class RaceService
         Race $race,
         RaceResult $raceResult,
         bool $won,
+        bool $experienceGranted,
     ): void {
         $sourceType = $raceResult->getMorphClass();
         $sourceId = $raceResult->id;
@@ -293,33 +299,45 @@ class RaceService
             sourceId: $sourceId,
         );
 
-        $this->transactionService->record(
-            userId: $userId,
-            type: TransactionType::NpcRace,
-            currency: TransactionCurrency::Experience,
-            amount: $won ? $race->experience_reward_win : $race->experience_reward_loss,
-            balanceAfter: $profile->experience,
-            sourceType: $sourceType,
-            sourceId: $sourceId,
-        );
+        if ($experienceGranted) {
+            $this->transactionService->record(
+                userId: $userId,
+                type: TransactionType::NpcRace,
+                currency: TransactionCurrency::Experience,
+                amount: $won ? $race->experience_reward_win : $race->experience_reward_loss,
+                balanceAfter: $profile->experience,
+                sourceType: $sourceType,
+                sourceId: $sourceId,
+            );
+        }
     }
 
-    private function applyRewards(PlayerProfile $profile, Race $race, bool $won): void
+    private function applyRewards(PlayerProfile $profile, Race $race, bool $won): bool
     {
+        $experienceGranted = $this->playerLevelService->canGainExperience($profile);
+
         if ($won) {
             $profile->cash += $race->cash_reward_win;
             $profile->reputation += $race->reputation_reward_win;
-            $this->playerLevelService->addExperience($profile, $race->experience_reward_win);
+
+            if ($experienceGranted) {
+                $this->playerLevelService->addExperience($profile, $race->experience_reward_win);
+            }
         } else {
             $profile->cash += $race->cash_reward_loss;
             $profile->reputation += $race->reputation_reward_loss;
-            $this->playerLevelService->addExperience(
-                $profile,
-                $race->experience_reward_loss,
-            );
+
+            if ($experienceGranted) {
+                $this->playerLevelService->addExperience(
+                    $profile,
+                    $race->experience_reward_loss,
+                );
+            }
         }
 
         $profile->save();
+
+        return $experienceGranted;
     }
 
     private function markAttemptFailed(
