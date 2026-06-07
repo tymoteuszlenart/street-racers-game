@@ -112,6 +112,35 @@ class PlayerLevelServiceTest extends TestCase
         $this->assertSame(6, $profile->unspent_stat_points);
     }
 
+    public function test_sync_level_drops_stale_level_from_linear_xp_curve(): void
+    {
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['level' => 6, 'experience' => 530]);
+
+        $this->service->syncLevel($profile);
+        $profile->save();
+        $profile->refresh();
+
+        $this->assertSame(2, $profile->level);
+    }
+
+    public function test_progress_toward_next_level_corrects_stale_level_and_never_reports_negative_xp(): void
+    {
+        $user = User::factory()->create();
+        $profile = $user->playerProfile()->firstOrFail();
+        $profile->update(['level' => 6, 'experience' => 530]);
+
+        $progress = $this->service->progressTowardNextLevel($profile);
+
+        $profile->refresh();
+        $this->assertSame(2, $profile->level);
+        $this->assertNotNull($progress);
+        $this->assertSame(330, $progress['current']);
+        $this->assertSame(450, $progress['required']);
+        $this->assertGreaterThanOrEqual(0, $progress['current']);
+    }
+
     public function test_progress_toward_next_level_reports_current_band(): void
     {
         $user = User::factory()->create();

@@ -22,6 +22,16 @@ class PlayerLevelService
         $maxLevel = $this->maxLevel();
         $previousLevel = $profile->level;
 
+        while ($profile->level > 1) {
+            $floor = $this->cumulativeExperienceForLevel($profile->level);
+
+            if ($profile->experience >= $floor) {
+                break;
+            }
+
+            $profile->level--;
+        }
+
         while ($profile->level < $maxLevel) {
             $requiredExperience = $this->cumulativeExperienceForLevel($profile->level + 1);
 
@@ -108,6 +118,12 @@ class PlayerLevelService
      */
     public function progressTowardNextLevel(PlayerProfile $profile): ?array
     {
+        $this->syncLevel($profile);
+
+        if ($profile->isDirty()) {
+            $profile->save();
+        }
+
         if ($profile->level >= $this->maxLevel()) {
             return null;
         }
