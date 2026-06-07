@@ -44,16 +44,20 @@
                         {{ __('Cars') }}
                     </button>
                     @foreach ($partSlots as $slot)
+                        @php
+                            $slotUnlockLevel = $slotUnlockLevels[$slot->value] ?? 1;
+                            $slotUnlocked = $partsUnlocked && $playerLevel >= $slotUnlockLevel;
+                        @endphp
                         <button
                             type="button"
                             @click="tab = '{{ $slot->value }}'"
                             :class="tab === '{{ $slot->value }}' ? 'border-accent-neon text-accent-neon' : 'border-transparent text-gray-400 hover:text-gray-200'"
                             class="px-4 py-2 text-sm font-semibold border-b-2 transition capitalize whitespace-nowrap"
-                            @if (! $partsUnlocked) disabled title="{{ __('Reach level :level', ['level' => $partsUnlockLevel]) }}" @endif
+                            @if (! $slotUnlocked) title="{{ __('Reach level :level to buy :slot parts', ['level' => $slotUnlockLevel, 'slot' => $slot->value]) }}" @endif
                         >
                             {{ $slot->value }}
-                            @if (! $partsUnlocked)
-                                <span class="text-gray-500 font-normal normal-case">({{ __('Lvl :level', ['level' => $partsUnlockLevel]) }})</span>
+                            @if (! $slotUnlocked)
+                                <span class="text-gray-500 font-normal normal-case">({{ __('Lvl :level', ['level' => $slotUnlockLevel]) }})</span>
                             @endif
                         </button>
                     @endforeach
@@ -96,9 +100,15 @@
             </div>
 
             @foreach ($partSlots as $slot)
+                @php
+                    $slotUnlockLevel = $slotUnlockLevels[$slot->value] ?? 1;
+                    $slotUnlocked = $partsUnlocked && $playerLevel >= $slotUnlockLevel;
+                @endphp
                 <div x-show="tab === '{{ $slot->value }}'" x-cloak>
                     @if (! $partsUnlocked)
                         <p class="text-gray-500">{{ __('Reach level :level to buy parts.', ['level' => $partsUnlockLevel]) }}</p>
+                    @elseif (! $slotUnlocked)
+                        <p class="text-gray-500">{{ __('Reach level :level to buy :slot parts.', ['level' => $slotUnlockLevel, 'slot' => $slot->value]) }}</p>
                     @else
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             @forelse ($partModelsBySlot->get($slot->value, collect()) as $partModel)

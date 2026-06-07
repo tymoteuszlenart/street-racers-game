@@ -75,22 +75,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/shop', [GameShopController::class, 'index'])->name('shop.index');
     Route::post('/shop/cars/{carModel}', [GameShopController::class, 'purchaseCar'])->name('shop.cars.purchase');
-    Route::middleware('tuning.unlocked')->post('/shop/parts/{partModel}', [GameShopController::class, 'purchasePart'])->name('shop.parts.purchase');
+    Route::middleware('parts_shop.unlocked')->post('/shop/parts/{partModel}', [GameShopController::class, 'purchasePart'])->name('shop.parts.purchase');
 
     Route::redirect('/dealer', '/shop')->name('dealer.index');
     Route::post('/dealer/{carModel}', [GameShopController::class, 'purchaseCar'])->name('dealer.purchase');
     Route::redirect('/tuning', '/shop?tab=parts')->name('tuning.index');
-    Route::middleware('tuning.unlocked')->post('/tuning/{partModel}', [GameShopController::class, 'purchasePart'])->name('tuning.purchase');
+    Route::middleware('parts_shop.unlocked')->post('/tuning/{partModel}', [GameShopController::class, 'purchasePart'])->name('tuning.purchase');
 
-    Route::middleware('tuning.unlocked')->group(function () {
+    Route::middleware('parts_shop.unlocked')->group(function () {
+        Route::get('/garage/{car}/upgrades', [CarUpgradeController::class, 'show'])->name('garage.upgrades');
+        Route::post('/garage/{car}/upgrades/{part}', [CarUpgradeController::class, 'equip'])->name('garage.upgrades.equip');
+        Route::delete('/garage/{car}/upgrades/{part}', [CarUpgradeController::class, 'unequip'])->name('garage.upgrades.unequip');
+    });
+
+    Route::middleware('mechanic.unlocked')->group(function () {
         Route::get('/mechanic', [MechanicController::class, 'index'])->name('mechanic.index');
         Route::post('/mechanic/parts/{part}/upgrade', [MechanicController::class, 'upgradePart'])->name('mechanic.parts.upgrade');
         Route::post('/mechanic/cars/{car}/repair', [MechanicController::class, 'repairCar'])->name('mechanic.cars.repair');
         Route::post('/mechanic/parts/{part}/repair', [MechanicController::class, 'repairPart'])->name('mechanic.parts.repair');
-
-        Route::get('/garage/{car}/upgrades', [CarUpgradeController::class, 'show'])->name('garage.upgrades');
-        Route::post('/garage/{car}/upgrades/{part}', [CarUpgradeController::class, 'equip'])->name('garage.upgrades.equip');
-        Route::delete('/garage/{car}/upgrades/{part}', [CarUpgradeController::class, 'unequip'])->name('garage.upgrades.unequip');
     });
 
     Route::get('/races', [RaceController::class, 'index'])->name('races.index');

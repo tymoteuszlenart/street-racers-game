@@ -325,6 +325,7 @@ class RaceStartTest extends TestCase
         $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
 
         $car = $profile->activeCar()->firstOrFail();
+        $car->parts()->where('slot', PartSlot::Engine)->forceDelete();
 
         $race = Race::factory()->create([
             'fuel_cost' => 10,

@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\Log;
 
 class StarterCarService
 {
+    public function __construct(
+        private readonly StarterPartService $starterPartService,
+    ) {}
+
     public function assignToProfile(PlayerProfile $profile): Car
     {
         return DB::transaction(function () use ($profile) {
@@ -58,6 +62,8 @@ class StarterCarService
             ]);
 
             $profile->setActiveCarId($car->id);
+
+            $this->starterPartService->attachToCar($car);
 
             return $car;
         });
