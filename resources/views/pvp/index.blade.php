@@ -19,7 +19,7 @@
             </p>
 
             <p class="text-gray-500 text-sm">
-                {{ __('PvP races grant no cash, reputation, or XP. Daily limit: :cap races per opponent pair.', ['cap' => config('game.pvp.daily_pair_cap')]) }}
+                {{ __('Win cash and reputation scaled to your opponent’s level (higher than NPC races). No XP. Daily limit: :cap races per opponent pair.', ['cap' => config('game.pvp.daily_pair_cap')]) }}
             </p>
 
             @if ($errors->any())

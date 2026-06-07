@@ -19,19 +19,20 @@ class MechanicTest extends TestCase
     private function mechanicReadyUser(): User
     {
         $user = User::factory()->create();
-        $user->playerProfile()->update(['level' => 5, 'cash' => 50000]);
+        $user->playerProfile()->update(['level' => 10, 'cash' => 50000]);
 
         return $user;
     }
 
-    public function test_mechanic_index_forbidden_below_level_five(): void
+    public function test_mechanic_index_forbidden_below_level_ten(): void
     {
         $user = User::factory()->create();
+        $user->playerProfile()->update(['level' => 9]);
 
         $this->actingAs($user)->get(route('mechanic.index'))->assertForbidden();
     }
 
-    public function test_mechanic_index_available_at_level_five(): void
+    public function test_mechanic_index_available_at_level_ten(): void
     {
         $user = $this->mechanicReadyUser();
 

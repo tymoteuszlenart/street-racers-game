@@ -13,6 +13,7 @@ class PlayerProfile extends Model
     protected $fillable = [
         'user_id',
         'cash',
+        'cups',
         'reputation',
         'level',
         'experience',

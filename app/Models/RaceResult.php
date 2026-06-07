@@ -15,6 +15,7 @@ class RaceResult extends Model
         'race_id',
         'pvp_race_id',
         'club_tournament_id',
+        'open_cup_id',
         'won',
         'is_tie',
         'player_score',
@@ -54,6 +55,11 @@ class RaceResult extends Model
     public function clubTournament(): BelongsTo
     {
         return $this->belongsTo(ClubTournament::class);
+    }
+
+    public function openCup(): BelongsTo
+    {
+        return $this->belongsTo(OpenCup::class);
     }
 
     public function raceAttempt(): HasOne

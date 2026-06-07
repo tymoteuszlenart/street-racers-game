@@ -23,6 +23,7 @@ class CarStatAggregatorTest extends TestCase
     {
         $user = User::factory()->create();
         $car = $user->cars()->firstOrFail();
+        $car->parts()->forceDelete();
         $car->update(['condition_current' => 80, 'condition_max' => 100]);
         $model = $car->carModel;
 
@@ -39,6 +40,7 @@ class CarStatAggregatorTest extends TestCase
     {
         $user = User::factory()->create();
         $car = $user->cars()->firstOrFail();
+        $car->parts()->forceDelete();
         $model = $car->carModel;
 
         $partModel = PartModel::factory()->create([
@@ -106,6 +108,7 @@ class CarStatAggregatorTest extends TestCase
     {
         $user = User::factory()->create();
         $car = $user->cars()->firstOrFail();
+        $car->parts()->where('slot', PartSlot::Engine)->forceDelete();
         $model = $car->carModel;
 
         $partModel = PartModel::factory()->create([
@@ -134,6 +137,7 @@ class CarStatAggregatorTest extends TestCase
     {
         $user = User::factory()->create();
         $car = $user->cars()->firstOrFail();
+        $car->parts()->where('slot', PartSlot::Engine)->forceDelete();
         $model = $car->carModel;
 
         $partModel = PartModel::factory()->create([
