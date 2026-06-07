@@ -18,4 +18,6 @@ enum TransactionType: string
     case ClubTournamentReward = 'club_tournament_reward';
     case PaidFuelPurchase = 'paid_fuel_purchase';
     case PaidPremiumFuelPurchase = 'paid_premium_fuel_purchase';
+    case OpenCupEntry = 'open_cup_entry';
+    case OpenCupReward = 'open_cup_reward';
 }
