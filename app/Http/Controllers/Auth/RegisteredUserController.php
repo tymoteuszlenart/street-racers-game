@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Exceptions\StarterCarCatalogNotConfiguredException;
+use App\Exceptions\StarterPartCatalogNotConfiguredException;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
@@ -44,7 +45,7 @@ class RegisteredUserController extends Controller
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
             ]));
-        } catch (StarterCarCatalogNotConfiguredException) {
+        } catch (StarterCarCatalogNotConfiguredException|StarterPartCatalogNotConfiguredException) {
             throw ValidationException::withMessages([
                 'email' => 'Registration is temporarily unavailable. Please try again later.',
             ]);

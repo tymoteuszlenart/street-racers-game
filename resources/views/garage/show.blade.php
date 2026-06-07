@@ -54,19 +54,19 @@
                         </div>
                         <div class="pt-4 border-t border-racing-600 space-y-2">
                             <div class="flex flex-wrap gap-2">
-                                @if ($tuningUnlocked)
+                                @if ($mechanicUnlocked)
                                     @if ($car->condition_current < $car->condition_max)
                                         <a href="{{ route('mechanic.index', ['tab' => 'repair']) }}" class="px-3 py-1 text-xs rounded bg-racing-700 text-accent-orange border border-racing-600 hover:border-accent-orange">{{ __('Repair') }}</a>
                                     @else
                                         <button type="button" disabled class="px-3 py-1 text-xs rounded bg-racing-700 text-gray-500 border border-racing-600 cursor-not-allowed" title="{{ __('Full condition') }}">{{ __('Repair') }}</button>
                                     @endif
                                 @else
-                                    <button type="button" disabled title="{{ __('Reach level 5') }}" class="px-3 py-1 text-xs rounded bg-racing-700 text-gray-500 border border-racing-600 cursor-not-allowed">{{ __('Repair') }} (Lvl 5)</button>
+                                    <button type="button" disabled title="{{ __('Reach level :level', ['level' => config('game.mechanic.unlock_level', 10)]) }}" class="px-3 py-1 text-xs rounded bg-racing-700 text-gray-500 border border-racing-600 cursor-not-allowed">{{ __('Repair') }} ({{ __('Lvl :level', ['level' => config('game.mechanic.unlock_level', 10)]) }})</button>
                                 @endif
-                                @if ($tuningUnlocked)
+                                @if ($partsEquipUnlocked)
                                     <a href="{{ route('garage.upgrades', $car) }}" class="px-3 py-1 text-xs rounded bg-racing-700 text-accent-neon border border-racing-600 hover:border-accent-neon">{{ __('Tune') }}</a>
                                 @else
-                                    <button type="button" disabled title="{{ __('Reach level 5') }}" class="px-3 py-1 text-xs rounded bg-racing-700 text-gray-500 border border-racing-600 cursor-not-allowed">{{ __('Tune') }} (Lvl 5)</button>
+                                    <button type="button" disabled title="{{ __('Reach level :level', ['level' => config('game.parts_shop.unlock_level', 1)]) }}" class="px-3 py-1 text-xs rounded bg-racing-700 text-gray-500 border border-racing-600 cursor-not-allowed">{{ __('Tune') }} ({{ __('Lvl :level', ['level' => config('game.parts_shop.unlock_level', 1)]) }})</button>
                                 @endif
                                 @if ($sellQuote->sellable)
                                     <button

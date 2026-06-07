@@ -45,7 +45,7 @@ class RaceResultShowTest extends TestCase
             ->assertSee(__('Driver stats used'), false);
     }
 
-    public function test_pvp_race_result_page_does_not_show_npc_rewards(): void
+    public function test_pvp_race_result_page_shows_cash_and_reputation_rewards(): void
     {
         $user = User::factory()->create();
 
@@ -73,6 +73,11 @@ class RaceResultShowTest extends TestCase
                     'random_adjustment' => 0,
                     'condition_penalty' => 0,
                 ],
+                'rewards' => [
+                    'cash' => 250,
+                    'reputation' => 10,
+                    'opponent_level' => 5,
+                ],
             ],
             'random_factor' => 0,
         ]);
@@ -80,7 +85,10 @@ class RaceResultShowTest extends TestCase
         $this->actingAs($user)
             ->get(route('pvp.show', $raceResult))
             ->assertOk()
-            ->assertDontSee(__('Rewards earned'), false)
+            ->assertSee(__('Rewards earned'), false)
+            ->assertSee('+$250', false)
+            ->assertSee('+10', false)
+            ->assertDontSee(__('XP'), false)
             ->assertSee(__('Score breakdown'), false)
             ->assertSee(__('Driver bonus'), false);
     }

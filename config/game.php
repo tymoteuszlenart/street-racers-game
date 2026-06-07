@@ -51,6 +51,20 @@ return [
         'condition_damage_min' => 1,
         'condition_damage_max' => 3,
         'random_factor_variance' => 0.05,
+        'rewards' => [
+            'cash_win_base' => 140,
+            'cash_loss_base' => 35,
+            'cash_per_opponent_level_win' => 28,
+            'cash_per_opponent_level_loss' => 7,
+            'reputation_win_base' => 6,
+            'reputation_loss_base' => 2,
+            'reputation_per_opponent_level_win' => 1,
+            'reputation_per_opponent_level_loss' => 0,
+            'cash_min' => 1,
+            'cash_max' => 5000,
+            'reputation_min' => 0,
+            'reputation_max' => 100,
+        ],
     ],
 
     'player' => [
@@ -167,8 +181,27 @@ return [
         ],
     ],
 
+    'starter_parts' => [
+        'engine' => 'Stock Inline',
+        'brakes' => 'OEM Discs',
+    ],
+
+    'parts_shop' => [
+        'unlock_level' => 1,
+        'slot_unlock_levels' => [
+            'engine' => 1,
+            'brakes' => 1,
+            'suspension' => 2,
+            'tires' => 3,
+            'turbo' => 5,
+            'ecu' => 4,
+            'gearbox' => 6,
+            'nitrous' => 8,
+        ],
+    ],
+
     'mechanic' => [
-        'unlock_level' => 5,
+        'unlock_level' => 10,
         'max_upgrade_level' => 9,
         'bonus_percent_per_level' => 10,
         'upgrade_cost_percent_of_price_per_level' => 15,
