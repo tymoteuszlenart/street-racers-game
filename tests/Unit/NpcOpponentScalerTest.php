@@ -2,6 +2,8 @@
 
 namespace Tests\Unit;
 
+use App\Enums\RaceTier;
+use App\Enums\RaceType;
 use App\Models\Race;
 use App\Services\NpcOpponentScaler;
 use App\Services\RaceScoreCalculator;
@@ -37,7 +39,7 @@ class NpcOpponentScalerTest extends TestCase
 
     public function test_tuning_increases_scaled_opponent_strength(): void
     {
-        $race = Race::query()->where('name', 'Pro')->firstOrFail();
+        $race = Race::findByTypeAndTier(RaceType::Sprint, RaceTier::Pro);
         $driverStats = config('game.player.driver_stats.base');
         $starterCar = [
             'power' => 44,
@@ -71,9 +73,9 @@ class NpcOpponentScalerTest extends TestCase
             'condition_percent' => 100.0,
         ];
 
-        $amateur = $this->simulateWinRate('Amateur', 1, $starterCar, $driverStats, 0.05);
-        $semiPro = $this->simulateWinRate('Semi-Pro', 1, $starterCar, $driverStats, 0.05);
-        $pro = $this->simulateWinRate('Pro', 1, $starterCar, $driverStats, 0.08);
+        $amateur = $this->simulateWinRate(RaceType::Sprint, RaceTier::Amateur, 1, $starterCar, $driverStats, 0.05);
+        $semiPro = $this->simulateWinRate(RaceType::Sprint, RaceTier::SemiPro, 1, $starterCar, $driverStats, 0.05);
+        $pro = $this->simulateWinRate(RaceType::Sprint, RaceTier::Pro, 1, $starterCar, $driverStats, 0.08);
 
         $this->assertGreaterThanOrEqual(0.85, $amateur);
         $this->assertGreaterThanOrEqual(0.58, $semiPro);
@@ -100,10 +102,10 @@ class NpcOpponentScalerTest extends TestCase
             'condition_percent' => 100.0,
         ];
 
-        $stockSemi = $this->simulateWinRate('Semi-Pro', 1, $starterCar, $driverStats, 0.05);
-        $tunedSemi = $this->simulateWinRate('Semi-Pro', 1, $tunedCar, $driverStats, 0.05);
-        $stockPro = $this->simulateWinRate('Pro', 1, $starterCar, $driverStats, 0.08);
-        $tunedPro = $this->simulateWinRate('Pro', 1, $tunedCar, $driverStats, 0.08);
+        $stockSemi = $this->simulateWinRate(RaceType::Sprint, RaceTier::SemiPro, 1, $starterCar, $driverStats, 0.05);
+        $tunedSemi = $this->simulateWinRate(RaceType::Sprint, RaceTier::SemiPro, 1, $tunedCar, $driverStats, 0.05);
+        $stockPro = $this->simulateWinRate(RaceType::Sprint, RaceTier::Pro, 1, $starterCar, $driverStats, 0.08);
+        $tunedPro = $this->simulateWinRate(RaceType::Sprint, RaceTier::Pro, 1, $tunedCar, $driverStats, 0.08);
 
         $this->assertGreaterThan($stockSemi, $tunedSemi);
         $this->assertGreaterThan($stockPro, $tunedPro);
@@ -117,13 +119,14 @@ class NpcOpponentScalerTest extends TestCase
      * @param  array{power: int, acceleration: int, grip: int, handling: int}  $playerDriverStats
      */
     private function simulateWinRate(
-        string $raceName,
+        RaceType $raceType,
+        RaceTier $raceTier,
         int $playerLevel,
         array $playerCarStats,
         array $playerDriverStats,
         float $variance,
     ): float {
-        $race = Race::query()->where('name', $raceName)->firstOrFail();
+        $race = Race::findByTypeAndTier($raceType, $raceTier);
         $wins = 0;
         $iterations = 4000;
 
@@ -139,17 +142,20 @@ class NpcOpponentScalerTest extends TestCase
 
             $playerRandom = $this->randomFactor($variance);
             $opponentRandom = $this->randomFactor($variance);
+            $raceType = $race->resolvedRaceType();
 
             $playerScore = $this->calculator->calculate(
                 $playerCarStats,
                 $playerDriverStats,
                 $playerRandom,
+                $raceType,
             )['score'];
 
             $opponentScore = $this->calculator->calculate(
                 $scaledOpponent['car'],
                 $scaledOpponent['driver'],
                 $opponentRandom,
+                $raceType,
             )['score'];
 
             if ($playerScore > $opponentScore) {
@@ -181,6 +187,7 @@ class NpcOpponentScalerTest extends TestCase
             $scaledOpponent['car'],
             $scaledOpponent['driver'],
             0.0,
+            $race->resolvedRaceType(),
         )['score'];
     }
 

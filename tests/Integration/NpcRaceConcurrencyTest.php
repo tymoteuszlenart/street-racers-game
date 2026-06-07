@@ -2,6 +2,8 @@
 
 namespace Tests\Integration;
 
+use App\Enums\RaceTier;
+use App\Enums\RaceType;
 use App\Exceptions\RaceAttemptPendingException;
 use App\Models\Race;
 use App\Models\RaceAttempt;
@@ -21,7 +23,7 @@ class NpcRaceConcurrencyTest extends TestCase
         $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
         $initialCash = $profile->cash;
 
-        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
+        $race = Race::findByTypeAndTier(RaceType::Sprint, RaceTier::Amateur);
         $service = app(RaceService::class)->withRandomUnit(fn (): float => 0.9);
 
         $result = $service->startNpcRace($user, $race, (string) Str::uuid());
@@ -40,7 +42,7 @@ class NpcRaceConcurrencyTest extends TestCase
         $profile = $user->playerProfile()->firstOrFail();
         $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
 
-        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
+        $race = Race::findByTypeAndTier(RaceType::Sprint, RaceTier::Amateur);
         $service = app(RaceService::class)->withRandomUnit(fn (): float => 0.9);
         $key = (string) Str::uuid();
 
@@ -59,7 +61,7 @@ class NpcRaceConcurrencyTest extends TestCase
         $profile = $user->playerProfile()->firstOrFail();
         $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
 
-        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
+        $race = Race::findByTypeAndTier(RaceType::Sprint, RaceTier::Amateur);
         $key = (string) Str::uuid();
 
         $outputs = $this->runParallelNpcRaceStarts($user->id, $race->id, [$key, $key]);
@@ -79,7 +81,7 @@ class NpcRaceConcurrencyTest extends TestCase
     {
         $user = User::factory()->create();
         $profile = $user->playerProfile()->firstOrFail();
-        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
+        $race = Race::findByTypeAndTier(RaceType::Sprint, RaceTier::Amateur);
         $profile->update(['fuel_current' => $race->fuel_cost, 'fuel_updated_at' => now()]);
 
         $outputs = $this->runParallelNpcRaceStarts($user->id, $race->id, [
@@ -104,7 +106,7 @@ class NpcRaceConcurrencyTest extends TestCase
         $profile = $user->playerProfile()->firstOrFail();
         $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
 
-        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
+        $race = Race::findByTypeAndTier(RaceType::Sprint, RaceTier::Amateur);
         $key = (string) Str::uuid();
 
         RaceAttempt::query()->create([

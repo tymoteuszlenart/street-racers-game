@@ -68,7 +68,7 @@ return [
     ],
 
     'player' => [
-        'max_level' => 50,
+        'max_level' => 100,
         'experience_per_level' => 100,
         'driver_stats' => [
             'base' => [
@@ -78,11 +78,36 @@ return [
                 'handling' => 1,
             ],
             'points_per_level' => 3,
-            'race_weights' => [
-                'power' => 0.15,
-                'acceleration' => 0.12,
-                'grip' => 0.10,
-                'handling' => 0.08,
+            'default_race_type' => 'circuit',
+            /*
+             * Driver bonus uses race-type stat affinity. Each type emphasizes different stats so
+             * builds matter across drag / sprint / drift / circuit events (PvP uses default_race_type).
+             */
+            'race_type_affinities' => [
+                'drag' => [
+                    'power' => 0.22,
+                    'acceleration' => 0.18,
+                    'grip' => 0.05,
+                    'handling' => 0.05,
+                ],
+                'sprint' => [
+                    'power' => 0.10,
+                    'acceleration' => 0.24,
+                    'grip' => 0.08,
+                    'handling' => 0.08,
+                ],
+                'drift' => [
+                    'power' => 0.06,
+                    'acceleration' => 0.08,
+                    'grip' => 0.22,
+                    'handling' => 0.18,
+                ],
+                'circuit' => [
+                    'power' => 0.12,
+                    'acceleration' => 0.12,
+                    'grip' => 0.12,
+                    'handling' => 0.12,
+                ],
             ],
             'labels' => [
                 'power' => 'Force',

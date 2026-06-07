@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Enums\PartAcquiredVia;
 use App\Enums\PartSlot;
+use App\Enums\RaceTier;
+use App\Enums\RaceType;
 use App\Models\Part;
 use App\Models\PartModel;
 use App\Models\Race;
@@ -26,7 +28,7 @@ class RaceStartTest extends TestCase
         $profile = $user->playerProfile()->firstOrFail();
         $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
 
-        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
+        $race = Race::findByTypeAndTier(RaceType::Sprint, RaceTier::Amateur);
 
         $response = $this->actingAs($user)->post(route('races.start', $race), [
             'idempotency_key' => (string) Str::uuid(),
@@ -42,7 +44,7 @@ class RaceStartTest extends TestCase
         $profile = $user->playerProfile()->firstOrFail();
         $profile->update(['fuel_current' => 0, 'fuel_updated_at' => now()]);
 
-        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
+        $race = Race::findByTypeAndTier(RaceType::Sprint, RaceTier::Amateur);
 
         $response = $this->actingAs($user)->from(route('races.index'))->post(route('races.start', $race), [
             'idempotency_key' => (string) Str::uuid(),
@@ -63,7 +65,7 @@ class RaceStartTest extends TestCase
             'fuel_updated_at' => now(),
         ])->save();
 
-        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
+        $race = Race::findByTypeAndTier(RaceType::Sprint, RaceTier::Amateur);
 
         $response = $this->actingAs($user)->from(route('races.index'))->post(route('races.start', $race), [
             'idempotency_key' => (string) Str::uuid(),
@@ -115,7 +117,7 @@ class RaceStartTest extends TestCase
         $profile = $user->playerProfile()->firstOrFail();
         $profile->update(['fuel_current' => 0, 'fuel_updated_at' => now()]);
 
-        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
+        $race = Race::findByTypeAndTier(RaceType::Sprint, RaceTier::Amateur);
         $key = (string) Str::uuid();
 
         $this->actingAs($user)->from(route('races.index'))->post(route('races.start', $race), [
@@ -137,7 +139,7 @@ class RaceStartTest extends TestCase
         $profile = $user->playerProfile()->firstOrFail();
         $profile->update(['fuel_current' => 0, 'fuel_updated_at' => now()]);
 
-        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
+        $race = Race::findByTypeAndTier(RaceType::Sprint, RaceTier::Amateur);
 
         $this->actingAs($user)->from(route('races.index'))->post(route('races.start', $race), [
             'idempotency_key' => (string) Str::uuid(),
@@ -375,7 +377,7 @@ class RaceStartTest extends TestCase
         $profile = $user->playerProfile()->firstOrFail();
         $profile->update(['fuel_current' => 100, 'fuel_updated_at' => now()]);
 
-        $race = Race::query()->where('name', 'Amateur')->firstOrFail();
+        $race = Race::findByTypeAndTier(RaceType::Sprint, RaceTier::Amateur);
         $key = (string) Str::uuid();
 
         $this->actingAs($user)->post(route('races.start', $race), [

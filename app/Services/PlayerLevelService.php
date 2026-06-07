@@ -18,7 +18,7 @@ class PlayerLevelService
 
     public function syncLevel(PlayerProfile $profile): void
     {
-        $maxLevel = (int) config('game.player.max_level', 50);
+        $maxLevel = (int) config('game.player.max_level', 100);
         $experiencePerLevel = (int) config('game.player.experience_per_level', 100);
         $previousLevel = $profile->level;
 
@@ -64,7 +64,7 @@ class PlayerLevelService
      */
     public function progressTowardNextLevel(PlayerProfile $profile): ?array
     {
-        $maxLevel = (int) config('game.player.max_level', 50);
+        $maxLevel = (int) config('game.player.max_level', 100);
 
         if ($profile->level >= $maxLevel) {
             return null;

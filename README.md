@@ -28,7 +28,7 @@ php artisan db:seed
 
 The car catalog (`CarModelSeeder`) is required for starter cars on registration and the dealer.
 
-`RaceSeeder` seeds three NPC street races — **Amateur**, **Semi-Pro**, and **Pro** — each with its own car stats and opponent driver stats.
+`RaceSeeder` seeds **12 NPC races** — drag, sprint, drift, and circuit, each with **Amateur**, **Semi-Pro**, and **Pro** tiers. Opponents scale to your level’s expected build.
 
 After pulling changes that add columns or tables, run migrations:
 
@@ -39,8 +39,8 @@ php artisan migrate
 ## Game features (dev)
 
 - **Racer profiles** — `/players/{user}` shows level, reputation, driver stats, active car, and club. Linked from rankings, PvP, clubs, and the dashboard.
-- **Driver stats** — Force, Reaction, Control, and Technique add a weighted bonus to race scores. Level-ups grant **3 unspent stat points** to allocate on your own profile (`POST /players/stats`).
-- **NPC races** — **Amateur**, **Semi-Pro**, and **Pro** are always available; opponents scale to your level’s expected build (tuning and upgrades improve your odds), with tier-specific target difficulty.
+- **Driver stats** — Force, Reaction, Control, and Technique add a race-type affinity bonus (drag, sprint, drift, circuit). Level-ups grant **3 unspent stat points** to allocate on your own profile (`POST /players/stats`). PvP and tournaments use the circuit affinity.
+- **NPC races** — **Drag**, **Sprint**, **Drift**, and **Circuit**, each with Amateur / Semi-Pro / Pro tiers. Driver stat affinity depends on race type; opponents scale to your level’s expected build.
 - **Score breakdown** — NPC, PvP, and tournament result pages show car base, driver bonus, luck, condition, and driver stats used (older results still show legacy `driver_level_bonus` as driver bonus).
 
 ## Development
