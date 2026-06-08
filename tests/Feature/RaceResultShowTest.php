@@ -118,7 +118,7 @@ class RaceResultShowTest extends TestCase
             ->assertSee(__('Rewards earned'), false)
             ->assertSee('+$250', false)
             ->assertSee('+10', false)
-            ->assertDontSee(__('XP'), false)
+            ->assertDontSee(__('Experience'), false)
             ->assertSee(__('Score breakdown'), false)
             ->assertSee(__('Driver bonus'), false);
     }
