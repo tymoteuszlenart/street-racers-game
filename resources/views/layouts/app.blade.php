@@ -16,7 +16,26 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased bg-racing-900 text-gray-200">
+    <body @class([
+        'font-sans antialiased bg-racing-900 text-gray-200',
+        'pt-6' => $playerHud !== null,
+    ])>
+        @if ($playerHud !== null)
+            <x-player-hud
+                :nickname="$playerHud['nickname']"
+                :cash="$playerHud['cash']"
+                :cups="$playerHud['cups']"
+                :fuel-current="$playerHud['fuelCurrent']"
+                :fuel-max="$playerHud['fuelMax']"
+                :premium-fuel-current="$playerHud['premiumFuelCurrent']"
+                :premium-fuel-max="$playerHud['premiumFuelMax']"
+                :level="$playerHud['level']"
+                :progress="$playerHud['progress']"
+                :percent="$playerHud['percent']"
+                :max-level="$playerHud['maxLevel']"
+            />
+        @endif
+
         <div class="min-h-screen">
             @include('layouts.navigation')
 
