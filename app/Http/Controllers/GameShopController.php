@@ -23,23 +23,20 @@ class GameShopController extends Controller
 
     public function index(Request $request): View
     {
-        $profile = $request->user()->playerProfile;
+        $user = $request->user();
+        $isAdmin = $user->is_admin;
+        $profile = $user->playerProfile;
         $level = $profile?->level ?? 1;
-        $partsUnlocked = $level >= PartsShopUnlock::shopLevel();
+        $partsUnlocked = $isAdmin || $level >= PartsShopUnlock::shopLevel();
 
-        $carModels = CarModel::query()
-            ->active()
-            ->dealerCatalog()
-            ->unlockedForLevel($level)
-            ->orderBy('unlock_level')
-            ->orderBy('price')
-            ->get();
+        $carModels = $isAdmin
+            ? CarModel::query()->active()->dealerCatalog()->orderBy('unlock_level')->orderBy('price')->get()
+            : CarModel::query()->active()->dealerCatalog()->unlockedForLevel($level)->orderBy('unlock_level')->orderBy('price')->get();
 
         $partModels = $partsUnlocked
-            ? PartModel::query()
-                ->shopCatalog($level)
-                ->get()
-                ->filter(fn (PartModel $partModel) => PartsShopUnlock::slotUnlocked($partModel->slot, $level))
+            ? ($isAdmin
+                ? PartModel::query()->active()->orderBy('slot')->orderBy('unlock_level')->orderBy('price')->get()
+                : PartModel::query()->shopCatalog($level)->get()->filter(fn (PartModel $partModel) => PartsShopUnlock::slotUnlocked($partModel->slot, $level)))
             : collect();
 
         $partSlots = collect(PartSlot::cases())

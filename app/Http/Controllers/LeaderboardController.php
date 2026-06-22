@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PlayerProfile;
+use App\Models\User;
 use Illuminate\View\View;
 
 class LeaderboardController extends Controller
@@ -11,8 +12,11 @@ class LeaderboardController extends Controller
     {
         $currentProfile = auth()->user()?->playerProfile;
 
+        $adminUserIds = User::query()->where('is_admin', true)->pluck('id');
+
         $profiles = PlayerProfile::query()
             ->with('user:id,name')
+            ->whereNotIn('user_id', $adminUserIds)
             ->orderByDesc('reputation')
             ->orderByDesc('level')
             ->orderBy('user_id')
@@ -32,7 +36,10 @@ class LeaderboardController extends Controller
 
     private function globalRankFor(PlayerProfile $profile): int
     {
+        $adminUserIds = User::query()->where('is_admin', true)->pluck('id');
+
         $betterRankedCount = PlayerProfile::query()
+            ->whereNotIn('user_id', $adminUserIds)
             ->where(function ($query) use ($profile) {
                 $query->where('reputation', '>', $profile->reputation)
                     ->orWhere(function ($query) use ($profile) {

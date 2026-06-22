@@ -40,6 +40,13 @@ class PlayerProfile extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function isAdmin(): bool
+    {
+        return (bool) ($this->relationLoaded('user')
+            ? $this->user?->is_admin
+            : User::query()->where('id', $this->user_id)->value('is_admin'));
+    }
+
     public function activeCar(): BelongsTo
     {
         return $this->belongsTo(Car::class, 'active_car_id');

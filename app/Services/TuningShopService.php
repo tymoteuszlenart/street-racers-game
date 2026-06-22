@@ -36,8 +36,10 @@ class TuningShopService
 
             $this->assertCanPurchase($profile, $partModel);
 
-            $profile->cash -= $partModel->price;
-            $profile->save();
+            if (! $profile->isAdmin()) {
+                $profile->cash -= $partModel->price;
+                $profile->save();
+            }
 
             $part = Part::query()->create([
                 'user_id' => $user->id,
