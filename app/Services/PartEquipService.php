@@ -140,5 +140,11 @@ class PartEquipService
                 'part' => ['This part requires a higher class car.'],
             ]);
         }
+
+        if ($carModel->unlock_level < $partModel->unlock_level) {
+            throw ValidationException::withMessages([
+                'part' => ["This part requires a level {$partModel->unlock_level} car."],
+            ]);
+        }
     }
 }
