@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\ActiveCarController;
+use App\Http\Controllers\AdminCarController;
+use App\Http\Controllers\AdminPartController;
 use App\Http\Controllers\AdminPurchaseController;
 use App\Http\Controllers\CarSellController;
 use App\Http\Controllers\CarUpgradeController;
@@ -128,6 +130,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/purchases', [AdminPurchaseController::class, 'index'])->name('purchases.index');
         Route::get('/purchases/{paymentOrder}', [AdminPurchaseController::class, 'show'])->name('purchases.show');
+        Route::get('/cars', [AdminCarController::class, 'index'])->name('cars.index');
+        Route::get('/parts', [AdminPartController::class, 'index'])->name('parts.index');
     });
 
     Route::middleware('tournaments.unlocked')->group(function () {
