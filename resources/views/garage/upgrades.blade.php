@@ -54,7 +54,7 @@
                                 <form method="POST" action="{{ route('garage.upgrades.unequip', [$car, $equipped]) }}">
                                     @csrf
                                     @method('DELETE')
-                                    <x-secondary-button>{{ __('Unequip') }}</x-secondary-button>
+                                    <x-secondary-button type="submit">{{ __('Unequip') }}</x-secondary-button>
                                 </form>
                             @endif
                         </div>

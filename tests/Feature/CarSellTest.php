@@ -92,6 +92,13 @@ class CarSellTest extends TestCase
         $user->unsetRelation('playerProfile');
 
         $partModel = PartModel::query()->where('name', 'Street Block')->firstOrFail();
+        $carModel = CarModel::query()
+            ->where('unlock_level', '>=', $partModel->unlock_level)
+            ->orderBy('unlock_level')
+            ->firstOrFail();
+        $this->actingAs($user)->post(route('dealer.purchase', $carModel))->assertRedirect();
+        $dealerCar = $user->cars()->where('car_model_id', $carModel->id)->firstOrFail();
+
         $part = app(TuningShopService::class)->purchase($user, $partModel);
         app(PartEquipService::class)->equip($user, $part, $dealerCar);
 

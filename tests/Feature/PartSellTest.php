@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Enums\PartAcquiredVia;
 use App\Enums\TransactionType;
+use App\Models\Car;
+use App\Models\CarModel;
 use App\Models\Part;
 use App\Models\PartModel;
 use App\Models\User;
@@ -48,7 +50,16 @@ class PartSellTest extends TestCase
     public function test_cannot_sell_equipped_part(): void
     {
         [$user, $part] = $this->userWithInventoryPart();
-        $car = $user->cars()->firstOrFail();
+        $partModel = $part->partModel;
+        $carModel = CarModel::query()
+            ->where('unlock_level', '>=', $partModel->unlock_level)
+            ->orderBy('unlock_level')
+            ->firstOrFail();
+        $car = Car::query()->create([
+            'user_id' => $user->id,
+            'car_model_id' => $carModel->id,
+            'acquired_via' => 'dealer',
+        ]);
         app(PartEquipService::class)->equip($user, $part, $car);
 
         $response = $this->actingAs($user)->delete(route('garage.parts.sell', $part->fresh()));

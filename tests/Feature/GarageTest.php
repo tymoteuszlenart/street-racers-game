@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\PartAcquiredVia;
 use App\Models\Car;
+use App\Models\CarModel;
 use App\Models\Part;
 use App\Models\PartModel;
 use App\Models\User;
@@ -56,9 +57,38 @@ class GarageTest extends TestCase
     {
         $user = User::factory()->create();
         $user->playerProfile()->update(['level' => 5]);
-        $car = $user->cars()->firstOrFail();
+        $user->cars()->delete();
+        Part::query()->where('user_id', $user->id)->delete();
 
         $partModel = PartModel::query()->where('name', 'Street Block')->firstOrFail();
+        $engineModel = PartModel::query()->where('name', 'Stock Inline')->firstOrFail();
+        $brakesModel = PartModel::query()->where('name', 'OEM Discs')->firstOrFail();
+        $carModel = CarModel::query()
+            ->where('unlock_level', '>=', $partModel->unlock_level)
+            ->orderBy('unlock_level')
+            ->firstOrFail();
+        $car = Car::query()->create([
+            'user_id' => $user->id,
+            'car_model_id' => $carModel->id,
+            'acquired_via' => 'dealer',
+        ]);
+
+        Part::query()->create([
+            'user_id' => $user->id,
+            'part_model_id' => $brakesModel->id,
+            'car_id' => $car->id,
+            'slot' => $brakesModel->slot,
+            'acquired_via' => PartAcquiredVia::Shop,
+        ]);
+
+        Part::query()->create([
+            'user_id' => $user->id,
+            'part_model_id' => $engineModel->id,
+            'car_id' => null,
+            'slot' => $engineModel->slot,
+            'acquired_via' => PartAcquiredVia::Shop,
+        ]);
+
         $part = Part::query()->create([
             'user_id' => $user->id,
             'part_model_id' => $partModel->id,
