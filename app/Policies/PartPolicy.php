@@ -7,6 +7,11 @@ use App\Models\User;
 
 class PartPolicy
 {
+    public function before(User $user): ?bool
+    {
+        return $user->is_admin ? true : null;
+    }
+
     public function view(User $user, Part $part): bool
     {
         return $part->user_id === $user->id;

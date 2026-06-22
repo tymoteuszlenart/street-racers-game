@@ -30,8 +30,10 @@ class DealerService
 
             $this->assertCanPurchase($profile, $carModel);
 
-            $profile->cash -= $carModel->price;
-            $profile->save();
+            if (! $profile->isAdmin()) {
+                $profile->cash -= $carModel->price;
+                $profile->save();
+            }
 
             $car = Car::query()->create([
                 'user_id' => $user->id,

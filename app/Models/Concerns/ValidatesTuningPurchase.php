@@ -33,6 +33,10 @@ trait ValidatesTuningPurchase
             return ['part_model' => ['This part is not available in the tuning shop.']];
         }
 
+        if ($profile->isAdmin()) {
+            return [];
+        }
+
         $shopUnlockLevel = PartsShopUnlock::shopLevel();
 
         if ($profile->level < $shopUnlockLevel) {

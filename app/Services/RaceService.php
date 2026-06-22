@@ -96,7 +96,9 @@ class RaceService
                 $this->assertNpcRaceEligible($profile, $car, $race);
 
                 $this->fuelService->regenerate($profile);
-                $this->fuelService->spend($profile, $race->fuel_cost);
+                if (! $user->is_admin) {
+                    $this->fuelService->spend($profile, $race->fuel_cost);
+                }
 
                 $variance = (float) $race->random_factor_variance;
                 $randomUnit = $this->randomUnitCallable();

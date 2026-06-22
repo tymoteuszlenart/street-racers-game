@@ -77,12 +77,14 @@ class MechanicService
 
             $part = Part::query()->whereKey($part->id)->lockForUpdate()->firstOrFail();
 
-            if ($profile->cash < $cost) {
-                throw ValidationException::withMessages(['cash' => 'Not enough cash for this upgrade.']);
-            }
+            if (! $profile->isAdmin()) {
+                if ($profile->cash < $cost) {
+                    throw ValidationException::withMessages(['cash' => 'Not enough cash for this upgrade.']);
+                }
 
-            $profile->cash -= $cost;
-            $profile->save();
+                $profile->cash -= $cost;
+                $profile->save();
+            }
 
             $part->upgrade_level++;
             $part->save();
@@ -127,12 +129,14 @@ class MechanicService
                 throw ValidationException::withMessages(['car' => 'This car does not need repairs.']);
             }
 
-            if ($profile->cash < $cost) {
-                throw ValidationException::withMessages(['cash' => 'Not enough cash for repairs.']);
-            }
+            if (! $profile->isAdmin()) {
+                if ($profile->cash < $cost) {
+                    throw ValidationException::withMessages(['cash' => 'Not enough cash for repairs.']);
+                }
 
-            $profile->cash -= $cost;
-            $profile->save();
+                $profile->cash -= $cost;
+                $profile->save();
+            }
 
             $car->condition_current = $car->condition_max;
             $car->save();
@@ -177,12 +181,14 @@ class MechanicService
                 throw ValidationException::withMessages(['part' => 'This part does not need repairs.']);
             }
 
-            if ($profile->cash < $cost) {
-                throw ValidationException::withMessages(['cash' => 'Not enough cash for repairs.']);
-            }
+            if (! $profile->isAdmin()) {
+                if ($profile->cash < $cost) {
+                    throw ValidationException::withMessages(['cash' => 'Not enough cash for repairs.']);
+                }
 
-            $profile->cash -= $cost;
-            $profile->save();
+                $profile->cash -= $cost;
+                $profile->save();
+            }
 
             $part->condition_current = $part->condition_max;
             $part->save();

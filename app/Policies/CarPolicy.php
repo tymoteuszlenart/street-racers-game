@@ -7,6 +7,11 @@ use App\Models\User;
 
 class CarPolicy
 {
+    public function before(User $user): ?bool
+    {
+        return $user->is_admin ? true : null;
+    }
+
     public function view(User $user, Car $car): bool
     {
         return $car->user_id === $user->id;
